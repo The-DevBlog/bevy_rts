@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier3d::geometry::Collider;
 use bevy_rts_camera::Ground;
 
 use crate::MAP_SIZE;
@@ -10,6 +11,9 @@ impl Plugin for MapPlugin {
         app.add_systems(Startup, spawn_map);
     }
 }
+
+#[derive(Component)]
+pub struct MapBase;
 
 fn spawn_map(
     mut cmds: Commands,
@@ -23,8 +27,10 @@ fn spawn_map(
             material: materials.add(Color::rgb(0.3, 0.5, 0.3)),
             ..default()
         },
-        // Add `Ground` component to any entity you want the camera to treat as ground.
+        Collider::cuboid(MAP_SIZE / 2.0, 0.0, MAP_SIZE / 2.0),
         Ground,
+        MapBase,
+        Name::new("Map Base"),
     ));
 
     // Some "terrain"
@@ -36,6 +42,8 @@ fn spawn_map(
             transform: Transform::from_xyz(15.0, 0.5, -5.0),
             ..default()
         },
+        Collider::cuboid(7.5, 1.0, 2.5),
+        Name::new("obstacle"),
         Ground,
     ));
 

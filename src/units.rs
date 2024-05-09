@@ -1,6 +1,7 @@
 use bevy::prelude::*;
-// use bevy_mod_picking::PickableBundle;
 use bevy_rapier3d::prelude::*;
+
+use crate::{Speed, TargetPos, Unit};
 
 pub struct UnitsPlugin;
 
@@ -9,18 +10,6 @@ impl Plugin for UnitsPlugin {
         app.add_systems(Startup, spawn_unit);
     }
 }
-
-#[derive(Component)]
-pub struct Selected(pub bool);
-
-#[derive(Component)]
-pub struct Speed(pub f32);
-
-#[derive(Component)]
-pub struct TargetPos(pub Option<Vec3>);
-
-#[derive(Component)]
-pub struct Unit;
 
 fn spawn_unit(
     mut cmds: Commands,
@@ -37,7 +26,6 @@ fn spawn_unit(
         Collider::cuboid(0.5, 0.5, 0.5),
         Name::new("Unit"),
         RigidBody::Dynamic,
-        Selected(false),
         Speed(5.0),
         TargetPos(None),
         Unit,
@@ -53,7 +41,6 @@ fn spawn_unit(
         Collider::cuboid(0.5, 0.5, 0.5),
         Name::new("Unit"),
         RigidBody::Dynamic,
-        Selected(false),
         Speed(5.0),
         TargetPos(None),
         Unit,

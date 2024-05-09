@@ -2,7 +2,6 @@ use bevy::{math::bounding::Aabb2d, prelude::*};
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 
 use crate::MAP_SIZE;
-
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
@@ -26,6 +25,7 @@ fn spawn_camera(mut cmds: Commands) {
             key_up: KeyCode::KeyW,
             key_down: KeyCode::KeyS,
             pan_speed: 40.0,
+            zoom_sensitivity: 0.2,
             ..default()
         },
     ));

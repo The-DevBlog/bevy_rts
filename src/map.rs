@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::geometry::Collider;
 use bevy_rts_camera::Ground;
 
-use crate::MAP_SIZE;
+use crate::{MapBase, MAP_SIZE};
 
 pub struct MapPlugin;
 
@@ -11,9 +11,6 @@ impl Plugin for MapPlugin {
         app.add_systems(Startup, spawn_map);
     }
 }
-
-#[derive(Component)]
-pub struct MapBase;
 
 fn spawn_map(
     mut cmds: Commands,

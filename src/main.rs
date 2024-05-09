@@ -1,5 +1,6 @@
 mod camera;
 mod commands;
+mod components;
 mod map;
 mod resources;
 mod units;
@@ -10,6 +11,7 @@ use bevy_rapier3d::{
 };
 use camera::CameraPlugin;
 use commands::CommandsPlugin;
+use components::*;
 use map::MapPlugin;
 use resources::ResourcesPlugin;
 use units::UnitsPlugin;

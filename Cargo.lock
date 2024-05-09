@@ -943,9 +943,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_rts_camera"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a8115f5cd418f4bed987963be00af4bcbef9fde80f4c95cb7c7178368677921"
+checksum = "9ab92fc6ceb3a512b9940f9da4004f28e488c89a49aff7b9213d6b785797cf15"
 dependencies = [
  "bevy",
  "bevy_mod_raycast",

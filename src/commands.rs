@@ -2,7 +2,8 @@ use std::f32::EPSILON;
 
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{
-    parry::query::Ray, pipeline::QueryFilter, plugin::RapierContext, render::ColliderDebugColor,
+    dynamics::ExternalImpulse, pipeline::QueryFilter, plugin::RapierContext,
+    render::ColliderDebugColor,
 };
 use bevy_rts_camera::RtsCamera;
 
@@ -45,18 +46,17 @@ fn set_unit_destination(
 }
 
 fn move_unit(
-    mut unit_q: Query<(&mut Transform, &Speed, &mut TargetPos), With<Unit>>,
+    mut unit_q: Query<(&mut Transform, &mut ExternalImpulse, &Speed, &mut TargetPos), With<Unit>>,
     time: Res<Time>,
 ) {
-    for (mut trans, speed, mut target_pos) in unit_q.iter_mut() {
+    for (trans, mut ext_impulse, speed, mut target_pos) in unit_q.iter_mut() {
         if let Some(new_pos) = target_pos.0 {
             let distance = new_pos - trans.translation;
             if distance.length_squared() <= (speed.0 * time.delta_seconds()).powi(2) + EPSILON {
-                trans.translation = new_pos;
                 target_pos.0 = None;
                 println!("Unit Stopping");
             } else {
-                trans.translation += distance.normalize() * speed.0 * time.delta_seconds();
+                ext_impulse.impulse += distance.normalize() * speed.0 * time.delta_seconds();
             }
         }
     }
@@ -110,20 +110,17 @@ pub fn deselect(
 pub fn drag_select(
     mut cmds: Commands,
     window_q: Query<&Window, With<PrimaryWindow>>,
-    rapier_context: Res<RapierContext>,
     mut box_select: ResMut<BoxSelect>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
-    select_q: Query<(Entity, &Selected)>,
     map_base_q: Query<&GlobalTransform, With<MapBase>>,
     input: Res<ButtonInput<MouseButton>>,
-    unit_q: Query<&Transform, With<Unit>>,
+    unit_q: Query<(Entity, &Transform), With<Unit>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let map_base_trans = map_base_q.single();
     let window = window_q.single();
 
     if input.just_pressed(MouseButton::Left) {
-        println!("DRAG START");
         let Some(cursor_pos) = window.cursor_position() else {
             return;
         };
@@ -141,8 +138,6 @@ pub fn drag_select(
     }
 
     if input.just_released(MouseButton::Left) {
-        println!("DRAG STOP");
-
         let Some(cursor_pos) = window.cursor_position() else {
             return;
         };
@@ -158,25 +153,23 @@ pub fn drag_select(
         let global_cursor = ray.get_point(distance);
         box_select.end = global_cursor;
 
-        println!("Box Select: {:?}", box_select);
+        let min_x = box_select.start.x.min(box_select.end.x);
+        let max_x = box_select.start.x.max(box_select.end.x);
+        let min_z = box_select.start.z.min(box_select.end.z);
+        let max_z = box_select.start.z.max(box_select.end.z);
 
-        for unit_trans in unit_q.iter() {
-            let Some(ray) = cam.viewport_to_world(cam_trans, unit_trans.translation.xy()) else {
-                return;
-            };
-
-            let hit = rapier_context.cast_ray(
-                ray.origin,
-                ray.direction.into(),
-                f32::MAX,
-                true,
-                QueryFilter::only_dynamic(),
-            );
-
-            if let Some((entity, _)) = hit {
-                cmds.entity(entity)
-                    .insert((ColliderDebugColor(Color::YELLOW)));
-            };
+        for (unit_ent, unit_trans) in unit_q.iter() {
+            let unit_pos = unit_trans.translation;
+            if unit_pos.x >= min_x
+                && unit_pos.x <= max_x
+                && unit_pos.z >= min_z
+                && unit_pos.z <= max_z
+            {
+                cmds.entity(unit_ent)
+                    .insert((ColliderDebugColor(Color::GREEN), Selected));
+            } else {
+                println!("OUT");
+            }
         }
     }
 }

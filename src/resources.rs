@@ -17,6 +17,10 @@ pub struct GroundCoords {
 
 #[derive(Resource, Default, Debug)]
 pub struct BoxSelect {
+    // pub global_start: Vec3,
+    // pub global_end: Vec3,
+    // pub local_start: Vec2,
+    // pub local_end: Vec2,
     pub start: Vec3,
     pub end: Vec3,
 }

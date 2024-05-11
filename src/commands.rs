@@ -8,7 +8,7 @@ use bevy_rapier3d::{
 use bevy_rts_camera::RtsCamera;
 
 use crate::{
-    resources::{BoxSelect, MouseCoords},
+    resources::{BoxCoords, LongPressTimer, MouseClick, MouseCoords},
     MapBase, Selected, Speed, TargetPos, Unit,
 };
 
@@ -16,19 +16,67 @@ pub struct CommandsPlugin;
 
 impl Plugin for CommandsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_gizmo_group::<MyRoundGizmos>()
-            .add_systems(
-                Update,
-                (
-                    set_unit_destination,
-                    set_mouse_coords,
-                    move_unit,
-                    // single_select,
-                    // drag_select,
-                    deselect,
-                ),
-            )
-            .add_systems(Update, (single_select, drag_select).chain());
+        app.init_gizmo_group::<MyRoundGizmos>().add_systems(
+            Update,
+            (
+                set_unit_destination,
+                set_mouse_coords,
+                move_unit,
+                single_select,
+                drag_select,
+                deselect,
+                long_press,
+                set_box_coords,
+                normal_press,
+            ),
+        );
+    }
+}
+
+fn normal_press(
+    input: Res<ButtonInput<MouseButton>>,
+    mut timer: ResMut<LongPressTimer>,
+    mut mouse_click: ResMut<MouseClick>,
+) {
+    if input.just_released(MouseButton::Left) {
+        if !timer.0.finished() {
+            mouse_click.normal_press = true;
+        }
+
+        timer.0.reset();
+    } else {
+        mouse_click.normal_press = false;
+    }
+}
+
+fn long_press(
+    input: Res<ButtonInput<MouseButton>>,
+    mut timer: ResMut<LongPressTimer>,
+    mut mouse_click: ResMut<MouseClick>,
+    time: Res<Time>,
+) {
+    if input.pressed(MouseButton::Left) {
+        if timer.0.tick(time.delta()).finished() {
+            mouse_click.long_press = true;
+        }
+    } else {
+        mouse_click.long_press = false;
+    }
+}
+
+fn set_box_coords(
+    mut box_coords: ResMut<BoxCoords>,
+    input: Res<ButtonInput<MouseButton>>,
+    mouse_coords: Res<MouseCoords>,
+) {
+    if input.just_pressed(MouseButton::Left) {
+        box_coords.global_start = mouse_coords.global;
+        box_coords.local_start = mouse_coords.local;
+    }
+
+    if input.pressed(MouseButton::Left) {
+        box_coords.local_end = mouse_coords.local;
+        box_coords.global_end = mouse_coords.global;
     }
 }
 
@@ -119,48 +167,42 @@ pub fn drag_select(
     mut cmds: Commands,
     mut gizmos: Gizmos,
     unit_q: Query<(Entity, &Transform), With<Unit>>,
-    mouse_coords: Res<MouseCoords>,
-    mut box_select: ResMut<BoxSelect>,
-    input: Res<ButtonInput<MouseButton>>,
+    box_coords: Res<BoxCoords>,
+    mouse_click: Res<MouseClick>,
 ) {
-    if input.just_pressed(MouseButton::Left) {
-        box_select.global_start = mouse_coords.global;
-        box_select.local_start = mouse_coords.local;
+    if !mouse_click.long_press {
+        return;
     }
 
-    if input.pressed(MouseButton::Left) {
-        box_select.local_end = mouse_coords.local;
-        box_select.global_end = mouse_coords.global;
+    let start = box_coords.global_start;
+    let end = box_coords.global_end;
 
-        let start = box_select.global_start;
-        let end = box_select.global_end;
+    // draw rectangle
+    gizmos.line(start, Vec3::new(end.x, 0.0, start.z), Color::GRAY);
+    gizmos.line(start, Vec3::new(start.x, 0.0, end.z), Color::GRAY);
+    gizmos.line(Vec3::new(start.x, 0.0, end.z), end, Color::GRAY);
+    gizmos.line(Vec3::new(end.x, 0.0, start.z), end, Color::GRAY);
 
-        // draw rectangle
-        gizmos.line(start, Vec3::new(end.x, 0.0, start.z), Color::GRAY);
-        gizmos.line(start, Vec3::new(start.x, 0.0, end.z), Color::GRAY);
-        gizmos.line(Vec3::new(start.x, 0.0, end.z), end, Color::GRAY);
-        gizmos.line(Vec3::new(end.x, 0.0, start.z), end, Color::GRAY);
+    let min_x = start.x.min(end.x);
+    let max_x = start.x.max(end.x);
+    let min_z = start.z.min(end.z);
+    let max_z = start.z.max(end.z);
 
-        let min_x = start.x.min(end.x);
-        let max_x = start.x.max(end.x);
-        let min_z = start.z.min(end.z);
-        let max_z = start.z.max(end.z);
+    for (unit_ent, unit_trans) in unit_q.iter() {
+        // check to see if units are within selection rectangle
+        let unit_pos = unit_trans.translation;
+        let in_drag_bounds = unit_pos.x >= min_x
+            && unit_pos.x <= max_x
+            && unit_pos.z >= min_z
+            && unit_pos.z <= max_z;
 
-        for (unit_ent, unit_trans) in unit_q.iter() {
-            // check to see if units are within selection rectangle
-            let unit_pos = unit_trans.translation;
-            if unit_pos.x >= min_x
-                && unit_pos.x <= max_x
-                && unit_pos.z >= min_z
-                && unit_pos.z <= max_z
-            {
-                cmds.entity(unit_ent)
-                    .insert((ColliderDebugColor(Color::GREEN), Selected));
-            } else {
-                cmds.entity(unit_ent)
-                    .remove::<Selected>()
-                    .insert(ColliderDebugColor(Color::NONE));
-            }
+        if in_drag_bounds {
+            cmds.entity(unit_ent)
+                .insert((ColliderDebugColor(Color::GREEN), Selected));
+        } else {
+            cmds.entity(unit_ent)
+                .remove::<Selected>()
+                .insert(ColliderDebugColor(Color::NONE));
         }
     }
 }
@@ -170,10 +212,10 @@ pub fn single_select(
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     select_q: Query<(Entity, &Selected)>,
-    input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
+    mouse_click: ResMut<MouseClick>,
 ) {
-    if !input.just_released(MouseButton::Left) {
+    if !mouse_click.normal_press {
         return;
     }
 

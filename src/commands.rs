@@ -8,7 +8,7 @@ use bevy_rapier3d::{
 use bevy_rts_camera::RtsCamera;
 
 use crate::{
-    resources::{BoxSelect, GroundCoords},
+    resources::{BoxSelect, MouseCoords},
     MapBase, Selected, Speed, TargetPos, Unit,
 };
 
@@ -16,13 +16,13 @@ pub struct CommandsPlugin;
 
 impl Plugin for CommandsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.init_gizmo_group::<MyRoundGizmos>().add_systems(
             Update,
             (
                 set_unit_destination,
-                set_ground_coords,
+                set_mouse_coords,
                 move_unit,
-                select,
+                single_select,
                 drag_select,
                 deselect,
             ),
@@ -30,16 +30,25 @@ impl Plugin for CommandsPlugin {
     }
 }
 
+// We can create our own gizmo config group!
+#[derive(Default, Reflect, GizmoConfigGroup)]
+struct MyRoundGizmos {}
+
 fn set_unit_destination(
-    ground_coords: ResMut<GroundCoords>,
+    mouse_coords: ResMut<MouseCoords>,
     mut unit_q: Query<(&mut TargetPos, &Transform), With<Selected>>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     if input.just_pressed(MouseButton::Left) {
         for (mut unit_target_pos, trans) in unit_q.iter_mut() {
-            let mut destination = ground_coords.global;
+            let mut destination = mouse_coords.global;
             destination.y += trans.scale.y / 2.0; // calculate for entity height
             unit_target_pos.0 = Some(destination);
+            println!(
+                "global mouse: {:?}, unit: {:?}",
+                mouse_coords.local,
+                unit_target_pos.0.unwrap()
+            );
             println!("Unit Moving");
         }
     }
@@ -63,8 +72,8 @@ fn move_unit(
 }
 
 // referenced https://bevy-cheatbook.github.io/cookbook/cursor2world.html
-fn set_ground_coords(
-    mut ground_coords: ResMut<GroundCoords>,
+fn set_mouse_coords(
+    mut mouse_coords: ResMut<MouseCoords>,
     window_q: Query<&Window, With<PrimaryWindow>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
     map_base_q: Query<&GlobalTransform, With<MapBase>>,
@@ -72,13 +81,13 @@ fn set_ground_coords(
     let (cam, cam_trans) = cam_q.single();
     let map_base_trans = map_base_q.single();
     let window = window_q.single();
-    let Some(cursor_pos) = window.cursor_position() else {
+    let Some(local_cursor) = window.cursor_position() else {
         return;
     };
 
     let plane_origin = map_base_trans.translation();
     let plane = Plane3d::new(map_base_trans.up());
-    let Some(ray) = cam.viewport_to_world(cam_trans, cursor_pos) else {
+    let Some(ray) = cam.viewport_to_world(cam_trans, local_cursor) else {
         return;
     };
     let Some(distance) = ray.intersect_plane(plane_origin, plane) else {
@@ -86,11 +95,8 @@ fn set_ground_coords(
     };
     let global_cursor = ray.get_point(distance);
 
-    ground_coords.global = global_cursor;
-
-    let inverse_transform_matrix = map_base_trans.compute_matrix().inverse();
-    let local_cursor = inverse_transform_matrix.transform_point3(global_cursor);
-    ground_coords.local = local_cursor.xz();
+    mouse_coords.global = global_cursor;
+    mouse_coords.local = local_cursor;
 }
 
 pub fn deselect(
@@ -109,54 +115,34 @@ pub fn deselect(
 
 pub fn drag_select(
     mut cmds: Commands,
-    window_q: Query<&Window, With<PrimaryWindow>>,
-    mut box_select: ResMut<BoxSelect>,
-    cam_q: Query<(&Camera, &GlobalTransform)>,
-    map_base_q: Query<&GlobalTransform, With<MapBase>>,
-    input: Res<ButtonInput<MouseButton>>,
+    mut gizmos: Gizmos,
     unit_q: Query<(Entity, &Transform), With<Unit>>,
+    mouse_coords: Res<MouseCoords>,
+    mut box_select: ResMut<BoxSelect>,
+    input: Res<ButtonInput<MouseButton>>,
 ) {
-    let (cam, cam_trans) = cam_q.single();
-    let map_base_trans = map_base_q.single();
-    let window = window_q.single();
-
     if input.just_pressed(MouseButton::Left) {
-        let Some(cursor_pos) = window.cursor_position() else {
-            return;
-        };
-
-        let plane_origin = map_base_trans.translation();
-        let plane = Plane3d::new(map_base_trans.up());
-        let Some(ray) = cam.viewport_to_world(cam_trans, cursor_pos) else {
-            return;
-        };
-        let Some(distance) = ray.intersect_plane(plane_origin, plane) else {
-            return;
-        };
-        let global_cursor = ray.get_point(distance);
-        box_select.start = global_cursor;
+        box_select.global_start = mouse_coords.global;
+        box_select.local_start = mouse_coords.local;
     }
 
-    if input.just_released(MouseButton::Left) {
-        let Some(cursor_pos) = window.cursor_position() else {
-            return;
-        };
+    if input.pressed(MouseButton::Left) {
+        box_select.local_end = mouse_coords.local;
+        box_select.global_end = mouse_coords.global;
 
-        let plane_origin = map_base_trans.translation();
-        let plane = Plane3d::new(map_base_trans.up());
-        let Some(ray) = cam.viewport_to_world(cam_trans, cursor_pos) else {
-            return;
-        };
-        let Some(distance) = ray.intersect_plane(plane_origin, plane) else {
-            return;
-        };
-        let global_cursor = ray.get_point(distance);
-        box_select.end = global_cursor;
+        let start = box_select.global_start;
+        let end = box_select.global_end;
 
-        let min_x = box_select.start.x.min(box_select.end.x);
-        let max_x = box_select.start.x.max(box_select.end.x);
-        let min_z = box_select.start.z.min(box_select.end.z);
-        let max_z = box_select.start.z.max(box_select.end.z);
+        // draw rectangle
+        gizmos.line(start, Vec3::new(end.x, 0.0, start.z), Color::GRAY);
+        gizmos.line(start, Vec3::new(start.x, 0.0, end.z), Color::GRAY);
+        gizmos.line(Vec3::new(start.x, 0.0, end.z), end, Color::GRAY);
+        gizmos.line(Vec3::new(end.x, 0.0, start.z), end, Color::GRAY);
+
+        let min_x = start.x.min(end.x);
+        let max_x = start.x.max(end.x);
+        let min_z = start.z.min(end.z);
+        let max_z = start.z.max(end.z);
 
         for (unit_ent, unit_trans) in unit_q.iter() {
             let unit_pos = unit_trans.translation;
@@ -167,33 +153,26 @@ pub fn drag_select(
             {
                 cmds.entity(unit_ent)
                     .insert((ColliderDebugColor(Color::GREEN), Selected));
-            } else {
-                println!("OUT");
             }
         }
     }
 }
 
-pub fn select(
+pub fn single_select(
     mut cmds: Commands,
-    window_q: Query<&Window, With<PrimaryWindow>>,
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     select_q: Query<(Entity, &Selected)>,
     input: Res<ButtonInput<MouseButton>>,
+    mouse_coords: Res<MouseCoords>,
 ) {
     if !input.just_pressed(MouseButton::Left) {
         return;
     }
 
-    let window = window_q.single();
-    let Some(cursor_pos) = window.cursor_position() else {
-        return;
-    };
-
     let (cam, cam_trans) = cam_q.single();
 
-    let Some(ray) = cam.viewport_to_world(cam_trans, cursor_pos) else {
+    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.local) else {
         return;
     };
 

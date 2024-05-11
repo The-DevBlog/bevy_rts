@@ -16,17 +16,19 @@ pub struct CommandsPlugin;
 
 impl Plugin for CommandsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_gizmo_group::<MyRoundGizmos>().add_systems(
-            Update,
-            (
-                set_unit_destination,
-                set_mouse_coords,
-                move_unit,
-                single_select,
-                drag_select,
-                deselect,
-            ),
-        );
+        app.init_gizmo_group::<MyRoundGizmos>()
+            .add_systems(
+                Update,
+                (
+                    set_unit_destination,
+                    set_mouse_coords,
+                    move_unit,
+                    // single_select,
+                    // drag_select,
+                    deselect,
+                ),
+            )
+            .add_systems(Update, (single_select, drag_select).chain());
     }
 }
 
@@ -145,6 +147,7 @@ pub fn drag_select(
         let max_z = start.z.max(end.z);
 
         for (unit_ent, unit_trans) in unit_q.iter() {
+            // check to see if units are within selection rectangle
             let unit_pos = unit_trans.translation;
             if unit_pos.x >= min_x
                 && unit_pos.x <= max_x
@@ -153,6 +156,10 @@ pub fn drag_select(
             {
                 cmds.entity(unit_ent)
                     .insert((ColliderDebugColor(Color::GREEN), Selected));
+            } else {
+                cmds.entity(unit_ent)
+                    .remove::<Selected>()
+                    .insert(ColliderDebugColor(Color::NONE));
             }
         }
     }
@@ -166,7 +173,7 @@ pub fn single_select(
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
 ) {
-    if !input.just_pressed(MouseButton::Left) {
+    if !input.just_released(MouseButton::Left) {
         return;
     }
 
@@ -184,15 +191,15 @@ pub fn single_select(
         QueryFilter::only_dynamic(),
     );
 
-    if let Some((entity, _toi)) = hit {
+    if let Some((ent, _toi)) = hit {
         // if unit is already selected, remove Selected component
-        if let Ok((_, _)) = select_q.get(entity) {
-            cmds.entity(entity)
+        if let Ok((_, _)) = select_q.get(ent) {
+            cmds.entity(ent)
                 .remove::<Selected>()
                 .insert(ColliderDebugColor(Color::NONE));
         // else add the Selected component
         } else {
-            cmds.entity(entity)
+            cmds.entity(ent)
                 .insert((ColliderDebugColor(Color::GREEN), Selected));
         }
     }

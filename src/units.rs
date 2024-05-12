@@ -3,7 +3,7 @@ use std::f32::EPSILON;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::{resources::MouseCoords, Selected, Speed, TargetPos, Unit};
+use crate::{resources::MouseCoords, Destination, Selected, Speed, Unit};
 
 pub struct UnitsPlugin;
 
@@ -22,7 +22,7 @@ struct UnitBundle {
     pub name: Name,
     pub rigid_body: RigidBody,
     pub speed: Speed,
-    pub target_pos: TargetPos,
+    pub destination: Destination,
     pub unit: Unit,
 }
 
@@ -40,7 +40,7 @@ impl UnitBundle {
             name: Name::new("Unit"),
             rigid_body: RigidBody::Dynamic,
             speed: Speed(speed),
-            target_pos: TargetPos(None),
+            destination: Destination(None),
             unit: Unit,
         }
     }
@@ -72,33 +72,36 @@ fn spawn_unit(
 
 fn set_unit_destination(
     mouse_coords: ResMut<MouseCoords>,
-    mut unit_q: Query<(&mut TargetPos, &Transform), With<Selected>>,
+    mut unit_q: Query<(&mut Destination, &Transform), With<Selected>>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     if input.just_pressed(MouseButton::Left) {
-        for (mut unit_target_pos, trans) in unit_q.iter_mut() {
+        for (mut unit_destination, trans) in unit_q.iter_mut() {
             let mut destination = mouse_coords.global;
             destination.y += trans.scale.y / 2.0; // calculate for entity height
-            unit_target_pos.0 = Some(destination);
-            println!(
-                "global mouse: {:?}, unit: {:?}",
-                mouse_coords.local,
-                unit_target_pos.0.unwrap()
-            );
+            unit_destination.0 = Some(destination);
             println!("Unit Moving");
         }
     }
 }
 
 fn move_unit(
-    mut unit_q: Query<(&mut Transform, &mut ExternalImpulse, &Speed, &mut TargetPos), With<Unit>>,
+    mut unit_q: Query<
+        (
+            &mut Transform,
+            &mut ExternalImpulse,
+            &Speed,
+            &mut Destination,
+        ),
+        With<Unit>,
+    >,
     time: Res<Time>,
 ) {
-    for (trans, mut ext_impulse, speed, mut target_pos) in unit_q.iter_mut() {
-        if let Some(new_pos) = target_pos.0 {
+    for (trans, mut ext_impulse, speed, mut destination) in unit_q.iter_mut() {
+        if let Some(new_pos) = destination.0 {
             let distance = new_pos - trans.translation;
             if distance.length_squared() <= (speed.0 * time.delta_seconds()).powi(2) + EPSILON {
-                target_pos.0 = None;
+                destination.0 = None;
                 println!("Unit Stopping");
             } else {
                 ext_impulse.impulse += distance.normalize() * speed.0 * time.delta_seconds();

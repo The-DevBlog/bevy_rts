@@ -7,7 +7,7 @@ pub struct Selected;
 pub struct Speed(pub f32);
 
 #[derive(Component)]
-pub struct TargetPos(pub Option<Vec3>);
+pub struct Destination(pub Option<Vec3>);
 
 #[derive(Component)]
 pub struct Unit;

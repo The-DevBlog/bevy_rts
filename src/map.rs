@@ -30,20 +30,6 @@ fn spawn_map(
         Name::new("Map Base"),
     ));
 
-    // Some "terrain"
-    let terrain_material = materials.add(Color::rgb(0.8, 0.7, 0.6));
-    cmds.spawn((
-        PbrBundle {
-            mesh: meshes.add(Cuboid::new(15.0, 1.0, 5.0)),
-            material: terrain_material.clone(),
-            transform: Transform::from_xyz(15.0, 0.5, -5.0),
-            ..default()
-        },
-        Collider::cuboid(7.5, 1.0, 2.5),
-        Name::new("obstacle"),
-        Ground,
-    ));
-
     // Light
     cmds.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {

@@ -19,7 +19,8 @@ use utils::UtilsPlugin;
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
-const MAP_SIZE: f32 = 100.0;
+const MAP_SIZE: f32 = 400.0;
+const UNITS: i32 = 100;
 
 fn main() {
     App::new()

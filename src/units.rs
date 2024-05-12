@@ -5,7 +5,7 @@ use bevy_rapier3d::prelude::*;
 
 use crate::{
     resources::{GameCommands, MouseCoords},
-    Destination, Selected, Speed, Unit,
+    Destination, Selected, Speed, Unit, UNITS,
 };
 
 pub struct UnitsPlugin;
@@ -70,10 +70,10 @@ fn spawn_unit(
     };
 
     let offset_increment = 1.5;
-    for row_index in 0..10 {
+    for row_index in 0..(UNITS / 10) {
         let offset = row_index as f32 * offset_increment;
 
-        for i in (0..20).filter(|&i| i % 2 == 0) {
+        for i in (0..(UNITS / 5)).filter(|&i| i % 2 == 0) {
             cmds.spawn(unit(1.0, 60.0, Vec3::new(i as f32, 0.5, offset)));
         }
     }
@@ -98,15 +98,7 @@ pub fn set_unit_destination(
 }
 
 fn move_unit(
-    mut unit_q: Query<
-        (
-            &mut Transform,
-            &mut ExternalImpulse,
-            &Speed,
-            &mut Destination,
-        ),
-        With<Unit>,
-    >,
+    mut unit_q: Query<(&Transform, &mut ExternalImpulse, &Speed, &mut Destination), With<Unit>>,
     time: Res<Time>,
 ) {
     for (trans, mut ext_impulse, speed, mut destination) in unit_q.iter_mut() {

@@ -6,7 +6,6 @@ impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseCoords>()
             .init_resource::<BoxCoords>()
-            // .init_resource::<DragSelect>();
             .init_resource::<GameCommands>();
     }
 }
@@ -36,9 +35,6 @@ impl BoxCoords {
         self.global_end = Vec3::ZERO;
     }
 }
-
-// #[derive(Resource, Default)]
-// pub struct DragSelect(pub bool);
 
 #[derive(Resource, Default)]
 pub struct GameCommands {

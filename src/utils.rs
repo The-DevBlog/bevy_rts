@@ -2,7 +2,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rts_camera::RtsCamera;
 
 use crate::{
-    resources::{BoxCoords, MouseClick, MouseCoords},
+    resources::{BoxCoords, DragSelect, MouseCoords},
     MapBase,
 };
 
@@ -10,31 +10,23 @@ pub struct UtilsPlugin;
 
 impl Plugin for UtilsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (set_box_coords, set_mouse_coords, normal_press, long_press),
-        );
+        app.add_systems(Update, (set_box_coords, set_mouse_coords, drag_select));
     }
 }
 
-fn normal_press(input: Res<ButtonInput<MouseButton>>, mut mouse_click: ResMut<MouseClick>) {
-    println!("NORMAL PRESS: {}", mouse_click.normal_press);
-    if input.just_pressed(MouseButton::Left) && !mouse_click.long_press {
-        mouse_click.normal_press = true;
-    } else {
-        mouse_click.normal_press = false;
-    }
-}
+fn drag_select(box_coords: Res<BoxCoords>, mut drag_select: ResMut<DragSelect>) {
+    let drag_threshold = 2.5;
+    let width_z = (box_coords.global_start.z - box_coords.global_end.z).abs();
+    let width_x = (box_coords.global_start.x - box_coords.global_end.x).abs();
 
-fn long_press(box_coords: Res<BoxCoords>, mut mouse_click: ResMut<MouseClick>) {
-    if (box_coords.global_start.x - box_coords.global_end.x).abs() > 10.0 {
-        mouse_click.long_press = true;
+    if width_z > drag_threshold || width_x > drag_threshold {
+        drag_select.0 = true;
     }
 }
 
 fn set_box_coords(
     mut box_coords: ResMut<BoxCoords>,
-    mut mouse_click: ResMut<MouseClick>,
+    mut drag_select: ResMut<DragSelect>,
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
 ) {
@@ -50,7 +42,7 @@ fn set_box_coords(
 
     if input.just_released(MouseButton::Left) {
         box_coords.empty_global();
-        mouse_click.long_press = false;
+        drag_select.0 = false;
     }
 }
 

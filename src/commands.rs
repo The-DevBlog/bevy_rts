@@ -7,7 +7,7 @@ use bevy_rapier3d::{
 };
 
 use crate::{
-    resources::{BoxCoords, MouseClick, MouseCoords},
+    resources::{BoxCoords, DragSelect, MouseCoords},
     Selected, Speed, TargetPos, Unit,
 };
 
@@ -31,9 +31,9 @@ impl Plugin for CommandsPlugin {
 fn set_unit_destination(
     mouse_coords: ResMut<MouseCoords>,
     mut unit_q: Query<(&mut TargetPos, &Transform), With<Selected>>,
-    mouse_click: ResMut<MouseClick>,
+    input: Res<ButtonInput<MouseButton>>,
 ) {
-    if mouse_click.normal_press {
+    if input.just_pressed(MouseButton::Left) {
         for (mut unit_target_pos, trans) in unit_q.iter_mut() {
             let mut destination = mouse_coords.global;
             destination.y += trans.scale.y / 2.0; // calculate for entity height
@@ -84,9 +84,9 @@ pub fn drag_select(
     mut gizmos: Gizmos,
     unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<BoxCoords>,
-    mouse_click: Res<MouseClick>,
+    drag_select: Res<DragSelect>,
 ) {
-    if !mouse_click.long_press {
+    if !drag_select.0 {
         return;
     }
 
@@ -129,9 +129,9 @@ pub fn single_select(
     cam_q: Query<(&Camera, &GlobalTransform)>,
     select_q: Query<(Entity, &Selected)>,
     mouse_coords: Res<MouseCoords>,
-    mouse_click: ResMut<MouseClick>,
+    input: Res<ButtonInput<MouseButton>>,
 ) {
-    if !mouse_click.normal_press {
+    if !input.just_pressed(MouseButton::Left) {
         return;
     }
 

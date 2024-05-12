@@ -6,7 +6,7 @@ impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseCoords>()
             .init_resource::<BoxCoords>()
-            .init_resource::<MouseClick>();
+            .init_resource::<DragSelect>();
     }
 }
 
@@ -36,19 +36,5 @@ impl BoxCoords {
     }
 }
 
-#[derive(Resource)]
-pub struct MouseClick {
-    pub long_press_timer: Timer,
-    pub long_press: bool,
-    pub normal_press: bool,
-}
-
-impl Default for MouseClick {
-    fn default() -> Self {
-        MouseClick {
-            long_press_timer: Timer::from_seconds(0.1, TimerMode::Once),
-            long_press: false,
-            normal_press: false,
-        }
-    }
-}
+#[derive(Resource, Default)]
+pub struct DragSelect(pub bool);

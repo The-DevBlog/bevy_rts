@@ -3,7 +3,10 @@ use std::f32::EPSILON;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::{resources::MouseCoords, Destination, Selected, Speed, Unit};
+use crate::{
+    resources::{GameCommands, MouseCoords},
+    Destination, Selected, Speed, Unit,
+};
 
 pub struct UnitsPlugin;
 
@@ -66,22 +69,31 @@ fn spawn_unit(
         )
     };
 
-    cmds.spawn(unit(1.0, 60.0, Vec3::new(0.0, 0.5, 0.0)));
-    cmds.spawn(unit(1.0, 60.0, Vec3::new(1.5, 0.5, 0.0)));
+    let offset_increment = 1.5;
+    for row_index in 0..10 {
+        let offset = row_index as f32 * offset_increment;
+
+        for i in (0..20).filter(|&i| i % 2 == 0) {
+            cmds.spawn(unit(1.0, 60.0, Vec3::new(i as f32, 0.5, offset)));
+        }
+    }
 }
 
-fn set_unit_destination(
+pub fn set_unit_destination(
     mouse_coords: ResMut<MouseCoords>,
     mut unit_q: Query<(&mut Destination, &Transform), With<Selected>>,
     input: Res<ButtonInput<MouseButton>>,
+    game_cmds: Res<GameCommands>,
 ) {
-    if input.just_pressed(MouseButton::Left) {
-        for (mut unit_destination, trans) in unit_q.iter_mut() {
-            let mut destination = mouse_coords.global;
-            destination.y += trans.scale.y / 2.0; // calculate for entity height
-            unit_destination.0 = Some(destination);
-            println!("Unit Moving");
-        }
+    if !input.just_released(MouseButton::Left) || game_cmds.drag_select {
+        return;
+    }
+
+    for (mut unit_destination, trans) in unit_q.iter_mut() {
+        let mut destination = mouse_coords.global;
+        destination.y += trans.scale.y / 2.0; // calculate for entity height
+        unit_destination.0 = Some(destination);
+        println!("Unit Moving");
     }
 }
 

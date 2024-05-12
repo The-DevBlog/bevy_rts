@@ -43,4 +43,6 @@ impl BoxCoords {
 #[derive(Resource, Default)]
 pub struct GameCommands {
     pub drag_select: bool,
+    pub single_select: bool,
+    pub selected: bool,
 }

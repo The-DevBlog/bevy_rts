@@ -4,6 +4,7 @@ use bevy_rts_camera::RtsCamera;
 
 use crate::{
     resources::{BoxCoords, GameCommands, MouseCoords},
+    units::set_unit_destination,
     MapBase, Selected, Unit,
 };
 
@@ -14,13 +15,16 @@ impl Plugin for UtilsPlugin {
         app.add_systems(
             Update,
             (
-                set_box_coords,
                 set_mouse_coords,
+                set_box_coords,
                 set_drag_select,
                 drag_select,
                 single_select,
+                set_selected,
                 deselect_all,
-            ),
+            )
+                .chain()
+                .after(set_unit_destination),
         );
     }
 }
@@ -32,12 +36,13 @@ fn set_drag_select(box_coords: Res<BoxCoords>, mut game_cmds: ResMut<GameCommand
 
     if width_z > drag_threshold || width_x > drag_threshold {
         game_cmds.drag_select = true;
+    } else {
+        game_cmds.drag_select = false;
     }
 }
 
 fn set_box_coords(
     mut box_coords: ResMut<BoxCoords>,
-    mut game_cmds: ResMut<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
 ) {
@@ -53,7 +58,6 @@ fn set_box_coords(
 
     if input.just_released(MouseButton::Left) {
         box_coords.empty_global();
-        game_cmds.drag_select = false;
     }
 }
 
@@ -136,8 +140,9 @@ pub fn single_select(
     select_q: Query<(Entity, &Selected)>,
     mouse_coords: Res<MouseCoords>,
     input: Res<ButtonInput<MouseButton>>,
+    game_cmds: Res<GameCommands>,
 ) {
-    if !input.just_pressed(MouseButton::Left) {
+    if !input.just_released(MouseButton::Left) || game_cmds.drag_select {
         return;
     }
 
@@ -155,7 +160,7 @@ pub fn single_select(
         QueryFilter::only_dynamic(),
     );
 
-    if let Some((ent, _toi)) = hit {
+    if let Some((ent, _)) = hit {
         // deselect all currently selected entities
         for (selected_entity, _) in select_q.iter() {
             cmds.entity(selected_entity)
@@ -177,10 +182,14 @@ pub fn deselect_all(
     input: Res<ButtonInput<MouseButton>>,
 ) {
     if input.just_pressed(MouseButton::Right) {
-        for entity in select_q.iter_mut() {
+        for ent in select_q.iter_mut() {
             println!("Unit deselected");
-            cmds.entity(entity).insert(ColliderDebugColor(Color::NONE));
-            cmds.entity(entity).remove::<Selected>();
+            cmds.entity(ent).insert(ColliderDebugColor(Color::NONE));
+            cmds.entity(ent).remove::<Selected>();
         }
     }
+}
+
+fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>) {
+    game_cmds.selected = !select_q.is_empty();
 }

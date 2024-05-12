@@ -30,8 +30,8 @@ fn main() {
             RapierDebugRenderPlugin::default(),
             RapierPhysicsPlugin::<NoUserData>::default(),
             ResourcesPlugin,
-            UnitsPlugin,
             UtilsPlugin,
+            UnitsPlugin,
             WorldInspectorPlugin::new(),
         ))
         .run();

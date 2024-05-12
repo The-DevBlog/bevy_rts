@@ -24,6 +24,18 @@ pub struct BoxCoords {
     pub local_end: Vec2,
 }
 
+impl BoxCoords {
+    // pub fn empty_local(&mut self) {
+    //     self.local_start = Vec2::ZERO;
+    //     self.local_end = Vec2::ZERO;
+    // }
+
+    pub fn empty_global(&mut self) {
+        self.global_start = Vec3::ZERO;
+        self.global_end = Vec3::ZERO;
+    }
+}
+
 #[derive(Resource)]
 pub struct MouseClick {
     pub long_press_timer: Timer,

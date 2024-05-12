@@ -18,33 +18,23 @@ impl Plugin for UtilsPlugin {
 }
 
 fn normal_press(input: Res<ButtonInput<MouseButton>>, mut mouse_click: ResMut<MouseClick>) {
-    if input.just_released(MouseButton::Left) {
-        if !mouse_click.long_press_timer.finished() {
-            mouse_click.normal_press = true;
-        }
-
-        mouse_click.long_press_timer.reset();
+    println!("NORMAL PRESS: {}", mouse_click.normal_press);
+    if input.just_pressed(MouseButton::Left) && !mouse_click.long_press {
+        mouse_click.normal_press = true;
     } else {
         mouse_click.normal_press = false;
     }
 }
 
-fn long_press(
-    input: Res<ButtonInput<MouseButton>>,
-    mut mouse_click: ResMut<MouseClick>,
-    time: Res<Time>,
-) {
-    if input.pressed(MouseButton::Left) {
-        if mouse_click.long_press_timer.tick(time.delta()).finished() {
-            mouse_click.long_press = true;
-        }
-    } else {
-        mouse_click.long_press = false;
+fn long_press(box_coords: Res<BoxCoords>, mut mouse_click: ResMut<MouseClick>) {
+    if (box_coords.global_start.x - box_coords.global_end.x).abs() > 10.0 {
+        mouse_click.long_press = true;
     }
 }
 
 fn set_box_coords(
     mut box_coords: ResMut<BoxCoords>,
+    mut mouse_click: ResMut<MouseClick>,
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
 ) {
@@ -56,6 +46,11 @@ fn set_box_coords(
     if input.pressed(MouseButton::Left) {
         box_coords.local_end = mouse_coords.local;
         box_coords.global_end = mouse_coords.global;
+    }
+
+    if input.just_released(MouseButton::Left) {
+        box_coords.empty_global();
+        mouse_click.long_press = false;
     }
 }
 

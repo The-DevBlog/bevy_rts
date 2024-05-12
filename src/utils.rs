@@ -3,7 +3,7 @@ use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext, render::Collid
 use bevy_rts_camera::RtsCamera;
 
 use crate::{
-    resources::{BoxCoords, DragSelect, MouseCoords},
+    resources::{BoxCoords, GameCommands, MouseCoords},
     MapBase, Selected, Unit,
 };
 
@@ -25,19 +25,19 @@ impl Plugin for UtilsPlugin {
     }
 }
 
-fn set_drag_select(box_coords: Res<BoxCoords>, mut drag_select: ResMut<DragSelect>) {
+fn set_drag_select(box_coords: Res<BoxCoords>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
     let width_z = (box_coords.global_start.z - box_coords.global_end.z).abs();
     let width_x = (box_coords.global_start.x - box_coords.global_end.x).abs();
 
     if width_z > drag_threshold || width_x > drag_threshold {
-        drag_select.0 = true;
+        game_cmds.drag_select = true;
     }
 }
 
 fn set_box_coords(
     mut box_coords: ResMut<BoxCoords>,
-    mut drag_select: ResMut<DragSelect>,
+    mut game_cmds: ResMut<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
 ) {
@@ -53,7 +53,7 @@ fn set_box_coords(
 
     if input.just_released(MouseButton::Left) {
         box_coords.empty_global();
-        drag_select.0 = false;
+        game_cmds.drag_select = false;
     }
 }
 
@@ -90,9 +90,9 @@ pub fn drag_select(
     mut gizmos: Gizmos,
     unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<BoxCoords>,
-    drag_select: Res<DragSelect>,
+    game_cmds: Res<GameCommands>,
 ) {
-    if !drag_select.0 {
+    if !game_cmds.drag_select {
         return;
     }
 

@@ -6,7 +6,8 @@ impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseCoords>()
             .init_resource::<BoxCoords>()
-            .init_resource::<DragSelect>();
+            // .init_resource::<DragSelect>();
+            .init_resource::<GameCommands>();
     }
 }
 
@@ -36,5 +37,10 @@ impl BoxCoords {
     }
 }
 
+// #[derive(Resource, Default)]
+// pub struct DragSelect(pub bool);
+
 #[derive(Resource, Default)]
-pub struct DragSelect(pub bool);
+pub struct GameCommands {
+    pub drag_select: bool,
+}

@@ -27,14 +27,13 @@ struct UnitBundle {
     pub speed: Speed,
     pub destination: Destination,
     pub unit: Unit,
+    pub locked_axis: LockedAxes,
 }
 
 impl UnitBundle {
     fn new(speed: f32, size: f32) -> Self {
-        let size = size / 2.0;
-
         Self {
-            collider: Collider::cuboid(size, size, size),
+            collider: Collider::cylinder(size, size / 2.0),
             damping: Damping {
                 linear_damping: 10.0,
                 ..default()
@@ -45,6 +44,7 @@ impl UnitBundle {
             speed: Speed(speed),
             destination: Destination(None),
             unit: Unit,
+            locked_axis: (LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z),
         }
     }
 }
@@ -57,7 +57,7 @@ fn spawn_unit(
     let mut unit = |size: f32, speed: f32, translation: Vec3| -> (PbrBundle, UnitBundle) {
         (
             PbrBundle {
-                mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+                mesh: meshes.add(Capsule3d::new(size / 2.0, size)),
                 transform: Transform {
                     translation: translation,
                     ..default()

@@ -6,7 +6,6 @@ impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseCoords>()
             .init_resource::<BoxCoords>()
-            .init_resource::<LongPressTimer>()
             .init_resource::<MouseClick>();
     }
 }
@@ -25,18 +24,19 @@ pub struct BoxCoords {
     pub local_end: Vec2,
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct MouseClick {
+    pub long_press_timer: Timer,
     pub long_press: bool,
     pub normal_press: bool,
-    // pub long_press_timer: Timer,
 }
 
-#[derive(Resource, Debug)]
-pub struct LongPressTimer(pub Timer);
-
-impl Default for LongPressTimer {
+impl Default for MouseClick {
     fn default() -> Self {
-        LongPressTimer(Timer::from_seconds(0.1, TimerMode::Once))
+        MouseClick {
+            long_press_timer: Timer::from_seconds(0.1, TimerMode::Once),
+            long_press: false,
+            normal_press: false,
+        }
     }
 }

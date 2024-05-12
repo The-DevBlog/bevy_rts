@@ -4,6 +4,7 @@ mod components;
 mod map;
 mod resources;
 mod units;
+mod utils;
 
 use bevy_rapier3d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
@@ -15,6 +16,7 @@ use components::*;
 use map::MapPlugin;
 use resources::ResourcesPlugin;
 use units::UnitsPlugin;
+use utils::UtilsPlugin;
 
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -26,12 +28,13 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             CameraPlugin,
-            UnitsPlugin,
-            MapPlugin,
             CommandsPlugin,
-            ResourcesPlugin,
-            RapierPhysicsPlugin::<NoUserData>::default(),
+            MapPlugin,
             RapierDebugRenderPlugin::default(),
+            RapierPhysicsPlugin::<NoUserData>::default(),
+            ResourcesPlugin,
+            UnitsPlugin,
+            UtilsPlugin,
             WorldInspectorPlugin::new(),
         ))
         .run();

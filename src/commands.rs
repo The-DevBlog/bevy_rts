@@ -1,15 +1,14 @@
 use std::f32::EPSILON;
 
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::prelude::*;
 use bevy_rapier3d::{
     dynamics::ExternalImpulse, pipeline::QueryFilter, plugin::RapierContext,
     render::ColliderDebugColor,
 };
-use bevy_rts_camera::RtsCamera;
 
 use crate::{
-    resources::{BoxCoords, LongPressTimer, MouseClick, MouseCoords},
-    MapBase, Selected, Speed, TargetPos, Unit,
+    resources::{BoxCoords, MouseClick, MouseCoords},
+    Selected, Speed, TargetPos, Unit,
 };
 
 pub struct CommandsPlugin;
@@ -19,64 +18,13 @@ impl Plugin for CommandsPlugin {
         app.init_gizmo_group::<MyRoundGizmos>().add_systems(
             Update,
             (
-                set_unit_destination,
-                set_mouse_coords,
-                move_unit,
-                single_select,
                 drag_select,
                 deselect,
-                long_press,
-                set_box_coords,
-                normal_press,
+                move_unit,
+                set_unit_destination,
+                single_select,
             ),
         );
-    }
-}
-
-fn normal_press(
-    input: Res<ButtonInput<MouseButton>>,
-    mut timer: ResMut<LongPressTimer>,
-    mut mouse_click: ResMut<MouseClick>,
-) {
-    if input.just_released(MouseButton::Left) {
-        if !timer.0.finished() {
-            mouse_click.normal_press = true;
-        }
-
-        timer.0.reset();
-    } else {
-        mouse_click.normal_press = false;
-    }
-}
-
-fn long_press(
-    input: Res<ButtonInput<MouseButton>>,
-    mut timer: ResMut<LongPressTimer>,
-    mut mouse_click: ResMut<MouseClick>,
-    time: Res<Time>,
-) {
-    if input.pressed(MouseButton::Left) {
-        if timer.0.tick(time.delta()).finished() {
-            mouse_click.long_press = true;
-        }
-    } else {
-        mouse_click.long_press = false;
-    }
-}
-
-fn set_box_coords(
-    mut box_coords: ResMut<BoxCoords>,
-    input: Res<ButtonInput<MouseButton>>,
-    mouse_coords: Res<MouseCoords>,
-) {
-    if input.just_pressed(MouseButton::Left) {
-        box_coords.global_start = mouse_coords.global;
-        box_coords.local_start = mouse_coords.local;
-    }
-
-    if input.pressed(MouseButton::Left) {
-        box_coords.local_end = mouse_coords.local;
-        box_coords.global_end = mouse_coords.global;
     }
 }
 
@@ -119,34 +67,6 @@ fn move_unit(
             }
         }
     }
-}
-
-// referenced https://bevy-cheatbook.github.io/cookbook/cursor2world.html
-fn set_mouse_coords(
-    mut mouse_coords: ResMut<MouseCoords>,
-    window_q: Query<&Window, With<PrimaryWindow>>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
-    map_base_q: Query<&GlobalTransform, With<MapBase>>,
-) {
-    let (cam, cam_trans) = cam_q.single();
-    let map_base_trans = map_base_q.single();
-    let window = window_q.single();
-    let Some(local_cursor) = window.cursor_position() else {
-        return;
-    };
-
-    let plane_origin = map_base_trans.translation();
-    let plane = Plane3d::new(map_base_trans.up());
-    let Some(ray) = cam.viewport_to_world(cam_trans, local_cursor) else {
-        return;
-    };
-    let Some(distance) = ray.intersect_plane(plane_origin, plane) else {
-        return;
-    };
-    let global_cursor = ray.get_point(distance);
-
-    mouse_coords.global = global_cursor;
-    mouse_coords.local = local_cursor;
 }
 
 pub fn deselect(

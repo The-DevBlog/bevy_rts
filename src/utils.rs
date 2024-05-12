@@ -1,20 +1,31 @@
 use bevy::{prelude::*, window::PrimaryWindow};
+use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext, render::ColliderDebugColor};
 use bevy_rts_camera::RtsCamera;
 
 use crate::{
     resources::{BoxCoords, DragSelect, MouseCoords},
-    MapBase,
+    MapBase, Selected, Unit,
 };
 
 pub struct UtilsPlugin;
 
 impl Plugin for UtilsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (set_box_coords, set_mouse_coords, drag_select));
+        app.add_systems(
+            Update,
+            (
+                set_box_coords,
+                set_mouse_coords,
+                set_drag_select,
+                drag_select,
+                single_select,
+                deselect_all,
+            ),
+        );
     }
 }
 
-fn drag_select(box_coords: Res<BoxCoords>, mut drag_select: ResMut<DragSelect>) {
+fn set_drag_select(box_coords: Res<BoxCoords>, mut drag_select: ResMut<DragSelect>) {
     let drag_threshold = 2.5;
     let width_z = (box_coords.global_start.z - box_coords.global_end.z).abs();
     let width_x = (box_coords.global_start.x - box_coords.global_end.x).abs();
@@ -72,4 +83,104 @@ fn set_mouse_coords(
 
     mouse_coords.global = global_cursor;
     mouse_coords.local = local_cursor;
+}
+
+pub fn drag_select(
+    mut cmds: Commands,
+    mut gizmos: Gizmos,
+    unit_q: Query<(Entity, &Transform), With<Unit>>,
+    box_coords: Res<BoxCoords>,
+    drag_select: Res<DragSelect>,
+) {
+    if !drag_select.0 {
+        return;
+    }
+
+    let start = box_coords.global_start;
+    let end = box_coords.global_end;
+
+    // draw rectangle
+    gizmos.line(start, Vec3::new(end.x, 0.0, start.z), Color::GRAY);
+    gizmos.line(start, Vec3::new(start.x, 0.0, end.z), Color::GRAY);
+    gizmos.line(Vec3::new(start.x, 0.0, end.z), end, Color::GRAY);
+    gizmos.line(Vec3::new(end.x, 0.0, start.z), end, Color::GRAY);
+
+    let min_x = start.x.min(end.x);
+    let max_x = start.x.max(end.x);
+    let min_z = start.z.min(end.z);
+    let max_z = start.z.max(end.z);
+
+    for (unit_ent, unit_trans) in unit_q.iter() {
+        // check to see if units are within selection rectangle
+        let unit_pos = unit_trans.translation;
+        let in_box_bounds = unit_pos.x >= min_x
+            && unit_pos.x <= max_x
+            && unit_pos.z >= min_z
+            && unit_pos.z <= max_z;
+
+        if in_box_bounds {
+            cmds.entity(unit_ent)
+                .insert((ColliderDebugColor(Color::GREEN), Selected));
+        } else {
+            cmds.entity(unit_ent)
+                .remove::<Selected>()
+                .insert(ColliderDebugColor(Color::NONE));
+        }
+    }
+}
+
+pub fn single_select(
+    mut cmds: Commands,
+    rapier_context: Res<RapierContext>,
+    cam_q: Query<(&Camera, &GlobalTransform)>,
+    select_q: Query<(Entity, &Selected)>,
+    mouse_coords: Res<MouseCoords>,
+    input: Res<ButtonInput<MouseButton>>,
+) {
+    if !input.just_pressed(MouseButton::Left) {
+        return;
+    }
+
+    let (cam, cam_trans) = cam_q.single();
+
+    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.local) else {
+        return;
+    };
+
+    let hit = rapier_context.cast_ray(
+        ray.origin,
+        ray.direction.into(),
+        f32::MAX,
+        true,
+        QueryFilter::only_dynamic(),
+    );
+
+    if let Some((ent, _toi)) = hit {
+        // deselect all currently selected entities
+        for (selected_entity, _) in select_q.iter() {
+            cmds.entity(selected_entity)
+                .insert(ColliderDebugColor(Color::NONE))
+                .remove::<Selected>();
+        }
+
+        // select unit
+        if !select_q.contains(ent) {
+            cmds.entity(ent)
+                .insert((ColliderDebugColor(Color::GREEN), Selected));
+        }
+    }
+}
+
+pub fn deselect_all(
+    mut cmds: Commands,
+    mut select_q: Query<Entity, With<Selected>>,
+    input: Res<ButtonInput<MouseButton>>,
+) {
+    if input.just_pressed(MouseButton::Right) {
+        for entity in select_q.iter_mut() {
+            println!("Unit deselected");
+            cmds.entity(entity).insert(ColliderDebugColor(Color::NONE));
+            cmds.entity(entity).remove::<Selected>();
+        }
+    }
 }

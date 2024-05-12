@@ -1,5 +1,4 @@
 mod camera;
-mod commands;
 mod components;
 mod map;
 mod resources;
@@ -11,7 +10,6 @@ use bevy_rapier3d::{
     render::RapierDebugRenderPlugin,
 };
 use camera::CameraPlugin;
-use commands::CommandsPlugin;
 use components::*;
 use map::MapPlugin;
 use resources::ResourcesPlugin;
@@ -28,7 +26,6 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             CameraPlugin,
-            CommandsPlugin,
             MapPlugin,
             RapierDebugRenderPlugin::default(),
             RapierPhysicsPlugin::<NoUserData>::default(),

@@ -24,7 +24,7 @@ fn spawn_camera(mut cmds: Commands) {
             key_right: KeyCode::KeyD,
             key_up: KeyCode::KeyW,
             key_down: KeyCode::KeyS,
-            pan_speed: 40.0,
+            pan_speed: 50.0,
             zoom_sensitivity: 0.2,
             ..default()
         },

@@ -15,7 +15,7 @@ pub struct CommandsPlugin;
 
 impl Plugin for CommandsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_gizmo_group::<MyRoundGizmos>().add_systems(
+        app.add_systems(
             Update,
             (
                 drag_select,
@@ -28,16 +28,12 @@ impl Plugin for CommandsPlugin {
     }
 }
 
-// We can create our own gizmo config group!
-#[derive(Default, Reflect, GizmoConfigGroup)]
-struct MyRoundGizmos {}
-
 fn set_unit_destination(
     mouse_coords: ResMut<MouseCoords>,
     mut unit_q: Query<(&mut TargetPos, &Transform), With<Selected>>,
-    input: Res<ButtonInput<MouseButton>>,
+    mouse_click: ResMut<MouseClick>,
 ) {
-    if input.just_pressed(MouseButton::Left) {
+    if mouse_click.normal_press {
         for (mut unit_target_pos, trans) in unit_q.iter_mut() {
             let mut destination = mouse_coords.global;
             destination.y += trans.scale.y / 2.0; // calculate for entity height
@@ -111,12 +107,12 @@ pub fn drag_select(
     for (unit_ent, unit_trans) in unit_q.iter() {
         // check to see if units are within selection rectangle
         let unit_pos = unit_trans.translation;
-        let in_drag_bounds = unit_pos.x >= min_x
+        let in_box_bounds = unit_pos.x >= min_x
             && unit_pos.x <= max_x
             && unit_pos.z >= min_z
             && unit_pos.z <= max_z;
 
-        if in_drag_bounds {
+        if in_box_bounds {
             cmds.entity(unit_ent)
                 .insert((ColliderDebugColor(Color::GREEN), Selected));
         } else {

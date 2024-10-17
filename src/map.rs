@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use bevy_rapier3d::geometry::Collider;
 use bevy_rts_camera::Ground;
 
-use crate::{MapBase, MAP_SIZE};
+use crate::MAP_SIZE;
+
+use super::components::MapBase;
 
 pub struct MapPlugin;
 
@@ -21,7 +23,7 @@ fn spawn_map(
     cmds.spawn((
         PbrBundle {
             mesh: meshes.add(Plane3d::default().mesh().size(MAP_SIZE, MAP_SIZE)),
-            material: materials.add(Color::rgb(0.3, 0.5, 0.3)),
+            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
             ..default()
         },
         Collider::cuboid(MAP_SIZE / 2.0, 0.0, MAP_SIZE / 2.0),

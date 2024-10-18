@@ -3,7 +3,6 @@ use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
 
 use super::components::*;
-use super::events::*;
 use super::friendly::set_unit_destination;
 use super::resources::*;
 
@@ -41,13 +40,6 @@ fn set_drag_select(
 
     let was_drag_select = game_cmds.drag_select;
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
-
-    // Trigger the event only if the mouse button was just released and drag select is active
-    if input.just_released(MouseButton::Left) {
-        if (was_drag_select || game_cmds.drag_select) && game_cmds.selected {
-            cmds.trigger(UnitAudioEv(UnitAudioOptions::Select));
-        }
-    }
 }
 
 fn set_box_coords(
@@ -173,9 +165,6 @@ pub fn single_select(
         for (selected_entity, mut selected) in select_q.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
             selected.0 = tmp && !selected.0;
-            if selected.0 {
-                cmds.trigger(UnitAudioEv(UnitAudioOptions::Select));
-            }
         }
     }
 }

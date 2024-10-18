@@ -2,9 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::geometry::Collider;
 use bevy_rts_camera::Ground;
 
-use crate::MAP_SIZE;
-
-use super::components::MapBase;
+use super::{components::MapBase, MAP_SIZE};
 
 pub struct MapPlugin;
 

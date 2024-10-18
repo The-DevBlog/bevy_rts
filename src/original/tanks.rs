@@ -2,8 +2,7 @@ use bevy::prelude::*;
 use bevy_mod_billboard::{BillboardTextureBundle, BillboardTextureHandle};
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 
-use crate::{SPEED_QUANTIFIER, TANK_COUNT, TANK_SPEED};
-
+use super::*;
 use super::{components::*, resources::*};
 
 pub struct TanksPlugin;

@@ -24,7 +24,7 @@ use resources::ResourcesPlugin;
 use tank::TankPlugin;
 use utils::UtilsPlugin;
 
-const TANK_COUNT: usize = 100;
+const TANK_COUNT: usize = 25;
 const MAP_SIZE: f32 = 800.0;
 const SPEED_QUANTIFIER: f32 = 1000.0;
 const TANK_SPEED: f32 = 50.0;

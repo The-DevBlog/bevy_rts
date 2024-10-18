@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_mod_billboard::{BillboardTextureBundle, BillboardTextureHandle};
+use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextureHandle};
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 
 use super::*;
@@ -117,6 +117,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
         (
             BillboardTextureBundle {
                 texture: BillboardTextureHandle(my_assets.img_select_border.clone()),
+                billboard_depth: BillboardDepth(false),
                 ..default()
             },
             BorderSelect::new(15.0, 15.0),

@@ -42,7 +42,6 @@ pub struct CurrentAction(pub Action);
 
 #[derive(Debug, PartialEq)]
 pub enum Action {
-    Attack,
     Relocate,
     None,
 }

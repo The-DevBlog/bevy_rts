@@ -28,17 +28,12 @@ impl Plugin for MousePlugin {
     }
 }
 
-fn set_drag_select(
-    box_coords: Res<BoxCoords>,
-    mut game_cmds: ResMut<GameCommands>,
-    mut cmds: Commands,
-    input: Res<ButtonInput<MouseButton>>,
-) {
+fn set_drag_select(box_coords: Res<BoxCoords>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
     let width_z = (box_coords.global_start.z - box_coords.global_end.z).abs();
     let width_x = (box_coords.global_start.x - box_coords.global_end.x).abs();
 
-    let was_drag_select = game_cmds.drag_select;
+    // let was_drag_select = game_cmds.drag_select;
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
 
@@ -78,7 +73,6 @@ fn set_mouse_coords(
 
     let plane_origin = map_base_trans.translation();
     let plane = InfinitePlane3d::new(map_base_trans.up());
-    // let plane = Plane3d::new(map_base_trans.up());
     let Some(ray) = cam.viewport_to_world(cam_trans, local_cursor) else {
         return;
     };
@@ -136,7 +130,6 @@ pub fn single_select(
     mouse_coords: Res<MouseCoords>,
     input: Res<ButtonInput<MouseButton>>,
     game_cmds: Res<GameCommands>,
-    mut cmds: Commands,
 ) {
     if !input.just_released(MouseButton::Left) || game_cmds.drag_select {
         return;
@@ -192,7 +185,7 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
 fn change_cursor(mut window_q: Query<&mut Window, With<PrimaryWindow>>, cursor: Res<CustomCursor>) {
     let mut window = window_q.get_single_mut().unwrap();
     match cursor.state {
-        CursorState::Attack => window.cursor.icon = CursorIcon::Crosshair,
+        // CursorState::Attack => window.cursor.icon = CursorIcon::Crosshair,
         CursorState::Relocate => window.cursor.icon = CursorIcon::Pointer,
         CursorState::Normal => window.cursor.icon = CursorIcon::Default,
     }

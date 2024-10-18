@@ -2,7 +2,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_billboard::plugin::BillboardPlugin;
 use bevy_rapier3d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
-    render::RapierDebugRenderPlugin,
+    // render::RapierDebugRenderPlugin,
 };
 
 use bevy::prelude::*;

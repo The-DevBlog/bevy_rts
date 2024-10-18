@@ -47,7 +47,7 @@ impl BoxCoords {
 #[derive(Resource, Default, Debug)]
 pub struct GameCommands {
     pub drag_select: bool,
-    pub single_select: bool,
+    // pub single_select: bool,
     pub selected: bool,
 }
 
@@ -58,7 +58,6 @@ pub struct CustomCursor {
 
 #[derive(PartialEq, Debug)]
 pub enum CursorState {
-    Attack,
     Relocate,
     Normal,
 }

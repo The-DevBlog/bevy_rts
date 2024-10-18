@@ -21,7 +21,6 @@ pub fn set_unit_destination(
     input: Res<ButtonInput<MouseButton>>,
     game_cmds: Res<GameCommands>,
     cursor: Res<CustomCursor>,
-    mut cmds: Commands,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     rapier_context: Res<RapierContext>,
 ) {

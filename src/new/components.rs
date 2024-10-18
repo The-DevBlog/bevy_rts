@@ -113,7 +113,7 @@ pub enum Action {
 
 #[derive(Bundle)]
 pub struct UnitBundle {
-    pub reward: Reward,
+    // pub reward: Reward,
     pub collider: Collider,
     pub damping: Damping,
     pub external_impulse: ExternalImpulse,
@@ -122,33 +122,33 @@ pub struct UnitBundle {
     pub speed: Speed,
     pub destination: Destination,
     pub unit: Unit,
-    pub target: Target,
+    // pub target: Target,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
     pub health: Health,
-    pub range: Range,
-    pub damage: Damage,
-    pub fire_rate: FireRate,
+    // pub range: Range,
+    // pub damage: Damage,
+    // pub fire_rate: FireRate,
     pub current_action: CurrentAction,
-    pub audio: AudioBundle,
+    // pub audio: AudioBundle,
 }
 
 impl UnitBundle {
     pub fn new(
-        reward: i32,
+        // reward: i32,
         name: String,
         speed: f32,
-        damage: f32,
-        range: f32,
+        // damage: f32,
+        // range: f32,
         health: f32,
         size: Vec3,
-        audio_source: Handle<AudioSource>,
-        fire_rate: Timer,
+        // audio_source: Handle<AudioSource>,
+        // fire_rate: Timer,
         scene: Handle<Scene>,
         translation: Vec3,
     ) -> Self {
         Self {
-            reward: Reward(reward),
+            // reward: Reward(reward),
             collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
                 linear_damping: 5.0,
@@ -158,21 +158,21 @@ impl UnitBundle {
             name: Name::new(name),
             rigid_body: RigidBody::Dynamic,
             speed: Speed(speed),
-            target: Target(None),
-            damage: Damage(damage),
+            // target: Target(None),
+            // damage: Damage(damage),
             destination: Destination(None),
-            audio: AudioBundle {
-                source: audio_source,
-                settings: PlaybackSettings {
-                    paused: true,
-                    mode: PlaybackMode::Loop,
-                    ..default()
-                },
-                ..default()
-            },
+            // audio: AudioBundle {
+            //     source: audio_source,
+            //     settings: PlaybackSettings {
+            //         paused: true,
+            //         mode: PlaybackMode::Loop,
+            //         ..default()
+            //     },
+            //     ..default()
+            // },
             unit: Unit,
-            fire_rate: FireRate(fire_rate),
-            range: Range(range),
+            // fire_rate: FireRate(fire_rate),
+            // range: Range(range),
             health: Health {
                 current: health,
                 original: health,

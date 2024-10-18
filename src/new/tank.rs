@@ -5,9 +5,9 @@ use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 use super::*;
 use super::{components::*, resources::*};
 
-pub struct Tanks2Plugin;
+pub struct TankPlugin;
 
-impl Plugin for Tanks2Plugin {
+impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
             .add_systems(Update, (set_unit_destination, move_unit::<Friendly>));
@@ -104,14 +104,12 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
             UnitBundle::new(
                 "Tank".to_string(),
                 TANK_SPEED * SPEED_QUANTIFIER,
-                TANK_HEALTH,
                 Vec3::new(4., 2., 6.),
                 assets.load("tank.glb#Scene0"),
                 position,
             ),
             Selected(false),
             Friendly,
-            // Tank,
         )
     };
 

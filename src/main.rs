@@ -1,43 +1,49 @@
-mod camera;
-mod components;
-mod map;
-mod mouse;
-mod resources;
-mod tanks;
-mod utils;
-
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_mod_billboard::plugin::BillboardPlugin;
 use bevy_rapier3d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
-    render::RapierDebugRenderPlugin,
+    // render::RapierDebugRenderPlugin,
 };
-use camera::CameraPlugin;
-use map::MapPlugin;
-use mouse::MousePlugin;
-use resources::ResourcesPlugin;
-use tanks::TanksPlugin;
-use utils::UtilsPlugin;
 
 use bevy::prelude::*;
 
-const MAP_SIZE: f32 = 400.0;
-const TANK_SPEED: f32 = 50.0;
+mod camera;
+mod components;
+mod friendly;
+mod map;
+mod mouse;
+mod resources;
+mod tank;
+mod utils;
+
+use camera::CameraPlugin;
+use friendly::FriendlyPlugin;
+use map::MapPlugin;
+use mouse::MousePlugin;
+use resources::ResourcesPlugin;
+use tank::TankPlugin;
+use utils::UtilsPlugin;
+
+const TANK_COUNT: usize = 25;
+const MAP_SIZE: f32 = 800.0;
 const SPEED_QUANTIFIER: f32 = 1000.0;
-const TANK_COUNT: usize = 100;
+const TANK_SPEED: f32 = 50.0;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            RapierDebugRenderPlugin::default(),
+            // RapierDebugRenderPlugin::default(),
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
-            ResourcesPlugin,
+            BillboardPlugin,
             CameraPlugin,
-            MousePlugin,
             MapPlugin,
-            TanksPlugin,
+            ResourcesPlugin,
+            MousePlugin,
             UtilsPlugin,
+            FriendlyPlugin,
+            TankPlugin,
         ))
         .run();
 }

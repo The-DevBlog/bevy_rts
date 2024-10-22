@@ -33,6 +33,11 @@ pub struct BoxCoords {
 }
 
 impl BoxCoords {
+    // pub fn empty_local(&mut self) {
+    //     self.local_start = Vec2::ZERO;
+    //     self.local_end = Vec2::ZERO;
+    // }
+
     pub fn empty_global(&mut self) {
         self.global_start = Vec3::ZERO;
         self.global_end = Vec3::ZERO;
@@ -42,7 +47,7 @@ impl BoxCoords {
 #[derive(Resource, Default, Debug)]
 pub struct GameCommands {
     pub drag_select: bool,
-    pub single_select: bool,
+    // pub single_select: bool,
     pub selected: bool,
 }
 

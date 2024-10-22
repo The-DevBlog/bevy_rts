@@ -2,7 +2,9 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
 
-use super::{components::*, resources::*, tanks::set_unit_destination};
+use super::components::*;
+use super::friendly::set_unit_destination;
+use super::resources::*;
 
 pub struct MousePlugin;
 
@@ -31,6 +33,7 @@ fn set_drag_select(box_coords: Res<BoxCoords>, mut game_cmds: ResMut<GameCommand
     let width_z = (box_coords.global_start.z - box_coords.global_end.z).abs();
     let width_x = (box_coords.global_start.x - box_coords.global_end.x).abs();
 
+    // let was_drag_select = game_cmds.drag_select;
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
 
@@ -70,7 +73,6 @@ fn set_mouse_coords(
 
     let plane_origin = map_base_trans.translation();
     let plane = InfinitePlane3d::new(map_base_trans.up());
-    // let plane = Plane3d::new(map_base_trans.up());
     let Some(ray) = cam.viewport_to_world(cam_trans, local_cursor) else {
         return;
     };
@@ -123,6 +125,7 @@ pub fn drag_select(
 pub fn single_select(
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
+    enemy_q: Query<Entity, With<Enemy>>,
     mut select_q: Query<(Entity, &mut Selected), With<Friendly>>,
     mouse_coords: Res<MouseCoords>,
     input: Res<ButtonInput<MouseButton>>,
@@ -147,6 +150,10 @@ pub fn single_select(
     );
 
     if let Some((ent, _)) = hit {
+        if let Ok(_) = enemy_q.get(ent) {
+            return;
+        }
+
         // deselect all currently selected entities
         for (selected_entity, mut selected) in select_q.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
@@ -178,6 +185,7 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
 fn change_cursor(mut window_q: Query<&mut Window, With<PrimaryWindow>>, cursor: Res<CustomCursor>) {
     let mut window = window_q.get_single_mut().unwrap();
     match cursor.state {
+        // CursorState::Attack => window.cursor.icon = CursorIcon::Crosshair,
         CursorState::Relocate => window.cursor.icon = CursorIcon::Pointer,
         CursorState::Normal => window.cursor.icon = CursorIcon::Default,
     }

@@ -1,14 +1,13 @@
 use bevy::prelude::*;
-use bevy_mod_billboard::{BillboardTextureBundle, BillboardTextureHandle};
+use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextureHandle};
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 
-use crate::{SPEED_QUANTIFIER, TANK_COUNT, TANK_SPEED};
-
+use super::*;
 use super::{components::*, resources::*};
 
-pub struct TanksPlugin;
+pub struct TankPlugin;
 
-impl Plugin for TanksPlugin {
+impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
             .add_systems(Update, (set_unit_destination, move_unit::<Friendly>));
@@ -111,7 +110,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
             ),
             Selected(false),
             Friendly,
-            // Tank,
         )
     };
 
@@ -119,6 +117,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
         (
             BillboardTextureBundle {
                 texture: BillboardTextureHandle(my_assets.img_select_border.clone()),
+                billboard_depth: BillboardDepth(false),
                 ..default()
             },
             BorderSelect::new(15.0, 15.0),

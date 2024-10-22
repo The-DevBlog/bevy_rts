@@ -25,7 +25,6 @@ fn border_select_visibility(
                     border_xy = Vec2::new(border.width, border.height);
                 }
 
-                println!("border_xy: {}", border_xy);
                 *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
             }
         }

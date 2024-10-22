@@ -4,14 +4,11 @@ use bevy_rapier3d::prelude::*;
 #[derive(Component)]
 pub struct Selected(pub bool);
 
-// #[derive(Component)]
-// pub struct Tank;
-
 #[derive(Component)]
 pub struct Speed(pub f32);
 
 #[derive(Component)]
-pub struct Friendly;
+pub struct Enemy;
 
 #[derive(Component)]
 pub struct BorderSelect {
@@ -24,6 +21,12 @@ impl BorderSelect {
         Self { width, height }
     }
 }
+
+#[derive(Component)]
+pub struct Target(pub Option<Entity>);
+
+#[derive(Component)]
+pub struct Friendly;
 
 #[derive(Component)]
 pub struct Destination(pub Option<Vec3>);

@@ -9,7 +9,7 @@ impl Plugin for ResourcesPlugin {
             .init_resource::<GameCommands>()
             .init_resource::<CustomCursor>()
             .init_resource::<MyAssets>()
-            .add_systems(Startup, setup);
+            .add_systems(PreStartup, setup);
     }
 }
 

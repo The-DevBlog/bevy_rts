@@ -13,7 +13,7 @@ impl Plugin for UtilsPlugin {
 
 fn border_select_visibility(
     friendly_q: Query<(Entity, &Selected), With<Friendly>>,
-    mut border_select_q: Query<(&mut BillboardMeshHandle, &BorderSelect), With<BorderSelect>>,
+    mut border_select_q: Query<(&mut BillboardMeshHandle, &BorderSelectImg), With<BorderSelectImg>>,
     children_q: Query<&Children>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {

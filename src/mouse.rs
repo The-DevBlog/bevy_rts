@@ -1,3 +1,4 @@
+use bevy::color::palettes::css::DARK_GRAY;
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
@@ -10,50 +11,49 @@ pub struct MousePlugin;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_systems(Startup, spawn_selection_box).add_systems(
             Update,
             (
                 set_mouse_coords,
                 set_box_coords,
                 set_drag_select,
-                drag_select,
+                handle_drag_select,
+                draw_drag_select_box,
                 single_select,
                 set_selected,
                 deselect_all,
             )
                 .chain()
                 .after(set_unit_destination),
-        )
-        .add_systems(Update, change_cursor);
+        );
     }
 }
 
-fn set_drag_select(box_coords: Res<BoxCoords>, mut game_cmds: ResMut<GameCommands>) {
+fn set_drag_select(box_coords: Res<SelectionBoxCoords>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
-    let width_z = (box_coords.global_start.z - box_coords.global_end.z).abs();
-    let width_x = (box_coords.global_start.x - box_coords.global_end.x).abs();
+    let width_z = (box_coords.world_start.z - box_coords.world_end.z).abs();
+    let width_x = (box_coords.world_start.x - box_coords.world_end.x).abs();
 
-    // let was_drag_select = game_cmds.drag_select;
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
 
 fn set_box_coords(
-    mut box_coords: ResMut<BoxCoords>,
+    mut box_coords: ResMut<SelectionBoxCoords>,
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
 ) {
     if input.just_pressed(MouseButton::Left) {
-        box_coords.global_start = mouse_coords.global;
-        box_coords.local_start = mouse_coords.local;
+        box_coords.world_start = mouse_coords.world;
+        box_coords.viewport_start = mouse_coords.viewport;
     }
 
     if input.pressed(MouseButton::Left) {
-        box_coords.local_end = mouse_coords.local;
-        box_coords.global_end = mouse_coords.global;
+        box_coords.viewport_end = mouse_coords.viewport;
+        box_coords.world_end = mouse_coords.world;
     }
 
     if input.just_released(MouseButton::Left) {
-        box_coords.empty_global();
+        box_coords.empty();
     }
 }
 
@@ -81,29 +81,74 @@ fn set_mouse_coords(
     };
     let global_cursor = ray.get_point(distance);
 
-    mouse_coords.global = global_cursor;
-    mouse_coords.local = local_cursor;
+    mouse_coords.world = global_cursor;
+    mouse_coords.viewport = local_cursor;
 }
 
-pub fn drag_select(
-    mut gizmos: Gizmos,
-    mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
-    box_coords: Res<BoxCoords>,
+fn spawn_selection_box(mut commands: Commands) {
+    let gray = Color::srgba(0.68, 0.68, 0.68, 0.25);
+
+    let selection_box = (
+        NodeBundle {
+            background_color: BackgroundColor(gray),
+            border_color: BorderColor(DARK_GRAY.into()),
+            style: Style {
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            ..default()
+        },
+        SelectionBox,
+    );
+
+    commands.spawn(selection_box);
+}
+
+fn draw_drag_select_box(
+    mut query: Query<&mut Style, With<SelectionBox>>,
+    box_coords: Res<SelectionBoxCoords>,
     game_cmds: Res<GameCommands>,
 ) {
+    let mut style = query.get_single_mut().unwrap();
+
+    if !game_cmds.drag_select {
+        style.width = Val::ZERO;
+
+        return;
+    }
+
+    let start = box_coords.viewport_start;
+    let end = box_coords.viewport_end;
+
+    let min_x = start.x.min(end.x);
+    let max_x = start.x.max(end.x);
+    let min_y = start.y.min(end.y);
+    let max_y = start.y.max(end.y);
+
+    println!(
+        "min_x: {}, max_x: {}, min_y: {}, max_y: {}",
+        min_x, max_x, min_y, max_y
+    );
+
+    style.left = Val::Px(min_x);
+    style.top = Val::Px(min_y);
+    style.width = Val::Px(max_x - min_x);
+    style.height = Val::Px(max_y - min_y);
+}
+
+pub fn handle_drag_select(
+    mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
+    box_coords: Res<SelectionBoxCoords>,
+    game_cmds: Res<GameCommands>,
+) {
+    // println!("{:?}", box_coords);
+
     if !game_cmds.drag_select {
         return;
     }
 
-    let start = box_coords.global_start;
-    let end = box_coords.global_end;
-
-    // draw rectangle
-    let gray = Color::srgb(0.68, 0.68, 0.68);
-    gizmos.line(start, Vec3::new(end.x, 0.0, start.z), gray);
-    gizmos.line(start, Vec3::new(start.x, 0.0, end.z), gray);
-    gizmos.line(Vec3::new(start.x, 0.0, end.z), end, gray);
-    gizmos.line(Vec3::new(end.x, 0.0, start.z), end, gray);
+    let start = box_coords.world_start;
+    let end = box_coords.world_end;
 
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);
@@ -125,7 +170,6 @@ pub fn drag_select(
 pub fn single_select(
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
-    enemy_q: Query<Entity, With<Enemy>>,
     mut select_q: Query<(Entity, &mut Selected), With<Friendly>>,
     mouse_coords: Res<MouseCoords>,
     input: Res<ButtonInput<MouseButton>>,
@@ -137,7 +181,7 @@ pub fn single_select(
 
     let (cam, cam_trans) = cam_q.single();
 
-    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.local) else {
+    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.viewport) else {
         return;
     };
 
@@ -150,10 +194,6 @@ pub fn single_select(
     );
 
     if let Some((ent, _)) = hit {
-        if let Ok(_) = enemy_q.get(ent) {
-            return;
-        }
-
         // deselect all currently selected entities
         for (selected_entity, mut selected) in select_q.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
@@ -179,14 +219,5 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
         if selected.0 {
             game_cmds.selected = true;
         }
-    }
-}
-
-fn change_cursor(mut window_q: Query<&mut Window, With<PrimaryWindow>>, cursor: Res<CustomCursor>) {
-    let mut window = window_q.get_single_mut().unwrap();
-    match cursor.state {
-        // CursorState::Attack => window.cursor.icon = CursorIcon::Crosshair,
-        CursorState::Relocate => window.cursor.icon = CursorIcon::Pointer,
-        CursorState::Normal => window.cursor.icon = CursorIcon::Default,
     }
 }

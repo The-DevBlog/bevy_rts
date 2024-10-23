@@ -93,6 +93,7 @@ fn spawn_selection_box(mut commands: Commands) {
             background_color: BackgroundColor(gray),
             border_color: BorderColor(DARK_GRAY.into()),
             style: Style {
+                // border: UiRect::all(Val::Percent(2.0)),
                 position_type: PositionType::Absolute,
                 ..default()
             },
@@ -113,7 +114,7 @@ fn draw_drag_select_box(
 
     if !game_cmds.drag_select {
         style.width = Val::ZERO;
-
+        style.border = UiRect::ZERO;
         return;
     }
 
@@ -130,6 +131,7 @@ fn draw_drag_select_box(
         min_x, max_x, min_y, max_y
     );
 
+    style.border = UiRect::all(Val::Percent(0.1));
     style.left = Val::Px(min_x);
     style.top = Val::Px(min_y);
     style.width = Val::Px(max_x - min_x);

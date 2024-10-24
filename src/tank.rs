@@ -1,3 +1,4 @@
+use bevy::color::palettes::css::DARK_GRAY;
 use bevy::prelude::*;
 use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextureHandle};
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
@@ -28,7 +29,7 @@ pub fn set_unit_destination(
 
     let (cam, cam_trans) = cam_q.single();
 
-    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.local) else {
+    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.viewport) else {
         return;
     };
 
@@ -49,7 +50,7 @@ pub fn set_unit_destination(
             continue;
         }
 
-        let mut destination = mouse_coords.global;
+        let mut destination = mouse_coords.world;
         destination.y += trans.scale.y / 2.0; // calculate for entity height
         friendly_destination.0 = Some(destination);
         println!("Unit Moving to ({}, {})", destination.x, destination.y);
@@ -120,7 +121,17 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
                 billboard_depth: BillboardDepth(false),
                 ..default()
             },
-            BorderSelect::new(15.0, 15.0),
+            // NodeBundle {
+            //     // background_color: BackgroundColor(gray),
+            //     border_color: BorderColor(DARK_GRAY.into()),
+            //     visibility: Visibility::Visible,
+            //     style: Style {
+            //         position_type: PositionType::Absolute,
+            //         ..default()
+            //     },
+            //     ..default()
+            // },
+            BorderSelectImg::new(15.0, 15.0),
             Name::new("Border Select"),
         )
     };

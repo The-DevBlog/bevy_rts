@@ -120,7 +120,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
                 billboard_depth: BillboardDepth(false),
                 ..default()
             },
-            BorderSelectImg::new(15.0, 15.0),
+            UnitBorderBoxImg::new(15.0, 15.0),
             Name::new("Border Select"),
         )
     };

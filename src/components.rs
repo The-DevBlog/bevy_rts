@@ -8,12 +8,12 @@ pub struct Selected(pub bool);
 pub struct Speed(pub f32);
 
 #[derive(Component)]
-pub struct BorderSelectImg {
+pub struct UnitBorderBoxImg {
     pub width: f32,
     pub height: f32,
 }
 
-impl BorderSelectImg {
+impl UnitBorderBoxImg {
     pub fn new(width: f32, height: f32) -> Self {
         Self { width, height }
     }

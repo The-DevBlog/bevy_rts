@@ -1,4 +1,4 @@
-use bevy::color::palettes::css::DARK_GRAY;
+use bevy::color::palettes::css::{DARK_GRAY, RED};
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
@@ -86,7 +86,7 @@ fn set_mouse_coords(
     mouse_coords.viewport = local_cursor;
 }
 
-fn spawn_selection_box(mut commands: Commands) {
+fn spawn_selection_box(mut cmds: Commands) {
     let gray = Color::srgba(0.68, 0.68, 0.68, 0.25);
 
     let selection_box = (
@@ -94,7 +94,6 @@ fn spawn_selection_box(mut commands: Commands) {
             background_color: BackgroundColor(gray),
             border_color: BorderColor(DARK_GRAY.into()),
             style: Style {
-                // border: UiRect::all(Val::Percent(2.0)),
                 position_type: PositionType::Absolute,
                 ..default()
             },
@@ -103,13 +102,15 @@ fn spawn_selection_box(mut commands: Commands) {
         SelectionBox,
     );
 
-    commands.spawn(selection_box);
+    cmds.spawn(selection_box);
 }
 
 fn draw_drag_select_box(
+    mut gizmos: Gizmos,
     mut query: Query<&mut Style, With<SelectionBox>>,
     box_coords: Res<SelectionBoxCoords>,
     game_cmds: Res<GameCommands>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     let mut style = query.get_single_mut().unwrap();
 
@@ -121,6 +122,14 @@ fn draw_drag_select_box(
 
     let start = box_coords.viewport_start;
     let end = box_coords.viewport_end;
+
+    // Get camera and its transform
+    let (cam, cam_trans) = cam_q.single();
+
+    // Convert viewport coordinates to world coordinates
+    let start_world = cam.viewport_to_world(cam_trans, start).unwrap().origin;
+    let mut end_world = cam.viewport_to_world(cam_trans, end).unwrap().origin;
+    end_world.y = 0.3; // Adjust y-coordinate for drawing in 3D space
 
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);
@@ -137,6 +146,26 @@ fn draw_drag_select_box(
     style.top = Val::Px(min_y);
     style.width = Val::Px(max_x - min_x);
     style.height = Val::Px(max_y - min_y);
+
+    // Calculate the center position of the rectangle
+    let center_x = (start_world.x + end_world.x) / 2.0;
+    let center_z = (start_world.z + end_world.z) / 2.0;
+    let center_position = Vec3::new(center_x, 0.2, center_z);
+
+    // Calculate the size of the rectangle
+    let size = Vec2::new(
+        (end_world.x - start_world.x).abs(),
+        (end_world.z - start_world.z).abs(),
+    );
+
+    // Set the rotation (no rotation)
+    let rotation = Quat::IDENTITY;
+
+    // Set the color
+    let color = RED;
+
+    // Draw the rectangle in the world space
+    gizmos.rect(center_position, rotation, size, color);
 }
 
 pub fn handle_drag_select(

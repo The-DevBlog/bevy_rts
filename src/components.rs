@@ -29,9 +29,6 @@ pub struct Friendly;
 pub struct Destination(pub Option<Vec3>);
 
 #[derive(Component)]
-pub struct Unit;
-
-#[derive(Component)]
 pub struct MapBase;
 
 #[derive(Component, Debug)]
@@ -52,7 +49,6 @@ pub struct UnitBundle {
     pub rigid_body: RigidBody,
     pub speed: Speed,
     pub destination: Destination,
-    pub unit: Unit,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
     pub current_action: CurrentAction,
@@ -77,7 +73,6 @@ impl UnitBundle {
             rigid_body: RigidBody::Dynamic,
             speed: Speed(speed),
             destination: Destination(None),
-            unit: Unit,
             current_action: CurrentAction(Action::None),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z

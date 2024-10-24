@@ -9,7 +9,6 @@ use bevy::prelude::*;
 
 mod camera;
 mod components;
-mod friendly;
 mod map;
 mod mouse;
 mod resources;
@@ -17,7 +16,6 @@ mod tank;
 mod utils;
 
 use camera::CameraPlugin;
-use friendly::FriendlyPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
@@ -42,7 +40,6 @@ fn main() {
             ResourcesPlugin,
             MousePlugin,
             UtilsPlugin,
-            FriendlyPlugin,
             TankPlugin,
         ))
         .run();

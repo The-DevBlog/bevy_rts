@@ -1,4 +1,3 @@
-use bevy::color::palettes::css::DARK_GRAY;
 use bevy::prelude::*;
 use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextureHandle};
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
@@ -121,16 +120,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
                 billboard_depth: BillboardDepth(false),
                 ..default()
             },
-            // NodeBundle {
-            //     // background_color: BackgroundColor(gray),
-            //     border_color: BorderColor(DARK_GRAY.into()),
-            //     visibility: Visibility::Visible,
-            //     style: Style {
-            //         position_type: PositionType::Absolute,
-            //         ..default()
-            //     },
-            //     ..default()
-            // },
             BorderSelectImg::new(15.0, 15.0),
             Name::new("Border Select"),
         )

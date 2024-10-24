@@ -3,8 +3,9 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
 
+use crate::tank::set_unit_destination;
+
 use super::components::*;
-use super::friendly::set_unit_destination;
 use super::resources::*;
 
 pub struct MousePlugin;

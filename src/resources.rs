@@ -5,7 +5,7 @@ pub struct ResourcesPlugin;
 impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseCoords>()
-            .init_resource::<SelectionBoxCoords>()
+            .init_resource::<SelectBox>()
             .init_resource::<GameCommands>()
             .init_resource::<MyAssets>()
             .add_systems(PreStartup, setup);
@@ -24,28 +24,38 @@ pub struct MouseCoords {
 }
 
 #[derive(Resource, Default, Debug)]
-pub struct SelectionBoxCoords {
-    pub world_top_start: Vec3,
-    pub world_top_end: Vec3,
-    pub world_bottom_start: Vec3,
-    pub world_bottom_end: Vec3,
-    pub viewport_top_start: Vec2,
-    pub viewport_top_end: Vec2,
-    pub viewport_bottom_start: Vec2,
-    pub viewport_bottom_end: Vec2,
+pub struct SelectBox {
+    pub coords_viewport: ViewportCoords,
+    pub coords_world: WorldCoords,
 }
 
-impl SelectionBoxCoords {
-    pub fn empty(&mut self) {
-        self.viewport_top_start = Vec2::ZERO;
-        self.viewport_top_end = Vec2::ZERO;
-        self.viewport_bottom_start = Vec2::ZERO;
-        self.viewport_bottom_end = Vec2::ZERO;
-        self.world_top_start = Vec3::ZERO;
-        self.world_top_end = Vec3::ZERO;
-        self.world_bottom_start = Vec3::ZERO;
-        self.world_bottom_end = Vec3::ZERO;
+impl SelectBox {
+    pub fn empty_coords(&mut self) {
+        self.coords_viewport.upper_1 = Vec2::ZERO;
+        self.coords_viewport.upper_2 = Vec2::ZERO;
+        self.coords_viewport.lower_1 = Vec2::ZERO;
+        self.coords_viewport.lower_2 = Vec2::ZERO;
+        self.coords_world.upper_1 = Vec3::ZERO;
+        self.coords_world.upper_2 = Vec3::ZERO;
+        self.coords_world.lower_1 = Vec3::ZERO;
+        self.coords_world.lower_2 = Vec3::ZERO;
     }
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct ViewportCoords {
+    pub upper_1: Vec2,
+    pub upper_2: Vec2,
+    pub lower_1: Vec2,
+    pub lower_2: Vec2,
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct WorldCoords {
+    pub upper_1: Vec3,
+    pub upper_2: Vec3,
+    pub lower_1: Vec3,
+    pub lower_2: Vec3,
 }
 
 #[derive(Resource, Default, Debug)]

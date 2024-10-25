@@ -1,7 +1,4 @@
-use std::f32::consts::PI;
-
 use bevy::color::palettes::css::{DARK_GRAY, RED};
-use bevy::math::VectorSpace;
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
@@ -33,16 +30,21 @@ impl Plugin for MousePlugin {
     }
 }
 
-fn set_drag_select(box_coords: Res<SelectionBoxCoords>, mut game_cmds: ResMut<GameCommands>) {
+fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
-    let width_z = (box_coords.world_top_start.z - box_coords.world_top_end.z).abs();
-    let width_x = (box_coords.world_top_start.x - box_coords.world_top_end.x).abs();
+    let world = box_coords.coords_world.clone();
+    let width_z = (world.upper_1.z - world.upper_2.z).abs();
+    let width_x = (world.upper_1.x - world.upper_2.x).abs();
 
+    let t = width_z > drag_threshold || width_x > drag_threshold;
+    if t {
+        println!("{}", t);
+    }
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
 
 fn set_box_coords(
-    mut box_coords: ResMut<SelectionBoxCoords>,
+    mut box_coords: ResMut<SelectBox>,
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
     map_base_q: Query<&GlobalTransform, With<MapBase>>,
@@ -50,22 +52,16 @@ fn set_box_coords(
 ) {
     // println!("mouse coords: {:}", mouse_coords.world);
     if input.just_pressed(MouseButton::Left) {
-        box_coords.viewport_top_start = mouse_coords.viewport;
-        box_coords.world_top_start = mouse_coords.world;
+        box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
+        box_coords.coords_world.upper_1 = mouse_coords.world;
     }
 
     if input.pressed(MouseButton::Left) {
         // VIEWPORT
-        box_coords.viewport_bottom_end = mouse_coords.viewport;
-        box_coords.viewport_top_end = Vec2::new(
-            box_coords.viewport_bottom_end.x,
-            box_coords.viewport_top_start.y,
-        );
-
-        box_coords.viewport_bottom_start = Vec2::new(
-            box_coords.viewport_top_start.x,
-            box_coords.viewport_bottom_end.y,
-        );
+        let viewport = box_coords.coords_viewport.clone();
+        box_coords.coords_viewport.lower_2 = mouse_coords.viewport;
+        box_coords.coords_viewport.upper_2 = Vec2::new(viewport.lower_2.x, viewport.upper_1.y);
+        box_coords.coords_viewport.lower_1 = Vec2::new(viewport.upper_1.x, viewport.lower_2.y);
 
         // WORLD
         let map_base_trans = map_base_q.single();
@@ -73,13 +69,14 @@ fn set_box_coords(
         let plane_origin = map_base_trans.translation();
         let plane = InfinitePlane3d::new(map_base_trans.up());
 
-        let Some(ray_top_end) = cam.viewport_to_world(cam_trans, box_coords.viewport_top_end)
+        let Some(ray_top_end) =
+            cam.viewport_to_world(cam_trans, box_coords.coords_viewport.upper_2)
         else {
             return;
         };
 
         let Some(ray_bottom_start) =
-            cam.viewport_to_world(cam_trans, box_coords.viewport_bottom_start)
+            cam.viewport_to_world(cam_trans, box_coords.coords_viewport.lower_1)
         else {
             return;
         };
@@ -93,16 +90,19 @@ fn set_box_coords(
             return;
         };
 
-        let top_end = ray_top_end.get_point(distance_top_end);
-        let bottom_start = ray_bottom_start.get_point(distance_bottom_start);
+        let mut top_end = ray_top_end.get_point(distance_top_end);
+        let mut bottom_start = ray_bottom_start.get_point(distance_bottom_start);
+        top_end.y = 0.2;
+        bottom_start.y = 0.2;
 
-        box_coords.world_bottom_end = mouse_coords.world;
-        box_coords.world_top_end = top_end;
-        box_coords.world_bottom_start = bottom_start;
+        box_coords.coords_world.lower_2 = mouse_coords.world;
+        box_coords.coords_world.lower_2.y = 0.2;
+        box_coords.coords_world.upper_2 = top_end;
+        box_coords.coords_world.lower_1 = bottom_start;
     }
 
     if input.just_released(MouseButton::Left) {
-        box_coords.empty();
+        box_coords.empty_coords();
     }
 }
 
@@ -156,7 +156,7 @@ fn spawn_selection_box(mut cmds: Commands) {
 fn draw_drag_select_box(
     mut gizmos: Gizmos,
     mut query: Query<&mut Style, With<SelectionBox>>,
-    box_coords: Res<SelectionBoxCoords>,
+    box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
 ) {
     let mut style = query.get_single_mut().unwrap();
@@ -167,8 +167,8 @@ fn draw_drag_select_box(
         return;
     }
 
-    let start = box_coords.viewport_top_start;
-    let end = box_coords.viewport_bottom_end;
+    let start = box_coords.coords_viewport.upper_1;
+    let end = box_coords.coords_viewport.lower_2;
 
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);
@@ -181,56 +181,17 @@ fn draw_drag_select_box(
     style.width = Val::Px(max_x - min_x);
     style.height = Val::Px(max_y - min_y);
 
-    // let map_base_trans = map_base_q.single();
-    // let (cam, cam_trans) = cam_q.single();
-    // let plane_origin = map_base_trans.translation();
-    // let plane = InfinitePlane3d::new(map_base_trans.up());
-    // let Some(ray_top_end) = cam.viewport_to_world(cam_trans, box_coords.viewport_top_end) else {
-    //     return;
-    // };
-    // let Some(distance_top_end) = ray_top_end.intersect_plane(plane_origin, plane) else {
-    //     return;
-    // };
-    // let top_end = ray_top_end.get_point(distance_top_end);
-
-    // Set the color
     let color = RED;
-
-    gizmos.line(box_coords.world_top_start, box_coords.world_top_end, color); // top
-    gizmos.line(
-        box_coords.world_bottom_end,
-        box_coords.world_bottom_start,
-        color,
-    ); // bottom
-
-    // let world_start = cam.viewport_to_world(cam_trans, box_coords.viewport_start);
-    // let world_end = cam.viewport_to_world(cam_trans, box_coords.viewport_end);
-
-    // println!(
-    //     "World: {:?}, World_Converted: {:?}",
-    //     box_coords.world_start,
-    //     world_start.unwrap().direction
-    // );
-
-    // let tl = Vec2::new(start.x - end.x, 0.0);
-    // let Some(local_cursor) = window.cursor_position() else {
-    //     return;
-    // };
-
-    // let top_right = box_coords.world_top_start;
-    // let top_left =
-    // let bottom_let = box_coords.world_top_end;
-
-    // gizmos.line(start, Vec3::new(end.x, 0.0, 0.0), color); // top
-    // gizmos.line(start, Vec3::new(end.x, 0.0, start.x), color); // top
-    // gizmos.line(start, Vec3::new(start.x, 0.0, end.z), color); // right
-    // gizmos.line(Vec3::new(start.x, 0.0, end.z), end, color); // bottom
-    // gizmos.line(Vec3::new(end.x, 0.0, start.z), end, color); // left
+    let world = box_coords.coords_world.clone();
+    gizmos.line(world.upper_1, world.upper_2, color); // top
+    gizmos.line(world.lower_1, world.lower_2, color); // bottom
+    gizmos.line(world.upper_2, world.lower_2, color); // side
+    gizmos.line(world.upper_1, world.lower_1, color); // side
 }
 
 pub fn handle_drag_select(
     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
-    box_coords: Res<SelectionBoxCoords>,
+    box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
 ) {
     // println!("{:?}", box_coords);
@@ -239,8 +200,8 @@ pub fn handle_drag_select(
         return;
     }
 
-    let start = box_coords.world_top_start;
-    let end = box_coords.world_top_end;
+    let start = box_coords.coords_world.upper_1;
+    let end = box_coords.coords_world.upper_2;
 
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);

@@ -25,18 +25,26 @@ pub struct MouseCoords {
 
 #[derive(Resource, Default, Debug)]
 pub struct SelectionBoxCoords {
-    pub world_start: Vec3,
-    pub world_end: Vec3,
-    pub viewport_start: Vec2,
-    pub viewport_end: Vec2,
+    pub world_top_start: Vec3,
+    pub world_top_end: Vec3,
+    pub world_bottom_start: Vec3,
+    pub world_bottom_end: Vec3,
+    pub viewport_top_start: Vec2,
+    pub viewport_top_end: Vec2,
+    pub viewport_bottom_start: Vec2,
+    pub viewport_bottom_end: Vec2,
 }
 
 impl SelectionBoxCoords {
     pub fn empty(&mut self) {
-        self.viewport_start = Vec2::ZERO;
-        self.viewport_end = Vec2::ZERO;
-        self.world_start = Vec3::ZERO;
-        self.world_end = Vec3::ZERO;
+        self.viewport_top_start = Vec2::ZERO;
+        self.viewport_top_end = Vec2::ZERO;
+        self.viewport_bottom_start = Vec2::ZERO;
+        self.viewport_bottom_end = Vec2::ZERO;
+        self.world_top_start = Vec3::ZERO;
+        self.world_top_end = Vec3::ZERO;
+        self.world_bottom_start = Vec3::ZERO;
+        self.world_bottom_end = Vec3::ZERO;
     }
 }
 

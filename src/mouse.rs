@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::color::palettes::css::{DARK_GRAY, RED};
 use bevy::math::VectorSpace;
 use bevy::{prelude::*, window::PrimaryWindow};
@@ -33,8 +35,8 @@ impl Plugin for MousePlugin {
 
 fn set_drag_select(box_coords: Res<SelectionBoxCoords>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
-    let width_z = (box_coords.world_start.z - box_coords.world_end.z).abs();
-    let width_x = (box_coords.world_start.x - box_coords.world_end.x).abs();
+    let width_z = (box_coords.world_top_start.z - box_coords.world_top_end.z).abs();
+    let width_x = (box_coords.world_top_start.x - box_coords.world_top_end.x).abs();
 
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
@@ -43,15 +45,60 @@ fn set_box_coords(
     mut box_coords: ResMut<SelectionBoxCoords>,
     input: Res<ButtonInput<MouseButton>>,
     mouse_coords: Res<MouseCoords>,
+    map_base_q: Query<&GlobalTransform, With<MapBase>>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
+    // println!("mouse coords: {:}", mouse_coords.world);
     if input.just_pressed(MouseButton::Left) {
-        box_coords.world_start = mouse_coords.world;
-        box_coords.viewport_start = mouse_coords.viewport;
+        box_coords.viewport_top_start = mouse_coords.viewport;
+        box_coords.world_top_start = mouse_coords.world;
     }
 
     if input.pressed(MouseButton::Left) {
-        box_coords.viewport_end = mouse_coords.viewport;
-        box_coords.world_end = mouse_coords.world;
+        // VIEWPORT
+        box_coords.viewport_bottom_end = mouse_coords.viewport;
+        box_coords.viewport_top_end = Vec2::new(
+            box_coords.viewport_bottom_end.x,
+            box_coords.viewport_top_start.y,
+        );
+
+        box_coords.viewport_bottom_start = Vec2::new(
+            box_coords.viewport_top_start.x,
+            box_coords.viewport_bottom_end.y,
+        );
+
+        // WORLD
+        let map_base_trans = map_base_q.single();
+        let (cam, cam_trans) = cam_q.single();
+        let plane_origin = map_base_trans.translation();
+        let plane = InfinitePlane3d::new(map_base_trans.up());
+
+        let Some(ray_top_end) = cam.viewport_to_world(cam_trans, box_coords.viewport_top_end)
+        else {
+            return;
+        };
+
+        let Some(ray_bottom_start) =
+            cam.viewport_to_world(cam_trans, box_coords.viewport_bottom_start)
+        else {
+            return;
+        };
+
+        let Some(distance_bottom_start) = ray_bottom_start.intersect_plane(plane_origin, plane)
+        else {
+            return;
+        };
+
+        let Some(distance_top_end) = ray_top_end.intersect_plane(plane_origin, plane) else {
+            return;
+        };
+
+        let top_end = ray_top_end.get_point(distance_top_end);
+        let bottom_start = ray_bottom_start.get_point(distance_bottom_start);
+
+        box_coords.world_bottom_end = mouse_coords.world;
+        box_coords.world_top_end = top_end;
+        box_coords.world_bottom_start = bottom_start;
     }
 
     if input.just_released(MouseButton::Left) {
@@ -111,7 +158,6 @@ fn draw_drag_select_box(
     mut query: Query<&mut Style, With<SelectionBox>>,
     box_coords: Res<SelectionBoxCoords>,
     game_cmds: Res<GameCommands>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     let mut style = query.get_single_mut().unwrap();
 
@@ -121,8 +167,8 @@ fn draw_drag_select_box(
         return;
     }
 
-    let start = box_coords.viewport_start;
-    let end = box_coords.viewport_end;
+    let start = box_coords.viewport_top_start;
+    let end = box_coords.viewport_bottom_end;
 
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);
@@ -135,41 +181,51 @@ fn draw_drag_select_box(
     style.width = Val::Px(max_x - min_x);
     style.height = Val::Px(max_y - min_y);
 
-    let (cam, cam_trans) = cam_q.single();
-
-    // Convert viewport coordinates to world coordinates
-    let start_world = cam.viewport_to_world(cam_trans, start).unwrap().origin;
-    let end_world = cam.viewport_to_world(cam_trans, end).unwrap().origin;
-
-    // Calculate the center position of the rectangle
-    let center_x = (start_world.x + end_world.x) / 2.0;
-    let center_z = (start_world.z + end_world.z) / 2.0;
-    // let center_position = Vec3::new(center_x, 0.0, center_z);
-    let center_position = Vec3::ZERO;
-
-    // Calculate the size of the rectangle
-    // let size = Vec2::new(
-    //     (end_world.x - start_world.x).abs(),
-    //     (end_world.z - start_world.z).abs(),
-    // );
-    let size = Vec2::new(200.0, 200.0);
-
-    // Get the camera's rotation
-    let mut rotation = cam_trans.to_scale_rotation_translation().1;
-
-    // Create a quaternion representing a 90-degree rotation around the x-axis
-    let rotation_90_x = Quat::from_rotation_x(90.0_f32);
-    let rotation_90_z = Quat::from_rotation_z(90.0_f32);
-
-    // Combine the camera's rotation with the 90-degree rotation
-    rotation = rotation * rotation_90_x;
-    rotation = rotation * rotation_90_z;
+    // let map_base_trans = map_base_q.single();
+    // let (cam, cam_trans) = cam_q.single();
+    // let plane_origin = map_base_trans.translation();
+    // let plane = InfinitePlane3d::new(map_base_trans.up());
+    // let Some(ray_top_end) = cam.viewport_to_world(cam_trans, box_coords.viewport_top_end) else {
+    //     return;
+    // };
+    // let Some(distance_top_end) = ray_top_end.intersect_plane(plane_origin, plane) else {
+    //     return;
+    // };
+    // let top_end = ray_top_end.get_point(distance_top_end);
 
     // Set the color
     let color = RED;
 
-    // Draw the rectangle in the world space
-    gizmos.rect(center_position, rotation, size, color);
+    gizmos.line(box_coords.world_top_start, box_coords.world_top_end, color); // top
+    gizmos.line(
+        box_coords.world_bottom_end,
+        box_coords.world_bottom_start,
+        color,
+    ); // bottom
+
+    // let world_start = cam.viewport_to_world(cam_trans, box_coords.viewport_start);
+    // let world_end = cam.viewport_to_world(cam_trans, box_coords.viewport_end);
+
+    // println!(
+    //     "World: {:?}, World_Converted: {:?}",
+    //     box_coords.world_start,
+    //     world_start.unwrap().direction
+    // );
+
+    // let tl = Vec2::new(start.x - end.x, 0.0);
+    // let Some(local_cursor) = window.cursor_position() else {
+    //     return;
+    // };
+
+    // let top_right = box_coords.world_top_start;
+    // let top_left =
+    // let bottom_let = box_coords.world_top_end;
+
+    // gizmos.line(start, Vec3::new(end.x, 0.0, 0.0), color); // top
+    // gizmos.line(start, Vec3::new(end.x, 0.0, start.x), color); // top
+    // gizmos.line(start, Vec3::new(start.x, 0.0, end.z), color); // right
+    // gizmos.line(Vec3::new(start.x, 0.0, end.z), end, color); // bottom
+    // gizmos.line(Vec3::new(end.x, 0.0, start.z), end, color); // left
 }
 
 pub fn handle_drag_select(
@@ -183,8 +239,8 @@ pub fn handle_drag_select(
         return;
     }
 
-    let start = box_coords.world_start;
-    let end = box_coords.world_end;
+    let start = box_coords.world_top_start;
+    let end = box_coords.world_top_end;
 
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);

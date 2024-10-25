@@ -1,4 +1,5 @@
 use bevy::color::palettes::css::{DARK_GRAY, RED};
+use bevy::math::VectorSpace;
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
@@ -123,23 +124,10 @@ fn draw_drag_select_box(
     let start = box_coords.viewport_start;
     let end = box_coords.viewport_end;
 
-    // Get camera and its transform
-    let (cam, cam_trans) = cam_q.single();
-
-    // Convert viewport coordinates to world coordinates
-    let start_world = cam.viewport_to_world(cam_trans, start).unwrap().origin;
-    let mut end_world = cam.viewport_to_world(cam_trans, end).unwrap().origin;
-    end_world.y = 0.3; // Adjust y-coordinate for drawing in 3D space
-
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);
     let min_y = start.y.min(end.y);
     let max_y = start.y.max(end.y);
-
-    println!(
-        "min_x: {}, max_x: {}, min_y: {}, max_y: {}",
-        min_x, max_x, min_y, max_y
-    );
 
     style.border = UiRect::all(Val::Percent(0.1));
     style.left = Val::Px(min_x);
@@ -147,19 +135,35 @@ fn draw_drag_select_box(
     style.width = Val::Px(max_x - min_x);
     style.height = Val::Px(max_y - min_y);
 
+    let (cam, cam_trans) = cam_q.single();
+
+    // Convert viewport coordinates to world coordinates
+    let start_world = cam.viewport_to_world(cam_trans, start).unwrap().origin;
+    let end_world = cam.viewport_to_world(cam_trans, end).unwrap().origin;
+
     // Calculate the center position of the rectangle
     let center_x = (start_world.x + end_world.x) / 2.0;
     let center_z = (start_world.z + end_world.z) / 2.0;
-    let center_position = Vec3::new(center_x, 0.2, center_z);
+    // let center_position = Vec3::new(center_x, 0.0, center_z);
+    let center_position = Vec3::ZERO;
 
     // Calculate the size of the rectangle
-    let size = Vec2::new(
-        (end_world.x - start_world.x).abs(),
-        (end_world.z - start_world.z).abs(),
-    );
+    // let size = Vec2::new(
+    //     (end_world.x - start_world.x).abs(),
+    //     (end_world.z - start_world.z).abs(),
+    // );
+    let size = Vec2::new(200.0, 200.0);
 
-    // Set the rotation (no rotation)
-    let rotation = Quat::IDENTITY;
+    // Get the camera's rotation
+    let mut rotation = cam_trans.to_scale_rotation_translation().1;
+
+    // Create a quaternion representing a 90-degree rotation around the x-axis
+    let rotation_90_x = Quat::from_rotation_x(90.0_f32);
+    let rotation_90_z = Quat::from_rotation_z(90.0_f32);
+
+    // Combine the camera's rotation with the 90-degree rotation
+    rotation = rotation * rotation_90_x;
+    rotation = rotation * rotation_90_z;
 
     // Set the color
     let color = RED;

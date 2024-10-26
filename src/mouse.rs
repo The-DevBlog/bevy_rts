@@ -32,13 +32,17 @@ impl Plugin for MousePlugin {
 
 fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
-    let world = box_coords.coords_world.clone();
+    let world: WorldCoords = box_coords.coords_world.clone();
     let width_z = (world.upper_1.z - world.upper_2.z).abs();
     let width_x = (world.upper_1.x - world.upper_2.x).abs();
 
     let t = width_z > drag_threshold || width_x > drag_threshold;
     if t {
         println!("{}", t);
+        println!("upper_1: {:?}", world.upper_1);
+        println!("upper_2: {:?}", world.upper_2);
+        // println!("width_z: {}", width_z);
+        // println!("width_x: {}", width_x);
     }
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
@@ -53,7 +57,9 @@ fn set_box_coords(
     // println!("mouse coords: {:}", mouse_coords.world);
     if input.just_pressed(MouseButton::Left) {
         box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
+        box_coords.coords_viewport.upper_2 = mouse_coords.viewport;
         box_coords.coords_world.upper_1 = mouse_coords.world;
+        box_coords.coords_world.upper_2 = mouse_coords.world;
     }
 
     if input.pressed(MouseButton::Left) {
@@ -69,36 +75,36 @@ fn set_box_coords(
         let plane_origin = map_base_trans.translation();
         let plane = InfinitePlane3d::new(map_base_trans.up());
 
-        let Some(ray_top_end) =
+        let Some(ray_upper_2) =
             cam.viewport_to_world(cam_trans, box_coords.coords_viewport.upper_2)
         else {
             return;
         };
 
-        let Some(ray_bottom_start) =
+        let Some(ray_lower_1) =
             cam.viewport_to_world(cam_trans, box_coords.coords_viewport.lower_1)
         else {
             return;
         };
 
-        let Some(distance_bottom_start) = ray_bottom_start.intersect_plane(plane_origin, plane)
-        else {
+        let Some(distance_lower_1) = ray_lower_1.intersect_plane(plane_origin, plane) else {
             return;
         };
 
-        let Some(distance_top_end) = ray_top_end.intersect_plane(plane_origin, plane) else {
+        let Some(distance_upper_2) = ray_upper_2.intersect_plane(plane_origin, plane) else {
             return;
         };
 
-        let mut top_end = ray_top_end.get_point(distance_top_end);
-        let mut bottom_start = ray_bottom_start.get_point(distance_bottom_start);
-        top_end.y = 0.2;
-        bottom_start.y = 0.2;
+        let mut upper_2 = ray_upper_2.get_point(distance_upper_2);
+        let mut lower_1 = ray_lower_1.get_point(distance_lower_1);
+        upper_2.y = 0.2;
+        lower_1.y = 0.2;
 
+        // println!("top end: {:?}", upper_2);
         box_coords.coords_world.lower_2 = mouse_coords.world;
         box_coords.coords_world.lower_2.y = 0.2;
-        box_coords.coords_world.upper_2 = top_end;
-        box_coords.coords_world.lower_1 = bottom_start;
+        box_coords.coords_world.lower_1 = lower_1;
+        box_coords.coords_world.upper_2 = upper_2; // THIS IS THE ISSUE
     }
 
     if input.just_released(MouseButton::Left) {

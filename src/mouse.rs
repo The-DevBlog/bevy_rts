@@ -3,7 +3,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
 
-use crate::events::{ClearBoxCoordsEv, DummyTriggerEv, SetBoxCoordsEv};
+use crate::events::{ClearBoxCoordsEv, SetBoxCoordsEv, SetDragSelectEv, SetInitialBoxCoords};
 use crate::tank::set_unit_destination;
 
 use super::components::*;
@@ -18,89 +18,85 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     set_mouse_coords,
-                    // set_box_coords,
-                    set_drag_select,
+                    handle_input,
+                    // set_drag_select,
                     handle_drag_select,
                     draw_drag_select_box,
                     single_select,
                     set_selected,
                     deselect_all,
-                    input_handler,
                 )
                     .chain()
                     .after(set_unit_destination),
             )
-            .observe(set_initial_coords)
-            .observe(set_box_coords)
-            .observe(clear_box_coords);
+            .observe(set_drag_select)
+            .observe(set_drag_select_coords)
+            .observe(set_drag_select_coords_2)
+            .observe(clear_drag_select_coords);
     }
 }
 
-fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
+fn set_drag_select(
+    _trigger: Trigger<SetDragSelectEv>,
+    box_coords: Res<SelectBox>,
+    mut game_cmds: ResMut<GameCommands>,
+) {
     let drag_threshold = 2.5;
-    let world: WorldCoords = box_coords.coords_world.clone();
+    let world = box_coords.coords_world.clone();
     let width_z = (world.upper_1.z - world.upper_2.z).abs();
     let width_x = (world.upper_1.x - world.upper_2.x).abs();
 
-    // let t = width_z > drag_threshold || width_x > drag_threshold;
-    // if t {
-    //     println!("{}", t);
-    //     println!("upper_1: {:?}", world.upper_1);
-    //     println!("upper_2: {:?}", world.upper_2);
-    //     // println!("width_z: {}", width_z);
-    //     // println!("width_x: {}", width_x);
-    // }
+    let t = width_z > drag_threshold || width_x > drag_threshold;
+    if t {
+        println!("{}", t);
+    }
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
 
-fn input_handler(input: Res<ButtonInput<MouseButton>>, mut cmds: Commands) {
+// fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
+//     let drag_threshold = 2.5;
+//     let world = box_coords.coords_world.clone();
+//     let width_z = (world.upper_1.z - world.upper_2.z).abs();
+//     let width_x = (world.upper_1.x - world.upper_2.x).abs();
+
+//     let t = width_z > drag_threshold || width_x > drag_threshold;
+//     if t {
+//         println!("{}", t);
+//     }
+//     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
+// }
+
+fn handle_input(mut cmds: Commands, input: Res<ButtonInput<MouseButton>>) {
     if input.just_pressed(MouseButton::Left) {
-        // handle single click
-        // return;
-    } else if input.pressed(MouseButton::Left) {
-        // handle long click
+        cmds.trigger(SetInitialBoxCoords);
+    }
+
+    if input.pressed(MouseButton::Left) {
+        cmds.trigger(SetDragSelectEv);
         cmds.trigger(SetBoxCoordsEv);
-        // return;
-    } else if input.just_released(MouseButton::Left) {
-        // single click again maybe?
+    }
+
+    if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
-        // return;
     }
 }
 
-fn set_initial_coords(
-    _trigger: Trigger<DummyTriggerEv>,
+fn set_drag_select_coords(
+    _trigger: Trigger<SetInitialBoxCoords>,
     mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
 ) {
     box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
-    box_coords.coords_viewport.upper_2 = mouse_coords.viewport;
     box_coords.coords_world.upper_1 = mouse_coords.world;
-    box_coords.coords_world.upper_2 = mouse_coords.world;
 }
 
-fn clear_box_coords(_trigger: Trigger<ClearBoxCoordsEv>, mut box_coords: ResMut<SelectBox>) {
-    box_coords.empty_coords();
-}
-
-fn set_box_coords(
+fn set_drag_select_coords_2(
     _trigger: Trigger<SetBoxCoordsEv>,
-    // input: Res<ButtonInput<MouseButton>>,
     mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
     map_base_q: Query<&GlobalTransform, With<MapBase>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
-    // println!("mouse coords: {:}", mouse_coords.world);
-    // if input.just_pressed(MouseButton::Left) {
-    // box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
-    // box_coords.coords_viewport.upper_2 = mouse_coords.viewport;
-    // box_coords.coords_world.upper_1 = mouse_coords.world;
-    // box_coords.coords_world.upper_2 = mouse_coords.world;
-    // }
-
-    // if input.pressed(MouseButton::Left) {
-    //     // VIEWPORT
     let viewport = box_coords.coords_viewport.clone();
     box_coords.coords_viewport.lower_2 = mouse_coords.viewport;
     box_coords.coords_viewport.upper_2 = Vec2::new(viewport.lower_2.x, viewport.upper_1.y);
@@ -112,39 +108,41 @@ fn set_box_coords(
     let plane_origin = map_base_trans.translation();
     let plane = InfinitePlane3d::new(map_base_trans.up());
 
-    let Some(ray_upper_2) = cam.viewport_to_world(cam_trans, box_coords.coords_viewport.upper_2)
+    let Some(ray_top_end) = cam.viewport_to_world(cam_trans, box_coords.coords_viewport.upper_2)
     else {
         return;
     };
 
-    let Some(ray_lower_1) = cam.viewport_to_world(cam_trans, box_coords.coords_viewport.lower_1)
+    let Some(ray_bottom_start) =
+        cam.viewport_to_world(cam_trans, box_coords.coords_viewport.lower_1)
     else {
         return;
     };
 
-    let Some(distance_lower_1) = ray_lower_1.intersect_plane(plane_origin, plane) else {
+    let Some(distance_bottom_start) = ray_bottom_start.intersect_plane(plane_origin, plane) else {
         return;
     };
 
-    let Some(distance_upper_2) = ray_upper_2.intersect_plane(plane_origin, plane) else {
+    let Some(distance_top_end) = ray_top_end.intersect_plane(plane_origin, plane) else {
         return;
     };
 
-    let mut upper_2 = ray_upper_2.get_point(distance_upper_2);
-    let mut lower_1 = ray_lower_1.get_point(distance_lower_1);
-    upper_2.y = 0.2;
-    lower_1.y = 0.2;
+    let mut top_end = ray_top_end.get_point(distance_top_end);
+    let mut bottom_start = ray_bottom_start.get_point(distance_bottom_start);
+    top_end.y = 0.2;
+    bottom_start.y = 0.2;
 
-    // println!("top end: {:?}", upper_2);
     box_coords.coords_world.lower_2 = mouse_coords.world;
     box_coords.coords_world.lower_2.y = 0.2;
-    box_coords.coords_world.lower_1 = lower_1;
-    box_coords.coords_world.upper_2 = upper_2; // THIS IS THE ISSUE
-                                               // }
+    box_coords.coords_world.upper_2 = top_end;
+    box_coords.coords_world.lower_1 = bottom_start;
+}
 
-    // if input.just_released(MouseButton::Left) {
-    //     box_coords.empty_coords();
-    // }
+fn clear_drag_select_coords(
+    _trigger: Trigger<ClearBoxCoordsEv>,
+    mut box_coords: ResMut<SelectBox>,
+) {
+    box_coords.empty_coords();
 }
 
 // referenced https://bevy-cheatbook.github.io/cookbook/cursor2world.html

@@ -10,7 +10,10 @@ impl Plugin for EventPlugin {
 pub struct SetBoxCoordsEv;
 
 #[derive(Event)]
+pub struct SetInitialBoxCoords;
+
+#[derive(Event)]
 pub struct ClearBoxCoordsEv;
 
 #[derive(Event)]
-pub struct DummyTriggerEv;
+pub struct SetDragSelectEv;

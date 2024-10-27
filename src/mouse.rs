@@ -43,6 +43,7 @@ fn handle_mouse_input(
     input: Res<ButtonInput<MouseButton>>,
 ) {
     cmds.trigger(SetDragSelectEv);
+    // if !input.just_released(MouseButton::Left) || game_cmds.drag_select {
 
     if input.just_pressed(MouseButton::Left) {
         cmds.trigger(SetStartBoxCoordsEv);
@@ -230,6 +231,27 @@ pub fn handle_drag_select(
     }
 }
 
+pub fn helper(
+    rapier: Res<RapierContext>,
+    cam: &Camera,
+    cam_trans: &GlobalTransform,
+    viewport: Vec2,
+) -> Option<(Entity, f32)> {
+    let Some(ray) = cam.viewport_to_world(cam_trans, viewport) else {
+        return None;
+    };
+
+    let hit = rapier.cast_ray(
+        ray.origin,
+        ray.direction.into(),
+        f32::MAX,
+        true,
+        QueryFilter::only_dynamic(),
+    );
+
+    return hit;
+}
+
 pub fn single_select(
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
@@ -244,6 +266,7 @@ pub fn single_select(
 
     let (cam, cam_trans) = cam_q.single();
 
+    // let hit = helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
     let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.viewport) else {
         return;
     };

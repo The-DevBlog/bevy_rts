@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextureHandle};
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
+use events::SetUnitDestinationEv;
 
 use super::*;
 use super::{components::*, resources::*};
@@ -11,10 +12,12 @@ impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
             .add_systems(Update, (set_unit_destination, move_unit::<Friendly>));
+        // .observe(set_unit_destination);
     }
 }
 
 pub fn set_unit_destination(
+    // _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
     mut friendly_q: Query<(&mut Destination, &Transform, &Selected), With<Friendly>>,
     input: Res<ButtonInput<MouseButton>>,

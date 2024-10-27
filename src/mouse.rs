@@ -20,7 +20,7 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     set_mouse_coords,
-                    handle_input,
+                    handle_mouse_input,
                     draw_select_box,
                     single_select,
                     set_drag_select,
@@ -37,21 +37,7 @@ impl Plugin for MousePlugin {
     }
 }
 
-fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
-    let drag_threshold = 2.5;
-    let viewport = box_coords.viewport.clone();
-
-    let widths = [
-        (viewport.start_1.x - viewport.start_2.x).abs(),
-        (viewport.start_1.y - viewport.start_2.y).abs(),
-        (viewport.end_1.y - viewport.end_2.y).abs(),
-        (viewport.end_1.y - viewport.end_2.y).abs(),
-    ];
-
-    game_cmds.drag_select = widths.iter().any(|&width| width > drag_threshold);
-}
-
-fn handle_input(
+fn handle_mouse_input(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
@@ -73,6 +59,20 @@ fn handle_input(
     if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
     }
+}
+
+fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
+    let drag_threshold = 2.5;
+    let viewport = box_coords.viewport.clone();
+
+    let widths = [
+        (viewport.start_1.x - viewport.start_2.x).abs(),
+        (viewport.start_1.y - viewport.start_2.y).abs(),
+        (viewport.end_1.y - viewport.end_2.y).abs(),
+        (viewport.end_1.y - viewport.end_2.y).abs(),
+    ];
+
+    game_cmds.drag_select = widths.iter().any(|&width| width > drag_threshold);
 }
 
 fn set_start_select_box_coords(

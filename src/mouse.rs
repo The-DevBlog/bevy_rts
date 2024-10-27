@@ -45,6 +45,7 @@ impl Plugin for MousePlugin {
 fn spawn_cursor(mut cmds: Commands, my_assets: Res<MyAssets>) {
     let cursor = (
         ImageBundle {
+            visibility: Visibility::Hidden,
             image: UiImage::new(my_assets.cursor_relocate.clone()),
             style: Style {
                 width: Val::Px(CURSOR_SIZE),
@@ -58,15 +59,6 @@ fn spawn_cursor(mut cmds: Commands, my_assets: Res<MyAssets>) {
     );
 
     cmds.spawn(cursor);
-}
-
-fn update_cursor_pos(
-    mut cursor_q: Query<(&mut Style, &MyCursor), With<MyCursor>>,
-    mouse_coords: Res<MouseCoords>,
-) {
-    let (mut style, cursor) = cursor_q.get_single_mut().unwrap();
-    style.left = Val::Px(mouse_coords.viewport.x - cursor.size / 2.0);
-    style.top = Val::Px(mouse_coords.viewport.y - cursor.size / 2.0);
 }
 
 fn spawn_select_box(mut cmds: Commands) {
@@ -84,6 +76,15 @@ fn spawn_select_box(mut cmds: Commands) {
     );
 
     cmds.spawn(select_box);
+}
+
+fn update_cursor_pos(
+    mut cursor_q: Query<(&mut Style, &MyCursor), With<MyCursor>>,
+    mouse_coords: Res<MouseCoords>,
+) {
+    let (mut style, cursor) = cursor_q.get_single_mut().unwrap();
+    style.left = Val::Px(mouse_coords.viewport.x - cursor.size / 2.0);
+    style.top = Val::Px(mouse_coords.viewport.y - cursor.size / 2.0);
 }
 
 fn handle_mouse_input(

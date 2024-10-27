@@ -8,7 +8,7 @@ impl Plugin for ResourcesPlugin {
             .init_resource::<SelectBox>()
             .init_resource::<GameCommands>()
             .init_resource::<MyAssets>()
-            .add_systems(PreStartup, setup);
+            .add_systems(PreStartup, add_assets);
     }
 }
 
@@ -82,6 +82,6 @@ pub struct GameCommands {
     pub selected: bool,
 }
 
-fn setup(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
+fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.img_select_border = assets.load("imgs/select_border.png");
 }

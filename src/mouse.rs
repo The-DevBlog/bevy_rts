@@ -1,5 +1,3 @@
-use std::ptr::null;
-
 use bevy::color::palettes::css::{DARK_GRAY, RED};
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
@@ -20,9 +18,9 @@ impl Plugin for MousePlugin {
                 (
                     set_mouse_coords,
                     handle_input,
-                    set_drag_select,
                     draw_drag_select_box,
                     single_select,
+                    set_drag_select,
                     set_selected,
                     deselect_all,
                 )
@@ -55,6 +53,8 @@ fn handle_input(
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
+    cmds.trigger(SetDragSelectEv);
+
     if input.just_pressed(MouseButton::Left) {
         cmds.trigger(SetStartBoxCoordsEv);
     }
@@ -63,8 +63,7 @@ fn handle_input(
         cmds.trigger(SetBoxCoordsEv);
 
         if game_cmds.drag_select {
-            cmds.trigger(SetEndBoxCoordsEv);
-            cmds.trigger(DragSelectEv);
+            cmds.trigger(HandleDragSelectEv);
         }
     }
 
@@ -130,22 +129,6 @@ fn set_mouse_coords(
     mouse_coords.world = coords;
 }
 
-// helper function
-fn get_world_coords(
-    map_base_trans: &GlobalTransform,
-    cam_trans: &GlobalTransform,
-    cam: &Camera,
-    viewport_pos: Vec2,
-) -> Vec3 {
-    let plane_origin = map_base_trans.translation();
-    let plane = InfinitePlane3d::new(map_base_trans.up());
-    let ray = cam.viewport_to_world(cam_trans, viewport_pos).unwrap();
-    let distance = ray.intersect_plane(plane_origin, plane).unwrap();
-    let world_cursor = ray.get_point(distance);
-
-    return world_cursor;
-}
-
 fn spawn_selection_box(mut cmds: Commands) {
     let gray = Color::srgba(0.68, 0.68, 0.68, 0.25);
 
@@ -172,7 +155,6 @@ fn draw_drag_select_box(
     game_cmds: Res<GameCommands>,
 ) {
     let mut style = query.get_single_mut().unwrap();
-
     if !game_cmds.drag_select {
         style.width = Val::ZERO;
         style.border = UiRect::ZERO;
@@ -202,7 +184,7 @@ fn draw_drag_select_box(
 }
 
 pub fn handle_drag_select(
-    _trigger: Trigger<DragSelectEv>,
+    _trigger: Trigger<HandleDragSelectEv>,
     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
     box_coords: Res<SelectBox>,
 ) {
@@ -281,4 +263,18 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
             game_cmds.selected = true;
         }
     }
+}
+
+// helper function
+fn get_world_coords(
+    map_base_trans: &GlobalTransform,
+    cam_trans: &GlobalTransform,
+    cam: &Camera,
+    viewport_pos: Vec2,
+) -> Vec3 {
+    let plane_origin = map_base_trans.translation();
+    let plane = InfinitePlane3d::new(map_base_trans.up());
+    let ray = cam.viewport_to_world(cam_trans, viewport_pos).unwrap();
+    let distance = ray.intersect_plane(plane_origin, plane).unwrap();
+    return ray.get_point(distance);
 }

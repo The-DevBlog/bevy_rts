@@ -7,13 +7,10 @@ pub struct SetBoxCoordsEv;
 pub struct SetStartBoxCoordsEv;
 
 #[derive(Event)]
-pub struct SetEndBoxCoordsEv;
-
-#[derive(Event)]
 pub struct ClearBoxCoordsEv;
 
 #[derive(Event)]
-pub struct DragSelectEv;
+pub struct HandleDragSelectEv;
 
 #[derive(Event)]
-pub struct SetWorldCoordsEv;
+pub struct SetDragSelectEv;

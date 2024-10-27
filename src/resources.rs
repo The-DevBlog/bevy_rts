@@ -25,37 +25,37 @@ pub struct MouseCoords {
 
 #[derive(Resource, Default, Debug)]
 pub struct SelectBox {
-    pub coords_viewport: ViewportCoords,
-    pub coords_world: WorldCoords,
+    pub viewport: Viewport,
+    pub world: World,
 }
 
 impl SelectBox {
     pub fn empty_coords(&mut self) {
-        self.coords_viewport.upper_1 = Vec2::ZERO;
-        self.coords_viewport.upper_2 = Vec2::ZERO;
-        self.coords_viewport.lower_1 = Vec2::ZERO;
-        self.coords_viewport.lower_2 = Vec2::ZERO;
-        self.coords_world.upper_1 = Vec3::ZERO;
-        self.coords_world.upper_2 = Vec3::ZERO;
-        self.coords_world.lower_1 = Vec3::ZERO;
-        self.coords_world.lower_2 = Vec3::ZERO;
+        self.viewport.start_1 = Vec2::ZERO;
+        self.viewport.start_2 = Vec2::ZERO;
+        self.viewport.end_1 = Vec2::ZERO;
+        self.viewport.end_2 = Vec2::ZERO;
+        self.world.start_1 = Vec3::ZERO;
+        self.world.start_2 = Vec3::ZERO;
+        self.world.end_1 = Vec3::ZERO;
+        self.world.end_2 = Vec3::ZERO;
     }
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct ViewportCoords {
-    pub upper_1: Vec2,
-    pub upper_2: Vec2,
-    pub lower_1: Vec2,
-    pub lower_2: Vec2,
+pub struct Viewport {
+    pub start_1: Vec2,
+    pub start_2: Vec2,
+    pub end_1: Vec2,
+    pub end_2: Vec2,
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct WorldCoords {
-    pub upper_1: Vec3,
-    pub upper_2: Vec3,
-    pub lower_1: Vec3,
-    pub lower_2: Vec3,
+pub struct World {
+    pub start_1: Vec3,
+    pub start_2: Vec3,
+    pub end_1: Vec3,
+    pub end_2: Vec3,
 }
 
 #[derive(Resource, Default, Debug)]

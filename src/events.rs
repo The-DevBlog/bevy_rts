@@ -4,7 +4,10 @@ use bevy::prelude::*;
 pub struct SetBoxCoordsEv;
 
 #[derive(Event)]
-pub struct SetInitialBoxCoords;
+pub struct SetStartBoxCoordsEv;
+
+#[derive(Event)]
+pub struct SetEndBoxCoordsEv;
 
 #[derive(Event)]
 pub struct ClearBoxCoordsEv;

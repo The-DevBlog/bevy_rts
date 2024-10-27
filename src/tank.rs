@@ -15,66 +15,6 @@ impl Plugin for TankPlugin {
     }
 }
 
-pub fn set_unit_destination(
-    _trigger: Trigger<SetUnitDestinationEv>,
-    mouse_coords: ResMut<MouseCoords>,
-    mut friendly_q: Query<(&mut Destination, &Transform, &Selected), With<Friendly>>,
-    cam_q: Query<(&Camera, &GlobalTransform)>,
-    rapier_context: Res<RapierContext>,
-) {
-    let (cam, cam_trans) = cam_q.single();
-    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
-
-    // return if selecting another object (select another unit for example)
-    if let Some(_) = hit {
-        return;
-    }
-
-    for (mut friendly_destination, trans, selected) in friendly_q.iter_mut() {
-        if selected.0 {
-            let mut destination = mouse_coords.world;
-            destination.y += trans.scale.y / 2.0; // calculate for entity height
-            friendly_destination.0 = Some(destination);
-            println!("Unit Moving to ({}, {})", destination.x, destination.y);
-        }
-    }
-}
-
-fn move_unit<T: Component>(
-    mut unit_q: Query<
-        (
-            &mut CurrentAction,
-            &mut Transform,
-            &mut ExternalImpulse,
-            &Speed,
-            &mut Destination,
-        ),
-        With<T>,
-    >,
-    time: Res<Time>,
-) {
-    for (mut action, mut trans, mut ext_impulse, speed, mut destination) in unit_q.iter_mut() {
-        if let Some(new_pos) = destination.0 {
-            let distance = new_pos - trans.translation;
-            let direction = Vec3::new(distance.x, 0.0, distance.z).normalize();
-            rotate_towards(&mut trans, direction);
-
-            if distance.length_squared() <= 5.0 {
-                destination.0 = None;
-                action.0 = Action::None;
-            } else {
-                action.0 = Action::Relocate;
-                ext_impulse.impulse += direction * speed.0 * time.delta_seconds();
-            }
-        }
-    }
-}
-
-fn rotate_towards(trans: &mut Transform, direction: Vec3) {
-    let target_yaw = direction.x.atan2(direction.z);
-    trans.rotation = Quat::from_rotation_y(target_yaw);
-}
-
 fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAssets>) {
     let initial_pos = Vec3::new(0.0, 0.0, 0.0);
     let offset = Vec3::new(20.0, 0.0, 20.0);
@@ -119,4 +59,65 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
             count += 1;
         }
     }
+}
+
+pub fn set_unit_destination(
+    _trigger: Trigger<SetUnitDestinationEv>,
+    mouse_coords: ResMut<MouseCoords>,
+    mut friendly_q: Query<(&mut Destination, &Transform, &Selected), With<Friendly>>,
+    cam_q: Query<(&Camera, &GlobalTransform)>,
+    rapier_context: Res<RapierContext>,
+) {
+    let (cam, cam_trans) = cam_q.single();
+    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+
+    // return if selecting another object (select another unit for example)
+    if let Some(_) = hit {
+        return;
+    }
+
+    for (mut friendly_destination, trans, selected) in friendly_q.iter_mut() {
+        if selected.0 {
+            let mut destination = mouse_coords.world;
+            destination.y += trans.scale.y / 2.0; // calculate for entity height
+            friendly_destination.0 = Some(destination);
+            println!("Unit Moving to ({}, {})", destination.x, destination.y);
+        }
+    }
+}
+
+fn move_unit<T: Component>(
+    mut unit_q: Query<
+        (
+            &mut CurrentAction,
+            &mut Transform,
+            &mut ExternalImpulse,
+            &Speed,
+            &mut Destination,
+        ),
+        With<T>,
+    >,
+    time: Res<Time>,
+) {
+    for (mut action, mut trans, mut ext_impulse, speed, mut destination) in unit_q.iter_mut() {
+        // only move the object if it has a destination
+        if let Some(new_pos) = destination.0 {
+            let distance = new_pos - trans.translation;
+            let direction = Vec3::new(distance.x, 0.0, distance.z).normalize();
+            rotate_towards(&mut trans, direction);
+
+            if distance.length_squared() <= 5.0 {
+                destination.0 = None;
+                action.0 = Action::None;
+            } else {
+                action.0 = Action::Relocate;
+                ext_impulse.impulse += direction * speed.0 * time.delta_seconds();
+            }
+        }
+    }
+}
+
+fn rotate_towards(trans: &mut Transform, direction: Vec3) {
+    let target_yaw = direction.x.atan2(direction.z);
+    trans.rotation = Quat::from_rotation_y(target_yaw);
 }

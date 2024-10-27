@@ -17,3 +17,6 @@ pub struct SetDragSelectEv;
 
 #[derive(Event)]
 pub struct SetUnitDestinationEv;
+
+#[derive(Event)]
+pub struct SelectSingleUnitEv;

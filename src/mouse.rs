@@ -1,12 +1,14 @@
 use bevy::color::palettes::css::DARK_GRAY;
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
+use bevy_mod_billboard::BillboardMeshHandle;
+use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 
 use crate::components::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::tank::set_unit_destination;
+use crate::utils;
 
 const SELECT_BOX_COLOR: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const SELECT_BOX_BORDER_COLOR: Srgba = DARK_GRAY;
@@ -19,10 +21,11 @@ impl Plugin for MousePlugin {
             .add_systems(
                 Update,
                 (
+                    border_select_visibility,
                     set_mouse_coords,
                     handle_mouse_input,
                     draw_select_box,
-                    single_select,
+                    // single_select,
                     set_drag_select,
                     set_selected,
                     deselect_all,
@@ -30,11 +33,29 @@ impl Plugin for MousePlugin {
                     .chain()
                     .after(set_unit_destination),
             )
+            .observe(single_select)
             .observe(handle_drag_select)
             .observe(set_start_select_box_coords)
             .observe(set_select_box_coords)
             .observe(clear_drag_select_coords);
     }
+}
+
+fn spawn_select_box(mut cmds: Commands) {
+    let select_box = (
+        NodeBundle {
+            background_color: BackgroundColor(SELECT_BOX_COLOR),
+            border_color: BorderColor(SELECT_BOX_BORDER_COLOR.into()),
+            style: Style {
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            ..default()
+        },
+        SelectionBox,
+    );
+
+    cmds.spawn(select_box);
 }
 
 fn handle_mouse_input(
@@ -58,6 +79,11 @@ fn handle_mouse_input(
 
     if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
+
+        if !game_cmds.drag_select {
+            cmds.trigger(SetUnitDestinationEv);
+            cmds.trigger(SelectSingleUnitEv);
+        }
     }
 }
 
@@ -101,10 +127,10 @@ fn set_select_box_coords(
 
     // Convert each viewport corner to world coordinates based on the current camera view
     let viewport = select_box.viewport.clone();
-    select_box.world.start_1 = get_world_coords(&map_base, cam_trans, cam, viewport.start_1);
-    select_box.world.start_2 = get_world_coords(&map_base, cam_trans, cam, viewport.start_2);
-    select_box.world.end_1 = get_world_coords(&map_base, cam_trans, cam, viewport.end_1);
-    select_box.world.end_2 = get_world_coords(&map_base, cam_trans, cam, viewport.end_2);
+    select_box.world.start_1 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.start_1);
+    select_box.world.start_2 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.start_2);
+    select_box.world.end_1 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.end_1);
+    select_box.world.end_2 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.end_2);
 }
 
 fn clear_drag_select_coords(
@@ -125,27 +151,10 @@ fn set_mouse_coords(
     let Some(viewport_cursor) = window_q.single().cursor_position() else {
         return;
     };
-    let coords = get_world_coords(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
+    let coords = utils::get_world_coords(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
 
     mouse_coords.viewport = viewport_cursor;
     mouse_coords.world = coords;
-}
-
-fn spawn_select_box(mut cmds: Commands) {
-    let select_box = (
-        NodeBundle {
-            background_color: BackgroundColor(SELECT_BOX_COLOR),
-            border_color: BorderColor(SELECT_BOX_BORDER_COLOR.into()),
-            style: Style {
-                position_type: PositionType::Absolute,
-                ..default()
-            },
-            ..default()
-        },
-        SelectionBox,
-    );
-
-    cmds.spawn(select_box);
 }
 
 fn draw_select_box(
@@ -231,30 +240,14 @@ pub fn handle_drag_select(
 }
 
 pub fn single_select(
+    _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     mut select_q: Query<(Entity, &mut Selected), With<Friendly>>,
     mouse_coords: Res<MouseCoords>,
-    input: Res<ButtonInput<MouseButton>>,
-    game_cmds: Res<GameCommands>,
 ) {
-    if !input.just_released(MouseButton::Left) || game_cmds.drag_select {
-        return;
-    }
-
     let (cam, cam_trans) = cam_q.single();
-
-    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.viewport) else {
-        return;
-    };
-
-    let hit = rapier_context.cast_ray(
-        ray.origin,
-        ray.direction.into(),
-        f32::MAX,
-        true,
-        QueryFilter::only_dynamic(),
-    );
+    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
     if let Some((ent, _)) = hit {
         // deselect all currently selected entities
@@ -285,16 +278,25 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
     }
 }
 
-// helper function
-fn get_world_coords(
-    map_base_trans: &GlobalTransform,
-    cam_trans: &GlobalTransform,
-    cam: &Camera,
-    viewport_pos: Vec2,
-) -> Vec3 {
-    let plane_origin = map_base_trans.translation();
-    let plane = InfinitePlane3d::new(map_base_trans.up());
-    let ray = cam.viewport_to_world(cam_trans, viewport_pos).unwrap();
-    let distance = ray.intersect_plane(plane_origin, plane).unwrap();
-    return ray.get_point(distance);
+fn border_select_visibility(
+    friendly_q: Query<(Entity, &Selected), With<Friendly>>,
+    mut border_select_q: Query<
+        (&mut BillboardMeshHandle, &UnitBorderBoxImg),
+        With<UnitBorderBoxImg>,
+    >,
+    children_q: Query<&Children>,
+    mut meshes: ResMut<Assets<Mesh>>,
+) {
+    for (friendly_ent, selected) in friendly_q.iter() {
+        for child in children_q.iter_descendants(friendly_ent) {
+            if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
+                let mut border_xy = Vec2::new(0.0, 0.0);
+                if selected.0 {
+                    border_xy = Vec2::new(border.width, border.height);
+                }
+
+                *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+            }
+        }
+    }
 }

@@ -1,35 +1,36 @@
 use bevy::prelude::*;
-use bevy_mod_billboard::BillboardMeshHandle;
+use bevy_rapier3d::{plugin::RapierContext, prelude::QueryFilter};
 
-use super::components::*;
+pub fn helper(
+    rapier: Res<RapierContext>,
+    cam: &Camera,
+    cam_trans: &GlobalTransform,
+    viewport: Vec2,
+) -> Option<(Entity, f32)> {
+    let Some(ray) = cam.viewport_to_world(cam_trans, viewport) else {
+        return None;
+    };
 
-pub struct UtilsPlugin;
+    let hit = rapier.cast_ray(
+        ray.origin,
+        ray.direction.into(),
+        f32::MAX,
+        true,
+        QueryFilter::only_dynamic(),
+    );
 
-impl Plugin for UtilsPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Update, border_select_visibility);
-    }
+    return hit;
 }
 
-fn border_select_visibility(
-    friendly_q: Query<(Entity, &Selected), With<Friendly>>,
-    mut border_select_q: Query<
-        (&mut BillboardMeshHandle, &UnitBorderBoxImg),
-        With<UnitBorderBoxImg>,
-    >,
-    children_q: Query<&Children>,
-    mut meshes: ResMut<Assets<Mesh>>,
-) {
-    for (friendly_ent, selected) in friendly_q.iter() {
-        for child in children_q.iter_descendants(friendly_ent) {
-            if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
-                let mut border_xy = Vec2::new(0.0, 0.0);
-                if selected.0 {
-                    border_xy = Vec2::new(border.width, border.height);
-                }
-
-                *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
-            }
-        }
-    }
+pub fn get_world_coords(
+    map_base_trans: &GlobalTransform,
+    cam_trans: &GlobalTransform,
+    cam: &Camera,
+    viewport_pos: Vec2,
+) -> Vec3 {
+    let plane_origin = map_base_trans.translation();
+    let plane = InfinitePlane3d::new(map_base_trans.up());
+    let ray = cam.viewport_to_world(cam_trans, viewport_pos).unwrap();
+    let distance = ray.intersect_plane(plane_origin, plane).unwrap();
+    return ray.get_point(distance);
 }

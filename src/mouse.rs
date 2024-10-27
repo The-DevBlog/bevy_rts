@@ -1,61 +1,118 @@
-use bevy::color::palettes::css::DARK_GRAY;
+use bevy::color::palettes::css::{DARK_GRAY, RED};
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
 
+use crate::components::*;
+use crate::events::*;
+use crate::resources::*;
 use crate::tank::set_unit_destination;
 
-use super::components::*;
-use super::resources::*;
+const SELECT_BOX_COLOR: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
+const SELECT_BOX_BORDER_COLOR: Srgba = DARK_GRAY;
 
 pub struct MousePlugin;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_selection_box).add_systems(
-            Update,
-            (
-                set_mouse_coords,
-                set_box_coords,
-                set_drag_select,
-                handle_drag_select,
-                draw_drag_select_box,
-                single_select,
-                set_selected,
-                deselect_all,
+        app.add_systems(Startup, spawn_select_box)
+            .add_systems(
+                Update,
+                (
+                    set_mouse_coords,
+                    handle_input,
+                    draw_select_box,
+                    single_select,
+                    set_drag_select,
+                    set_selected,
+                    deselect_all,
+                )
+                    .chain()
+                    .after(set_unit_destination),
             )
-                .chain()
-                .after(set_unit_destination),
-        );
+            .observe(handle_drag_select)
+            .observe(set_start_drag_select_coords)
+            .observe(set_drag_select_coords)
+            .observe(clear_drag_select_coords);
     }
 }
 
-fn set_drag_select(box_coords: Res<SelectionBoxCoords>, mut game_cmds: ResMut<GameCommands>) {
+fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
-    let width_z = (box_coords.world_start.z - box_coords.world_end.z).abs();
-    let width_x = (box_coords.world_start.x - box_coords.world_end.x).abs();
+    let viewport = box_coords.viewport.clone();
 
-    game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
+    let widths = [
+        (viewport.start_1.x - viewport.start_2.x).abs(),
+        (viewport.start_1.y - viewport.start_2.y).abs(),
+        (viewport.end_1.y - viewport.end_2.y).abs(),
+        (viewport.end_1.y - viewport.end_2.y).abs(),
+    ];
+
+    game_cmds.drag_select = widths.iter().any(|&width| width > drag_threshold);
 }
 
-fn set_box_coords(
-    mut box_coords: ResMut<SelectionBoxCoords>,
+fn handle_input(
+    mut cmds: Commands,
+    game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
-    mouse_coords: Res<MouseCoords>,
 ) {
+    cmds.trigger(SetDragSelectEv);
+
     if input.just_pressed(MouseButton::Left) {
-        box_coords.world_start = mouse_coords.world;
-        box_coords.viewport_start = mouse_coords.viewport;
+        cmds.trigger(SetStartBoxCoordsEv);
     }
 
     if input.pressed(MouseButton::Left) {
-        box_coords.viewport_end = mouse_coords.viewport;
-        box_coords.world_end = mouse_coords.world;
+        cmds.trigger(SetBoxCoordsEv);
+
+        if game_cmds.drag_select {
+            cmds.trigger(HandleDragSelectEv);
+        }
     }
 
     if input.just_released(MouseButton::Left) {
-        box_coords.empty();
+        cmds.trigger(ClearBoxCoordsEv);
     }
+}
+
+fn set_start_drag_select_coords(
+    _trigger: Trigger<SetStartBoxCoordsEv>,
+    mut box_coords: ResMut<SelectBox>,
+    mouse_coords: Res<MouseCoords>,
+) {
+    box_coords.viewport.initialize_coords(mouse_coords.viewport);
+    box_coords.world.initialize_coords(mouse_coords.world);
+}
+
+fn set_drag_select_coords(
+    _trigger: Trigger<SetBoxCoordsEv>,
+    mut select_box: ResMut<SelectBox>,
+    mouse_coords: Res<MouseCoords>,
+    map_base_q: Query<&GlobalTransform, With<MapBase>>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
+) {
+    let viewport = select_box.viewport.clone();
+    select_box.viewport.end_2 = mouse_coords.viewport;
+    select_box.viewport.start_2 = Vec2::new(viewport.end_2.x, viewport.start_1.y);
+    select_box.viewport.end_1 = Vec2::new(viewport.start_1.x, viewport.end_2.y);
+    select_box.world.end_2 = mouse_coords.world;
+    select_box.world.end_2.y = 0.2;
+
+    let map_base = map_base_q.single();
+    let cam = cam_q.single();
+
+    let world_start_2 = get_world_coords(&map_base, &cam.1, &cam.0, select_box.viewport.start_2);
+    let world_end_1 = get_world_coords(&map_base, &cam.1, &cam.0, select_box.viewport.end_1);
+
+    select_box.world.start_2 = world_start_2;
+    select_box.world.end_1 = world_end_1;
+}
+
+fn clear_drag_select_coords(
+    _trigger: Trigger<ClearBoxCoordsEv>,
+    mut box_coords: ResMut<SelectBox>,
+) {
+    box_coords.empty_coords();
 }
 
 // referenced https://bevy-cheatbook.github.io/cookbook/cursor2world.html
@@ -66,35 +123,21 @@ fn set_mouse_coords(
     map_base_q: Query<&GlobalTransform, With<MapBase>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
-    let map_base_trans = map_base_q.single();
-    let window = window_q.single();
-    let Some(local_cursor) = window.cursor_position() else {
+    let Some(viewport_cursor) = window_q.single().cursor_position() else {
         return;
     };
+    let coords = get_world_coords(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
 
-    let plane_origin = map_base_trans.translation();
-    let plane = InfinitePlane3d::new(map_base_trans.up());
-    let Some(ray) = cam.viewport_to_world(cam_trans, local_cursor) else {
-        return;
-    };
-    let Some(distance) = ray.intersect_plane(plane_origin, plane) else {
-        return;
-    };
-    let global_cursor = ray.get_point(distance);
-
-    mouse_coords.world = global_cursor;
-    mouse_coords.viewport = local_cursor;
+    mouse_coords.viewport = viewport_cursor;
+    mouse_coords.world = coords;
 }
 
-fn spawn_selection_box(mut commands: Commands) {
-    let gray = Color::srgba(0.68, 0.68, 0.68, 0.25);
-
-    let selection_box = (
+fn spawn_select_box(mut cmds: Commands) {
+    let select_box = (
         NodeBundle {
-            background_color: BackgroundColor(gray),
-            border_color: BorderColor(DARK_GRAY.into()),
+            background_color: BackgroundColor(SELECT_BOX_COLOR),
+            border_color: BorderColor(SELECT_BOX_BORDER_COLOR.into()),
             style: Style {
-                // border: UiRect::all(Val::Percent(2.0)),
                 position_type: PositionType::Absolute,
                 ..default()
             },
@@ -103,69 +146,87 @@ fn spawn_selection_box(mut commands: Commands) {
         SelectionBox,
     );
 
-    commands.spawn(selection_box);
+    cmds.spawn(select_box);
 }
 
-fn draw_drag_select_box(
+fn draw_select_box(
+    mut gizmos: Gizmos,
     mut query: Query<&mut Style, With<SelectionBox>>,
-    box_coords: Res<SelectionBoxCoords>,
+    box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
 ) {
     let mut style = query.get_single_mut().unwrap();
-
     if !game_cmds.drag_select {
         style.width = Val::ZERO;
         style.border = UiRect::ZERO;
         return;
     }
 
-    let start = box_coords.viewport_start;
-    let end = box_coords.viewport_end;
+    let start = box_coords.viewport.start_1;
+    let end = box_coords.viewport.end_2;
 
     let min_x = start.x.min(end.x);
     let max_x = start.x.max(end.x);
     let min_y = start.y.min(end.y);
     let max_y = start.y.max(end.y);
 
-    println!(
-        "min_x: {}, max_x: {}, min_y: {}, max_y: {}",
-        min_x, max_x, min_y, max_y
-    );
-
     style.border = UiRect::all(Val::Percent(0.1));
     style.left = Val::Px(min_x);
     style.top = Val::Px(min_y);
     style.width = Val::Px(max_x - min_x);
     style.height = Val::Px(max_y - min_y);
+
+    // debug purposes only. This will draw
+    let color = RED;
+    let world = box_coords.world.clone();
+    gizmos.line(world.start_1, world.start_2, color); // top
+    gizmos.line(world.end_1, world.end_2, color); // bottom
+    gizmos.line(world.start_2, world.end_2, color); // side
+    gizmos.line(world.start_1, world.end_1, color); // side
 }
 
 pub fn handle_drag_select(
+    _trigger: Trigger<HandleDragSelectEv>,
     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
-    box_coords: Res<SelectionBoxCoords>,
-    game_cmds: Res<GameCommands>,
+    box_coords: Res<SelectBox>,
 ) {
-    // println!("{:?}", box_coords);
-
-    if !game_cmds.drag_select {
-        return;
+    fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
+        v1.x * v2.z - v1.z * v2.x
     }
 
-    let start = box_coords.world_start;
-    let end = box_coords.world_end;
+    // 4 corners of select box
+    let a = box_coords.world.start_1;
+    let b = box_coords.world.start_2;
+    let c = box_coords.world.end_2;
+    let d = box_coords.world.end_1;
 
-    let min_x = start.x.min(end.x);
-    let max_x = start.x.max(end.x);
-    let min_z = start.z.min(end.z);
-    let max_z = start.z.max(end.z);
-
+    // check to see if units are within selection rectangle
     for (friendly_trans, mut selected) in friendly_q.iter_mut() {
-        // check to see if units are within selection rectangle
         let unit_pos = friendly_trans.translation;
-        let in_box_bounds = unit_pos.x >= min_x
-            && unit_pos.x <= max_x
-            && unit_pos.z >= min_z
-            && unit_pos.z <= max_z;
 
+        // Calculate cross products for each edge
+        let ab = b - a;
+        let ap = unit_pos - a;
+        let bc = c - b;
+        let bp = unit_pos - b;
+        let cd = d - c;
+        let cp = unit_pos - c;
+        let da = a - d;
+        let dp = unit_pos - d;
+
+        let cross_ab_ap = cross_product(ab, ap);
+        let cross_bc_bp = cross_product(bc, bp);
+        let cross_cd_cp = cross_product(cd, cp);
+        let cross_da_dp = cross_product(da, dp);
+
+        // Check if all cross products have the same sign
+        let in_box_bounds = (cross_ab_ap > 0.0
+            && cross_bc_bp > 0.0
+            && cross_cd_cp > 0.0
+            && cross_da_dp > 0.0)
+            || (cross_ab_ap < 0.0 && cross_bc_bp < 0.0 && cross_cd_cp < 0.0 && cross_da_dp < 0.0);
+
+        // Set the selection status
         selected.0 = in_box_bounds;
     }
 }
@@ -223,4 +284,18 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
             game_cmds.selected = true;
         }
     }
+}
+
+// helper function
+fn get_world_coords(
+    map_base_trans: &GlobalTransform,
+    cam_trans: &GlobalTransform,
+    cam: &Camera,
+    viewport_pos: Vec2,
+) -> Vec3 {
+    let plane_origin = map_base_trans.translation();
+    let plane = InfinitePlane3d::new(map_base_trans.up());
+    let ray = cam.viewport_to_world(cam_trans, viewport_pos).unwrap();
+    let distance = ray.intersect_plane(plane_origin, plane).unwrap();
+    return ray.get_point(distance);
 }

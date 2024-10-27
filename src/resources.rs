@@ -5,7 +5,7 @@ pub struct ResourcesPlugin;
 impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseCoords>()
-            .init_resource::<SelectionBoxCoords>()
+            .init_resource::<SelectBox>()
             .init_resource::<GameCommands>()
             .init_resource::<MyAssets>()
             .add_systems(PreStartup, setup);
@@ -24,19 +24,55 @@ pub struct MouseCoords {
 }
 
 #[derive(Resource, Default, Debug)]
-pub struct SelectionBoxCoords {
-    pub world_start: Vec3,
-    pub world_end: Vec3,
-    pub viewport_start: Vec2,
-    pub viewport_end: Vec2,
+pub struct SelectBox {
+    pub viewport: Viewport,
+    pub world: World,
 }
 
-impl SelectionBoxCoords {
-    pub fn empty(&mut self) {
-        self.viewport_start = Vec2::ZERO;
-        self.viewport_end = Vec2::ZERO;
-        self.world_start = Vec3::ZERO;
-        self.world_end = Vec3::ZERO;
+impl SelectBox {
+    pub fn empty_coords(&mut self) {
+        self.viewport.start_1 = Vec2::ZERO;
+        self.viewport.start_2 = Vec2::ZERO;
+        self.viewport.end_1 = Vec2::ZERO;
+        self.viewport.end_2 = Vec2::ZERO;
+        self.world.start_1 = Vec3::ZERO;
+        self.world.start_2 = Vec3::ZERO;
+        self.world.end_1 = Vec3::ZERO;
+        self.world.end_2 = Vec3::ZERO;
+    }
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct Viewport {
+    pub start_1: Vec2,
+    pub start_2: Vec2,
+    pub end_1: Vec2,
+    pub end_2: Vec2,
+}
+
+impl Viewport {
+    pub fn initialize_coords(&mut self, coords: Vec2) {
+        self.start_1 = coords;
+        self.start_2 = coords;
+        self.end_1 = coords;
+        self.end_2 = coords;
+    }
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct World {
+    pub start_1: Vec3,
+    pub start_2: Vec3,
+    pub end_1: Vec3,
+    pub end_2: Vec3,
+}
+
+impl World {
+    pub fn initialize_coords(&mut self, coords: Vec3) {
+        self.start_1 = coords;
+        self.start_2 = coords;
+        self.end_1 = coords;
+        self.end_2 = coords;
     }
 }
 

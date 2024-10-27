@@ -1,12 +1,14 @@
 use bevy::color::palettes::css::DARK_GRAY;
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
+use bevy_mod_billboard::BillboardMeshHandle;
+use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 
 use crate::components::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::tank::set_unit_destination;
+use crate::utils;
 
 const SELECT_BOX_COLOR: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const SELECT_BOX_BORDER_COLOR: Srgba = DARK_GRAY;
@@ -19,6 +21,7 @@ impl Plugin for MousePlugin {
             .add_systems(
                 Update,
                 (
+                    border_select_visibility,
                     set_mouse_coords,
                     handle_mouse_input,
                     draw_select_box,
@@ -43,7 +46,6 @@ fn handle_mouse_input(
     input: Res<ButtonInput<MouseButton>>,
 ) {
     cmds.trigger(SetDragSelectEv);
-    // if !input.just_released(MouseButton::Left) || game_cmds.drag_select {
 
     if input.just_pressed(MouseButton::Left) {
         cmds.trigger(SetStartBoxCoordsEv);
@@ -59,6 +61,10 @@ fn handle_mouse_input(
 
     if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
+
+        if !game_cmds.drag_select {
+            cmds.trigger(SetUnitDestinationEv);
+        }
     }
 }
 
@@ -231,27 +237,6 @@ pub fn handle_drag_select(
     }
 }
 
-pub fn helper(
-    rapier: Res<RapierContext>,
-    cam: &Camera,
-    cam_trans: &GlobalTransform,
-    viewport: Vec2,
-) -> Option<(Entity, f32)> {
-    let Some(ray) = cam.viewport_to_world(cam_trans, viewport) else {
-        return None;
-    };
-
-    let hit = rapier.cast_ray(
-        ray.origin,
-        ray.direction.into(),
-        f32::MAX,
-        true,
-        QueryFilter::only_dynamic(),
-    );
-
-    return hit;
-}
-
 pub fn single_select(
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
@@ -265,19 +250,7 @@ pub fn single_select(
     }
 
     let (cam, cam_trans) = cam_q.single();
-
-    // let hit = helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
-    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.viewport) else {
-        return;
-    };
-
-    let hit = rapier_context.cast_ray(
-        ray.origin,
-        ray.direction.into(),
-        f32::MAX,
-        true,
-        QueryFilter::only_dynamic(),
-    );
+    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
     if let Some((ent, _)) = hit {
         // deselect all currently selected entities
@@ -304,6 +277,29 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
     for selected in select_q.iter() {
         if selected.0 {
             game_cmds.selected = true;
+        }
+    }
+}
+
+fn border_select_visibility(
+    friendly_q: Query<(Entity, &Selected), With<Friendly>>,
+    mut border_select_q: Query<
+        (&mut BillboardMeshHandle, &UnitBorderBoxImg),
+        With<UnitBorderBoxImg>,
+    >,
+    children_q: Query<&Children>,
+    mut meshes: ResMut<Assets<Mesh>>,
+) {
+    for (friendly_ent, selected) in friendly_q.iter() {
+        for child in children_q.iter_descendants(friendly_ent) {
+            if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
+                let mut border_xy = Vec2::new(0.0, 0.0);
+                if selected.0 {
+                    border_xy = Vec2::new(border.width, border.height);
+                }
+
+                *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+            }
         }
     }
 }

@@ -3,59 +3,43 @@ use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextur
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 use events::SetUnitDestinationEv;
 
-use super::*;
-use super::{components::*, resources::*};
+use crate::utils;
+use crate::*;
+use crate::{components::*, resources::*};
 
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
-            .add_systems(Update, (set_unit_destination, move_unit::<Friendly>));
-        // .observe(set_unit_destination);
+            // .add_systems(Update, (set_unit_destination, move_unit::<Friendly>));
+            .add_systems(Update, move_unit::<Friendly>)
+            .observe(set_unit_destination);
     }
 }
 
 pub fn set_unit_destination(
-    // _trigger: Trigger<SetUnitDestinationEv>,
+    _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
     mut friendly_q: Query<(&mut Destination, &Transform, &Selected), With<Friendly>>,
-    input: Res<ButtonInput<MouseButton>>,
-    game_cmds: Res<GameCommands>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     rapier_context: Res<RapierContext>,
 ) {
-    if !input.just_released(MouseButton::Left) || game_cmds.drag_select {
-        return;
-    }
-
     let (cam, cam_trans) = cam_q.single();
+    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
-    let Some(ray) = cam.viewport_to_world(cam_trans, mouse_coords.viewport) else {
-        return;
-    };
-
-    let hit = rapier_context.cast_ray(
-        ray.origin,
-        ray.direction.into(),
-        f32::MAX,
-        true,
-        QueryFilter::only_dynamic(),
-    );
-
+    // return if selecting another object (select another unit for example)
     if let Some(_) = hit {
         return;
     }
 
     for (mut friendly_destination, trans, selected) in friendly_q.iter_mut() {
-        if !selected.0 {
-            continue;
+        if selected.0 {
+            let mut destination = mouse_coords.world;
+            destination.y += trans.scale.y / 2.0; // calculate for entity height
+            friendly_destination.0 = Some(destination);
+            println!("Unit Moving to ({}, {})", destination.x, destination.y);
         }
-
-        let mut destination = mouse_coords.world;
-        destination.y += trans.scale.y / 2.0; // calculate for entity height
-        friendly_destination.0 = Some(destination);
-        println!("Unit Moving to ({}, {})", destination.x, destination.y);
     }
 }
 

@@ -21,7 +21,6 @@ use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
 use tank::TankPlugin;
-use utils::UtilsPlugin;
 
 const TANK_COUNT: usize = 25;
 const MAP_SIZE: f32 = 800.0;
@@ -40,7 +39,6 @@ fn main() {
             CameraPlugin,
             MapPlugin,
             MousePlugin,
-            UtilsPlugin,
             TankPlugin,
         ))
         .run();

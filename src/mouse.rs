@@ -8,17 +8,20 @@ use crate::events::*;
 use crate::resources::*;
 use crate::tank::set_unit_destination;
 
+const SELECT_BOX_COLOR: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
+const SELECT_BOX_BORDER_COLOR: Srgba = DARK_GRAY;
+
 pub struct MousePlugin;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_selection_box)
+        app.add_systems(Startup, spawn_select_box)
             .add_systems(
                 Update,
                 (
                     set_mouse_coords,
                     handle_input,
-                    draw_drag_select_box,
+                    draw_select_box,
                     single_select,
                     set_drag_select,
                     set_selected,
@@ -129,13 +132,11 @@ fn set_mouse_coords(
     mouse_coords.world = coords;
 }
 
-fn spawn_selection_box(mut cmds: Commands) {
-    let gray = Color::srgba(0.68, 0.68, 0.68, 0.25);
-
-    let selection_box = (
+fn spawn_select_box(mut cmds: Commands) {
+    let select_box = (
         NodeBundle {
-            background_color: BackgroundColor(gray),
-            border_color: BorderColor(DARK_GRAY.into()),
+            background_color: BackgroundColor(SELECT_BOX_COLOR),
+            border_color: BorderColor(SELECT_BOX_BORDER_COLOR.into()),
             style: Style {
                 position_type: PositionType::Absolute,
                 ..default()
@@ -145,10 +146,10 @@ fn spawn_selection_box(mut cmds: Commands) {
         SelectionBox,
     );
 
-    cmds.spawn(selection_box);
+    cmds.spawn(select_box);
 }
 
-fn draw_drag_select_box(
+fn draw_select_box(
     mut gizmos: Gizmos,
     mut query: Query<&mut Style, With<SelectionBox>>,
     box_coords: Res<SelectBox>,
@@ -175,6 +176,7 @@ fn draw_drag_select_box(
     style.width = Val::Px(max_x - min_x);
     style.height = Val::Px(max_y - min_y);
 
+    // debug purposes only. This will draw
     let color = RED;
     let world = box_coords.world.clone();
     gizmos.line(world.start_1, world.start_2, color); // top
@@ -183,83 +185,49 @@ fn draw_drag_select_box(
     gizmos.line(world.start_1, world.end_1, color); // side
 }
 
-// pub fn handle_drag_select(
-//     _trigger: Trigger<HandleDragSelectEv>,
-//     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
-//     box_coords: Res<SelectBox>,
-// ) {
-//     // println!("{:?}", box_coords.world);
-
-//     let start = box_coords.world.start_1;
-//     let end = box_coords.world.start_2;
-
-//     let min_x = start.x.min(end.x);
-//     let max_x = start.x.max(end.x);
-//     let min_z = start.z.min(end.z);
-//     let max_z = start.z.max(end.z);
-
-//     for (friendly_trans, mut selected) in friendly_q.iter_mut() {
-//         // check to see if units are within selection rectangle
-//         let unit_pos = friendly_trans.translation;
-//         let in_box_bounds = unit_pos.x >= min_x
-//             && unit_pos.x <= max_x
-//             && unit_pos.z >= min_z
-//             && unit_pos.z <= max_z;
-
-//         selected.0 = in_box_bounds;
-//     }
-// }
-
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
     box_coords: Res<SelectBox>,
 ) {
-    // Helper to compute the cross product of two vectors
-    fn cross_product(v1: Vec2, v2: Vec2) -> f32 {
-        v1.x * v2.y - v1.y * v2.x
+    fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
+        v1.x * v2.z - v1.z * v2.x
     }
 
-    // a = start_1
-    // b = start_2
-    // c = end_1
-    // d = end_2
+    // 4 corners of select box
+    let a = box_coords.world.start_1;
+    let b = box_coords.world.start_2;
+    let c = box_coords.world.end_2;
+    let d = box_coords.world.end_1;
 
-    // Calculate vectors for each edge and point to edge start
-    let ab = box_coords.world.start_1 - box_coords.world.start_2;
-    let bc = box_coords.world.end_1 - box_coords.world.start_2;
-    let cd = box_coords.world.end_2 - box_coords.world.end_1;
-    let da = box_coords.world.start_1 - box_coords.world.end_2;
-
+    // check to see if units are within selection rectangle
     for (friendly_trans, mut selected) in friendly_q.iter_mut() {
-        // check to see if units are within selection rectangle
         let unit_pos = friendly_trans.translation;
 
-        let ap = unit_pos - box_coords.world.start_1;
-        let bp = unit_pos - box_coords.world.start_2;
-        let cp = unit_pos - box_coords.world.end_1;
-        let dp = unit_pos - box_coords.world.end_2;
+        // Calculate cross products for each edge
+        let ab = b - a;
+        let ap = unit_pos - a;
+        let bc = c - b;
+        let bp = unit_pos - b;
+        let cd = d - c;
+        let cp = unit_pos - c;
+        let da = a - d;
+        let dp = unit_pos - d;
 
-        // Check the cross products
-        let cross1 = cross_product(Vec2::new(ab.x, ab.z), Vec2::new(ap.x, ap.z));
-        let cross2 = cross_product(Vec2::new(bc.x, bc.z), Vec2::new(bp.x, bp.z));
-        let cross3 = cross_product(Vec2::new(cd.x, cd.z), Vec2::new(cp.x, cp.z));
-        let cross4 = cross_product(Vec2::new(da.x, da.z), Vec2::new(dp.x, dp.z));
+        let cross_ab_ap = cross_product(ab, ap);
+        let cross_bc_bp = cross_product(bc, bp);
+        let cross_cd_cp = cross_product(cd, cp);
+        let cross_da_dp = cross_product(da, dp);
 
-        // All cross products should have the same sign (either all positive or all negative)
-        if (cross1 > 0.0 && cross2 > 0.0 && cross3 > 0.0 && cross4 > 0.0)
-            || (cross1 < 0.0 && cross2 < 0.0 && cross3 < 0.0 && cross4 < 0.0)
-        {
-            selected.0 = true;
-        } else {
-            selected.0 = false;
-        }
-        // let in_box_bounds = unit_pos.x >= min_x
-        //     && unit_pos.x <= max_x
-        //     && unit_pos.z >= min_z
-        //     && unit_pos.z <= max_z;
+        // Check if all cross products have the same sign
+        let in_box_bounds = (cross_ab_ap > 0.0
+            && cross_bc_bp > 0.0
+            && cross_cd_cp > 0.0
+            && cross_da_dp > 0.0)
+            || (cross_ab_ap < 0.0 && cross_bc_bp < 0.0 && cross_cd_cp < 0.0 && cross_da_dp < 0.0);
 
-        // selected.0 = in_box_bounds;
+        // Set the selection status
+        selected.0 = in_box_bounds;
     }
 }
 

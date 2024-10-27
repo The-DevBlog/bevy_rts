@@ -50,12 +50,30 @@ pub struct Viewport {
     pub end_2: Vec2,
 }
 
+impl Viewport {
+    pub fn initialize_coords(&mut self, coords: Vec2) {
+        self.start_1 = coords;
+        self.start_2 = coords;
+        self.end_1 = coords;
+        self.end_2 = coords;
+    }
+}
+
 #[derive(Default, Debug, Clone)]
 pub struct World {
     pub start_1: Vec3,
     pub start_2: Vec3,
     pub end_1: Vec3,
     pub end_2: Vec3,
+}
+
+impl World {
+    pub fn initialize_coords(&mut self, coords: Vec3) {
+        self.start_1 = coords;
+        self.start_2 = coords;
+        self.end_1 = coords;
+        self.end_2 = coords;
+    }
 }
 
 #[derive(Resource, Default, Debug)]

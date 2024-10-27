@@ -53,6 +53,7 @@ fn handle_input(
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
+    println!("{}", game_cmds.drag_select);
     cmds.trigger(SetDragSelectEv);
 
     if input.just_pressed(MouseButton::Left) {
@@ -77,8 +78,8 @@ fn set_start_drag_select_coords(
     mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
 ) {
-    box_coords.viewport.start_1 = mouse_coords.viewport;
-    box_coords.world.start_1 = mouse_coords.world;
+    box_coords.viewport.initialize_coords(mouse_coords.viewport);
+    box_coords.world.initialize_coords(mouse_coords.world);
 }
 
 fn set_drag_select_coords(

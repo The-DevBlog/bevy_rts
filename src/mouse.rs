@@ -3,11 +3,10 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
 
-use crate::events::{ClearBoxCoordsEv, SetBoxCoordsEv, SetDragSelectEv, SetInitialBoxCoords};
+use crate::components::*;
+use crate::events::*;
+use crate::resources::*;
 use crate::tank::set_unit_destination;
-
-use super::components::*;
-use super::resources::*;
 
 pub struct MousePlugin;
 
@@ -19,8 +18,7 @@ impl Plugin for MousePlugin {
                 (
                     set_mouse_coords,
                     handle_input,
-                    // set_drag_select,
-                    handle_drag_select,
+                    set_drag_select,
                     draw_drag_select_box,
                     single_select,
                     set_selected,
@@ -29,18 +27,14 @@ impl Plugin for MousePlugin {
                     .chain()
                     .after(set_unit_destination),
             )
-            .observe(set_drag_select)
+            .observe(handle_drag_select)
+            .observe(set_starting_point_drag_select_coords)
             .observe(set_drag_select_coords)
-            .observe(set_drag_select_coords_2)
             .observe(clear_drag_select_coords);
     }
 }
 
-fn set_drag_select(
-    _trigger: Trigger<SetDragSelectEv>,
-    box_coords: Res<SelectBox>,
-    mut game_cmds: ResMut<GameCommands>,
-) {
+fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
     let world = box_coords.coords_world.clone();
     let width_z = (world.upper_1.z - world.upper_2.z).abs();
@@ -48,32 +42,26 @@ fn set_drag_select(
 
     let t = width_z > drag_threshold || width_x > drag_threshold;
     if t {
-        println!("{}", t);
+        println!("width z: {:?}, width x: {:?}", width_z, width_x);
     }
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
 
-// fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
-//     let drag_threshold = 2.5;
-//     let world = box_coords.coords_world.clone();
-//     let width_z = (world.upper_1.z - world.upper_2.z).abs();
-//     let width_x = (world.upper_1.x - world.upper_2.x).abs();
-
-//     let t = width_z > drag_threshold || width_x > drag_threshold;
-//     if t {
-//         println!("{}", t);
-//     }
-//     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
-// }
-
-fn handle_input(mut cmds: Commands, input: Res<ButtonInput<MouseButton>>) {
+fn handle_input(
+    mut cmds: Commands,
+    game_cmds: Res<GameCommands>,
+    input: Res<ButtonInput<MouseButton>>,
+) {
     if input.just_pressed(MouseButton::Left) {
         cmds.trigger(SetInitialBoxCoords);
     }
 
     if input.pressed(MouseButton::Left) {
-        cmds.trigger(SetDragSelectEv);
         cmds.trigger(SetBoxCoordsEv);
+
+        if game_cmds.drag_select {
+            cmds.trigger(DragSelectEv);
+        }
     }
 
     if input.just_released(MouseButton::Left) {
@@ -81,7 +69,7 @@ fn handle_input(mut cmds: Commands, input: Res<ButtonInput<MouseButton>>) {
     }
 }
 
-fn set_drag_select_coords(
+fn set_starting_point_drag_select_coords(
     _trigger: Trigger<SetInitialBoxCoords>,
     mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
@@ -90,7 +78,7 @@ fn set_drag_select_coords(
     box_coords.coords_world.upper_1 = mouse_coords.world;
 }
 
-fn set_drag_select_coords_2(
+fn set_drag_select_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
@@ -229,15 +217,11 @@ fn draw_drag_select_box(
 }
 
 pub fn handle_drag_select(
+    _trigger: Trigger<DragSelectEv>,
     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
     box_coords: Res<SelectBox>,
-    game_cmds: Res<GameCommands>,
 ) {
     // println!("{:?}", box_coords);
-
-    if !game_cmds.drag_select {
-        return;
-    }
 
     let start = box_coords.coords_world.upper_1;
     let end = box_coords.coords_world.upper_2;

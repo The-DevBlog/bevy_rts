@@ -17,7 +17,6 @@ mod tank;
 mod utils;
 
 use camera::CameraPlugin;
-use events::EventPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
@@ -37,7 +36,6 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
             ResourcesPlugin,
-            EventPlugin,
             BillboardPlugin,
             CameraPlugin,
             MapPlugin,

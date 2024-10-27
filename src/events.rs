@@ -1,11 +1,5 @@
 use bevy::prelude::*;
 
-pub struct EventPlugin;
-
-impl Plugin for EventPlugin {
-    fn build(&self, app: &mut App) {}
-}
-
 #[derive(Event)]
 pub struct SetBoxCoordsEv;
 
@@ -16,4 +10,4 @@ pub struct SetInitialBoxCoords;
 pub struct ClearBoxCoordsEv;
 
 #[derive(Event)]
-pub struct SetDragSelectEv;
+pub struct DragSelectEv;

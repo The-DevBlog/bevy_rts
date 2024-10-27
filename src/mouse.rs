@@ -31,8 +31,8 @@ impl Plugin for MousePlugin {
                     .after(set_unit_destination),
             )
             .observe(handle_drag_select)
-            .observe(set_start_drag_select_coords)
-            .observe(set_drag_select_coords)
+            .observe(set_start_select_box_coords)
+            .observe(set_select_box_coords)
             .observe(clear_drag_select_coords);
     }
 }
@@ -75,7 +75,7 @@ fn handle_input(
     }
 }
 
-fn set_start_drag_select_coords(
+fn set_start_select_box_coords(
     _trigger: Trigger<SetStartBoxCoordsEv>,
     mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
@@ -84,7 +84,7 @@ fn set_start_drag_select_coords(
     box_coords.world.initialize_coords(mouse_coords.world);
 }
 
-fn set_drag_select_coords(
+fn set_select_box_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut select_box: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
@@ -95,17 +95,16 @@ fn set_drag_select_coords(
     select_box.viewport.end_2 = mouse_coords.viewport;
     select_box.viewport.start_2 = Vec2::new(viewport.end_2.x, viewport.start_1.y);
     select_box.viewport.end_1 = Vec2::new(viewport.start_1.x, viewport.end_2.y);
-    select_box.world.end_2 = mouse_coords.world;
-    select_box.world.end_2.y = 0.2;
 
     let map_base = map_base_q.single();
-    let cam = cam_q.single();
+    let (cam, cam_trans) = cam_q.single();
 
-    let world_start_2 = get_world_coords(&map_base, &cam.1, &cam.0, select_box.viewport.start_2);
-    let world_end_1 = get_world_coords(&map_base, &cam.1, &cam.0, select_box.viewport.end_1);
-
-    select_box.world.start_2 = world_start_2;
-    select_box.world.end_1 = world_end_1;
+    // Convert each viewport corner to world coordinates based on the current camera view
+    let viewport = select_box.viewport.clone();
+    select_box.world.start_1 = get_world_coords(&map_base, cam_trans, cam, viewport.start_1);
+    select_box.world.start_2 = get_world_coords(&map_base, cam_trans, cam, viewport.start_2);
+    select_box.world.end_1 = get_world_coords(&map_base, cam_trans, cam, viewport.end_1);
+    select_box.world.end_2 = get_world_coords(&map_base, cam_trans, cam, viewport.end_2);
 }
 
 fn clear_drag_select_coords(

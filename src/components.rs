@@ -20,6 +20,11 @@ impl UnitBorderBoxImg {
 }
 
 #[derive(Component)]
+pub struct MyCursor {
+    pub size: f32,
+}
+
+#[derive(Component)]
 pub struct SelectionBox;
 
 #[derive(Component)]

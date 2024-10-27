@@ -14,7 +14,8 @@ impl Plugin for ResourcesPlugin {
 
 #[derive(Resource, Default)]
 pub struct MyAssets {
-    pub img_select_border: Handle<Image>,
+    pub select_border: Handle<Image>,
+    pub cursor_relocate: Handle<Image>,
 }
 
 #[derive(Resource, Default, Debug)]
@@ -83,5 +84,6 @@ pub struct GameCommands {
 }
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
-    my_assets.img_select_border = assets.load("imgs/select_border.png");
+    my_assets.select_border = assets.load("imgs/select_border.png");
+    my_assets.cursor_relocate = assets.load("imgs/cursor/relocate.png");
 }

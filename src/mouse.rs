@@ -1,14 +1,16 @@
 use bevy::color::palettes::css::DARK_GRAY;
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_mod_billboard::BillboardMeshHandle;
+use bevy_mod_billboard::{
+    BillboardDepth, BillboardMeshHandle, BillboardTextureBundle, BillboardTextureHandle,
+};
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 
-use crate::components::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::tank::set_unit_destination;
 use crate::utils;
+use crate::{components::*, CURSOR_SIZE};
 
 const SELECT_BOX_COLOR: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const SELECT_BOX_BORDER_COLOR: Srgba = DARK_GRAY;
@@ -17,15 +19,14 @@ pub struct MousePlugin;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_select_box)
+        app.add_systems(Startup, (spawn_select_box, spawn_cursor))
+            .add_systems(PreUpdate, (set_mouse_coords, update_cursor_pos).chain())
             .add_systems(
                 Update,
                 (
                     border_select_visibility,
-                    set_mouse_coords,
                     handle_mouse_input,
                     draw_select_box,
-                    // single_select,
                     set_drag_select,
                     set_selected,
                     deselect_all,
@@ -39,6 +40,33 @@ impl Plugin for MousePlugin {
             .observe(set_select_box_coords)
             .observe(clear_drag_select_coords);
     }
+}
+
+fn spawn_cursor(mut cmds: Commands, my_assets: Res<MyAssets>) {
+    let cursor = (
+        ImageBundle {
+            image: UiImage::new(my_assets.cursor_relocate.clone()),
+            style: Style {
+                width: Val::Px(CURSOR_SIZE),
+                height: Val::Px(CURSOR_SIZE),
+                ..default()
+            },
+            ..default()
+        },
+        MyCursor { size: CURSOR_SIZE },
+        Name::new("relocate cursor"),
+    );
+
+    cmds.spawn(cursor);
+}
+
+fn update_cursor_pos(
+    mut cursor_q: Query<(&mut Style, &MyCursor), With<MyCursor>>,
+    mouse_coords: Res<MouseCoords>,
+) {
+    let (mut style, cursor) = cursor_q.get_single_mut().unwrap();
+    style.left = Val::Px(mouse_coords.viewport.x - cursor.size / 2.0);
+    style.top = Val::Px(mouse_coords.viewport.y - cursor.size / 2.0);
 }
 
 fn spawn_select_box(mut cmds: Commands) {

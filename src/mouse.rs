@@ -1,4 +1,4 @@
-use bevy::color::palettes::css::{DARK_GRAY, RED};
+use bevy::color::palettes::css::DARK_GRAY;
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
@@ -149,7 +149,7 @@ fn spawn_select_box(mut cmds: Commands) {
 }
 
 fn draw_select_box(
-    mut gizmos: Gizmos,
+    // mut gizmos: Gizmos,
     mut query: Query<&mut Style, With<SelectionBox>>,
     box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
@@ -175,13 +175,13 @@ fn draw_select_box(
     style.width = Val::Px(max_x - min_x);
     style.height = Val::Px(max_y - min_y);
 
-    // debug purposes only. This will draw
-    let color = RED;
-    let world = box_coords.world.clone();
-    gizmos.line(world.start_1, world.start_2, color); // top
-    gizmos.line(world.end_1, world.end_2, color); // bottom
-    gizmos.line(world.start_2, world.end_2, color); // side
-    gizmos.line(world.start_1, world.end_1, color); // side
+    // debug purposes only. This will draw the select box on the 3d world
+    // let color = RED;
+    // let world = box_coords.world.clone();
+    // gizmos.line(world.start_1, world.start_2, color); // top
+    // gizmos.line(world.end_1, world.end_2, color); // bottom
+    // gizmos.line(world.start_2, world.end_2, color); // side
+    // gizmos.line(world.start_1, world.end_1, color); // side
 }
 
 pub fn handle_drag_select(

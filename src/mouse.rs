@@ -1,3 +1,5 @@
+use std::ptr::null;
+
 use bevy::color::palettes::css::{DARK_GRAY, RED};
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
@@ -36,15 +38,25 @@ impl Plugin for MousePlugin {
 
 fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
     let drag_threshold = 2.5;
-    let world = box_coords.coords_world.clone();
-    let width_z = (world.upper_1.z - world.upper_2.z).abs();
-    let width_x = (world.upper_1.x - world.upper_2.x).abs();
+    // let world = box_coords.coords_world.clone();
+    // let width_z = (world.upper_1.z - world.upper_2.z).abs();
+    // let width_x = (world.upper_1.x - world.upper_2.x).abs();
 
-    let t = width_z > drag_threshold || width_x > drag_threshold;
-    if t {
-        println!("width z: {:?}, width x: {:?}", width_z, width_x);
-    }
-    game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
+    let viewport = box_coords.coords_viewport.clone();
+    let width_upper_x = (viewport.upper_1.x - viewport.upper_2.x).abs();
+    let width_upper_y = (viewport.upper_1.y - viewport.upper_2.y).abs();
+    let width_lower_x = (viewport.lower_1.y - viewport.lower_2.y).abs();
+    let width_lower_y = (viewport.lower_1.y - viewport.lower_2.y).abs();
+
+    // let t = width_z > drag_threshold || width_x > drag_threshold;
+    // if t {
+    println!("width x: {:?}, width y: {:?}", width_upper_x, width_upper_y);
+    // }
+    // game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
+    game_cmds.drag_select = width_upper_x > drag_threshold
+        || width_upper_y > drag_threshold
+        || width_lower_x > drag_threshold
+        || width_lower_y > drag_threshold;
 }
 
 fn handle_input(
@@ -77,6 +89,10 @@ fn set_starting_point_drag_select_coords(
     box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
     box_coords.coords_world.upper_1 = mouse_coords.world;
 }
+
+// fn set_world_coords() {
+
+// }
 
 fn set_drag_select_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
@@ -141,24 +157,28 @@ fn set_mouse_coords(
     map_base_q: Query<&GlobalTransform, With<MapBase>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
-    let map_base_trans = map_base_q.single();
-    let window = window_q.single();
-    let Some(local_cursor) = window.cursor_position() else {
+    let Some(viewport_cursor) = window_q.single().cursor_position() else {
         return;
     };
+    let coords = helper(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
 
+    mouse_coords.viewport = coords.0;
+    mouse_coords.world = coords.1;
+}
+
+fn helper(
+    map_base_trans: &GlobalTransform,
+    cam_trans: &GlobalTransform,
+    cam: &Camera,
+    viewport_cursor: Vec2,
+) -> (Vec2, Vec3) {
     let plane_origin = map_base_trans.translation();
     let plane = InfinitePlane3d::new(map_base_trans.up());
-    let Some(ray) = cam.viewport_to_world(cam_trans, local_cursor) else {
-        return;
-    };
-    let Some(distance) = ray.intersect_plane(plane_origin, plane) else {
-        return;
-    };
-    let global_cursor = ray.get_point(distance);
+    let ray = cam.viewport_to_world(cam_trans, viewport_cursor).unwrap();
+    let distance = ray.intersect_plane(plane_origin, plane).unwrap();
+    let world_cursor = ray.get_point(distance);
 
-    mouse_coords.world = global_cursor;
-    mouse_coords.viewport = local_cursor;
+    return (viewport_cursor, world_cursor);
 }
 
 fn spawn_selection_box(mut cmds: Commands) {

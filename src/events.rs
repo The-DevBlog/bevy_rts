@@ -11,3 +11,6 @@ pub struct ClearBoxCoordsEv;
 
 #[derive(Event)]
 pub struct DragSelectEv;
+
+#[derive(Event)]
+pub struct SetWorldCoordsEv;

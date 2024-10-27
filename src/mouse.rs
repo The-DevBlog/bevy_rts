@@ -53,7 +53,6 @@ fn handle_input(
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
-    println!("{}", game_cmds.drag_select);
     cmds.trigger(SetDragSelectEv);
 
     if input.just_pressed(MouseButton::Left) {
@@ -184,30 +183,83 @@ fn draw_drag_select_box(
     gizmos.line(world.start_1, world.end_1, color); // side
 }
 
+// pub fn handle_drag_select(
+//     _trigger: Trigger<HandleDragSelectEv>,
+//     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
+//     box_coords: Res<SelectBox>,
+// ) {
+//     // println!("{:?}", box_coords.world);
+
+//     let start = box_coords.world.start_1;
+//     let end = box_coords.world.start_2;
+
+//     let min_x = start.x.min(end.x);
+//     let max_x = start.x.max(end.x);
+//     let min_z = start.z.min(end.z);
+//     let max_z = start.z.max(end.z);
+
+//     for (friendly_trans, mut selected) in friendly_q.iter_mut() {
+//         // check to see if units are within selection rectangle
+//         let unit_pos = friendly_trans.translation;
+//         let in_box_bounds = unit_pos.x >= min_x
+//             && unit_pos.x <= max_x
+//             && unit_pos.z >= min_z
+//             && unit_pos.z <= max_z;
+
+//         selected.0 = in_box_bounds;
+//     }
+// }
+
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
     box_coords: Res<SelectBox>,
 ) {
-    // println!("{:?}", box_coords);
+    // Helper to compute the cross product of two vectors
+    fn cross_product(v1: Vec2, v2: Vec2) -> f32 {
+        v1.x * v2.y - v1.y * v2.x
+    }
 
-    let start = box_coords.world.start_1;
-    let end = box_coords.world.start_2;
+    // a = start_1
+    // b = start_2
+    // c = end_1
+    // d = end_2
 
-    let min_x = start.x.min(end.x);
-    let max_x = start.x.max(end.x);
-    let min_z = start.z.min(end.z);
-    let max_z = start.z.max(end.z);
+    // Calculate vectors for each edge and point to edge start
+    let ab = box_coords.world.start_1 - box_coords.world.start_2;
+    let bc = box_coords.world.end_1 - box_coords.world.start_2;
+    let cd = box_coords.world.end_2 - box_coords.world.end_1;
+    let da = box_coords.world.start_1 - box_coords.world.end_2;
 
     for (friendly_trans, mut selected) in friendly_q.iter_mut() {
         // check to see if units are within selection rectangle
         let unit_pos = friendly_trans.translation;
-        let in_box_bounds = unit_pos.x >= min_x
-            && unit_pos.x <= max_x
-            && unit_pos.z >= min_z
-            && unit_pos.z <= max_z;
 
-        selected.0 = in_box_bounds;
+        let ap = unit_pos - box_coords.world.start_1;
+        let bp = unit_pos - box_coords.world.start_2;
+        let cp = unit_pos - box_coords.world.end_1;
+        let dp = unit_pos - box_coords.world.end_2;
+
+        // Check the cross products
+        let cross1 = cross_product(Vec2::new(ab.x, ab.z), Vec2::new(ap.x, ap.z));
+        let cross2 = cross_product(Vec2::new(bc.x, bc.z), Vec2::new(bp.x, bp.z));
+        let cross3 = cross_product(Vec2::new(cd.x, cd.z), Vec2::new(cp.x, cp.z));
+        let cross4 = cross_product(Vec2::new(da.x, da.z), Vec2::new(dp.x, dp.z));
+
+        // All cross products should have the same sign (either all positive or all negative)
+        if (cross1 > 0.0 && cross2 > 0.0 && cross3 > 0.0 && cross4 > 0.0)
+            || (cross1 < 0.0 && cross2 < 0.0 && cross3 < 0.0 && cross4 < 0.0)
+        {
+            selected.0 = true;
+        } else {
+            selected.0 = false;
+        }
+        // let in_box_bounds = unit_pos.x >= min_x
+        //     && unit_pos.x <= max_x
+        //     && unit_pos.z >= min_z
+        //     && unit_pos.z <= max_z;
+
+        // selected.0 = in_box_bounds;
     }
 }
 

@@ -9,6 +9,7 @@ use bevy::prelude::*;
 
 mod camera;
 mod components;
+mod events;
 mod map;
 mod mouse;
 mod resources;
@@ -16,6 +17,7 @@ mod tank;
 mod utils;
 
 use camera::CameraPlugin;
+use events::EventPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
@@ -34,10 +36,11 @@ fn main() {
             // RapierDebugRenderPlugin::default(),
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
+            ResourcesPlugin,
+            EventPlugin,
             BillboardPlugin,
             CameraPlugin,
             MapPlugin,
-            ResourcesPlugin,
             MousePlugin,
             UtilsPlugin,
             TankPlugin,

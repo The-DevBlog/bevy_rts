@@ -3,6 +3,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{pipeline::QueryFilter, plugin::RapierContext};
 use bevy_rts_camera::RtsCamera;
 
+use crate::events::{ClearBoxCoordsEv, DummyTriggerEv, SetBoxCoordsEv};
 use crate::tank::set_unit_destination;
 
 use super::components::*;
@@ -12,21 +13,26 @@ pub struct MousePlugin;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_selection_box).add_systems(
-            Update,
-            (
-                set_mouse_coords,
-                set_box_coords,
-                set_drag_select,
-                handle_drag_select,
-                draw_drag_select_box,
-                single_select,
-                set_selected,
-                deselect_all,
+        app.add_systems(Startup, spawn_selection_box)
+            .add_systems(
+                Update,
+                (
+                    set_mouse_coords,
+                    // set_box_coords,
+                    set_drag_select,
+                    handle_drag_select,
+                    draw_drag_select_box,
+                    single_select,
+                    set_selected,
+                    deselect_all,
+                    input_handler,
+                )
+                    .chain()
+                    .after(set_unit_destination),
             )
-                .chain()
-                .after(set_unit_destination),
-        );
+            .observe(set_initial_coords)
+            .observe(set_box_coords)
+            .observe(clear_box_coords);
     }
 }
 
@@ -36,80 +42,109 @@ fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommand
     let width_z = (world.upper_1.z - world.upper_2.z).abs();
     let width_x = (world.upper_1.x - world.upper_2.x).abs();
 
-    let t = width_z > drag_threshold || width_x > drag_threshold;
-    if t {
-        println!("{}", t);
-        println!("upper_1: {:?}", world.upper_1);
-        println!("upper_2: {:?}", world.upper_2);
-        // println!("width_z: {}", width_z);
-        // println!("width_x: {}", width_x);
-    }
+    // let t = width_z > drag_threshold || width_x > drag_threshold;
+    // if t {
+    //     println!("{}", t);
+    //     println!("upper_1: {:?}", world.upper_1);
+    //     println!("upper_2: {:?}", world.upper_2);
+    //     // println!("width_z: {}", width_z);
+    //     // println!("width_x: {}", width_x);
+    // }
     game_cmds.drag_select = width_z > drag_threshold || width_x > drag_threshold;
 }
 
-fn set_box_coords(
+fn input_handler(input: Res<ButtonInput<MouseButton>>, mut cmds: Commands) {
+    if input.just_pressed(MouseButton::Left) {
+        // handle single click
+        // return;
+    } else if input.pressed(MouseButton::Left) {
+        // handle long click
+        cmds.trigger(SetBoxCoordsEv);
+        // return;
+    } else if input.just_released(MouseButton::Left) {
+        // single click again maybe?
+        cmds.trigger(ClearBoxCoordsEv);
+        // return;
+    }
+}
+
+fn set_initial_coords(
+    _trigger: Trigger<DummyTriggerEv>,
     mut box_coords: ResMut<SelectBox>,
-    input: Res<ButtonInput<MouseButton>>,
+    mouse_coords: Res<MouseCoords>,
+) {
+    box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
+    box_coords.coords_viewport.upper_2 = mouse_coords.viewport;
+    box_coords.coords_world.upper_1 = mouse_coords.world;
+    box_coords.coords_world.upper_2 = mouse_coords.world;
+}
+
+fn clear_box_coords(_trigger: Trigger<ClearBoxCoordsEv>, mut box_coords: ResMut<SelectBox>) {
+    box_coords.empty_coords();
+}
+
+fn set_box_coords(
+    _trigger: Trigger<SetBoxCoordsEv>,
+    // input: Res<ButtonInput<MouseButton>>,
+    mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
     map_base_q: Query<&GlobalTransform, With<MapBase>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     // println!("mouse coords: {:}", mouse_coords.world);
-    if input.just_pressed(MouseButton::Left) {
-        box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
-        box_coords.coords_viewport.upper_2 = mouse_coords.viewport;
-        box_coords.coords_world.upper_1 = mouse_coords.world;
-        box_coords.coords_world.upper_2 = mouse_coords.world;
-    }
+    // if input.just_pressed(MouseButton::Left) {
+    // box_coords.coords_viewport.upper_1 = mouse_coords.viewport;
+    // box_coords.coords_viewport.upper_2 = mouse_coords.viewport;
+    // box_coords.coords_world.upper_1 = mouse_coords.world;
+    // box_coords.coords_world.upper_2 = mouse_coords.world;
+    // }
 
-    if input.pressed(MouseButton::Left) {
-        // VIEWPORT
-        let viewport = box_coords.coords_viewport.clone();
-        box_coords.coords_viewport.lower_2 = mouse_coords.viewport;
-        box_coords.coords_viewport.upper_2 = Vec2::new(viewport.lower_2.x, viewport.upper_1.y);
-        box_coords.coords_viewport.lower_1 = Vec2::new(viewport.upper_1.x, viewport.lower_2.y);
+    // if input.pressed(MouseButton::Left) {
+    //     // VIEWPORT
+    let viewport = box_coords.coords_viewport.clone();
+    box_coords.coords_viewport.lower_2 = mouse_coords.viewport;
+    box_coords.coords_viewport.upper_2 = Vec2::new(viewport.lower_2.x, viewport.upper_1.y);
+    box_coords.coords_viewport.lower_1 = Vec2::new(viewport.upper_1.x, viewport.lower_2.y);
 
-        // WORLD
-        let map_base_trans = map_base_q.single();
-        let (cam, cam_trans) = cam_q.single();
-        let plane_origin = map_base_trans.translation();
-        let plane = InfinitePlane3d::new(map_base_trans.up());
+    // WORLD
+    let map_base_trans = map_base_q.single();
+    let (cam, cam_trans) = cam_q.single();
+    let plane_origin = map_base_trans.translation();
+    let plane = InfinitePlane3d::new(map_base_trans.up());
 
-        let Some(ray_upper_2) =
-            cam.viewport_to_world(cam_trans, box_coords.coords_viewport.upper_2)
-        else {
-            return;
-        };
+    let Some(ray_upper_2) = cam.viewport_to_world(cam_trans, box_coords.coords_viewport.upper_2)
+    else {
+        return;
+    };
 
-        let Some(ray_lower_1) =
-            cam.viewport_to_world(cam_trans, box_coords.coords_viewport.lower_1)
-        else {
-            return;
-        };
+    let Some(ray_lower_1) = cam.viewport_to_world(cam_trans, box_coords.coords_viewport.lower_1)
+    else {
+        return;
+    };
 
-        let Some(distance_lower_1) = ray_lower_1.intersect_plane(plane_origin, plane) else {
-            return;
-        };
+    let Some(distance_lower_1) = ray_lower_1.intersect_plane(plane_origin, plane) else {
+        return;
+    };
 
-        let Some(distance_upper_2) = ray_upper_2.intersect_plane(plane_origin, plane) else {
-            return;
-        };
+    let Some(distance_upper_2) = ray_upper_2.intersect_plane(plane_origin, plane) else {
+        return;
+    };
 
-        let mut upper_2 = ray_upper_2.get_point(distance_upper_2);
-        let mut lower_1 = ray_lower_1.get_point(distance_lower_1);
-        upper_2.y = 0.2;
-        lower_1.y = 0.2;
+    let mut upper_2 = ray_upper_2.get_point(distance_upper_2);
+    let mut lower_1 = ray_lower_1.get_point(distance_lower_1);
+    upper_2.y = 0.2;
+    lower_1.y = 0.2;
 
-        // println!("top end: {:?}", upper_2);
-        box_coords.coords_world.lower_2 = mouse_coords.world;
-        box_coords.coords_world.lower_2.y = 0.2;
-        box_coords.coords_world.lower_1 = lower_1;
-        box_coords.coords_world.upper_2 = upper_2; // THIS IS THE ISSUE
-    }
+    // println!("top end: {:?}", upper_2);
+    box_coords.coords_world.lower_2 = mouse_coords.world;
+    box_coords.coords_world.lower_2.y = 0.2;
+    box_coords.coords_world.lower_1 = lower_1;
+    box_coords.coords_world.upper_2 = upper_2; // THIS IS THE ISSUE
+                                               // }
 
-    if input.just_released(MouseButton::Left) {
-        box_coords.empty_coords();
-    }
+    // if input.just_released(MouseButton::Left) {
+    //     box_coords.empty_coords();
+    // }
 }
 
 // referenced https://bevy-cheatbook.github.io/cookbook/cursor2world.html

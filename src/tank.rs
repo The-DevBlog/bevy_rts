@@ -3,16 +3,13 @@ use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextur
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 use events::SetUnitDestinationEv;
 
-use crate::utils;
-use crate::*;
-use crate::{components::*, resources::*};
+use crate::{components::*, resources::*, utils, *};
 
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
-            // .add_systems(Update, (set_unit_destination, move_unit::<Friendly>));
             .add_systems(Update, move_unit::<Friendly>)
             .observe(set_unit_destination);
     }
@@ -79,21 +76,19 @@ fn rotate_towards(trans: &mut Transform, direction: Vec3) {
 }
 
 fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAssets>) {
-    let initial_position = Vec3::new(0.0, 0.0, 0.0);
+    let initial_pos = Vec3::new(0.0, 0.0, 0.0);
     let offset = Vec3::new(20.0, 0.0, 20.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
     let create_tank = |row: usize, col: usize| {
-        let position =
-            initial_position + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
-
+        let pos = initial_pos + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         (
             UnitBundle::new(
                 "Tank".to_string(),
                 TANK_SPEED * SPEED_QUANTIFIER,
                 Vec3::new(4., 2., 6.),
                 assets.load("tank.glb#Scene0"),
-                position,
+                pos,
             ),
             Selected(false),
             Friendly,

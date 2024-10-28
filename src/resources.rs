@@ -16,6 +16,8 @@ impl Plugin for ResourcesPlugin {
 pub struct MyAssets {
     pub select_border: Handle<Image>,
     pub cursor_relocate: Handle<Image>,
+    pub cursor_select: Handle<Image>,
+    pub cursor_standard: Handle<Image>,
 }
 
 #[derive(Resource, Default, Debug)]
@@ -77,8 +79,22 @@ impl World {
     }
 }
 
+#[derive(Debug)]
+pub enum CursorState {
+    Relocate,
+    Select,
+    Standard,
+}
+
+impl Default for CursorState {
+    fn default() -> Self {
+        CursorState::Standard
+    }
+}
+
 #[derive(Resource, Default, Debug)]
 pub struct GameCommands {
+    pub cursor_state: CursorState,
     pub drag_select: bool,
     pub selected: bool,
 }
@@ -86,4 +102,6 @@ pub struct GameCommands {
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.select_border = assets.load("imgs/select_border.png");
     my_assets.cursor_relocate = assets.load("imgs/cursor/relocate.png");
+    my_assets.cursor_select = assets.load("imgs/cursor/relocate.png");
+    my_assets.cursor_standard = assets.load("imgs/cursor/relocate.png");
 }

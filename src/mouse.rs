@@ -1,8 +1,6 @@
 use bevy::color::palettes::css::DARK_GRAY;
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_mod_billboard::{
-    BillboardDepth, BillboardMeshHandle, BillboardTextureBundle, BillboardTextureHandle,
-};
+use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 
@@ -34,31 +32,13 @@ impl Plugin for MousePlugin {
                     .chain()
                     .after(set_unit_destination),
             )
+            .observe(change_cursor)
             .observe(single_select)
             .observe(handle_drag_select)
             .observe(set_start_select_box_coords)
             .observe(set_select_box_coords)
             .observe(clear_drag_select_coords);
     }
-}
-
-fn spawn_cursor(mut cmds: Commands, my_assets: Res<MyAssets>) {
-    let cursor = (
-        ImageBundle {
-            visibility: Visibility::Hidden,
-            image: UiImage::new(my_assets.cursor_relocate.clone()),
-            style: Style {
-                width: Val::Px(CURSOR_SIZE),
-                height: Val::Px(CURSOR_SIZE),
-                ..default()
-            },
-            ..default()
-        },
-        MyCursor { size: CURSOR_SIZE },
-        Name::new("relocate cursor"),
-    );
-
-    cmds.spawn(cursor);
 }
 
 fn spawn_select_box(mut cmds: Commands) {
@@ -78,8 +58,48 @@ fn spawn_select_box(mut cmds: Commands) {
     cmds.spawn(select_box);
 }
 
+fn spawn_cursor(
+    mut cmds: Commands,
+    my_assets: Res<MyAssets>,
+    mut window_q: Query<&mut Window, With<PrimaryWindow>>,
+) {
+    let mut window = window_q.get_single_mut().unwrap();
+    window.cursor.visible = false;
+
+    let cursor = (
+        ImageBundle {
+            // visibility: Visibility::Hidden,
+            image: UiImage::new(my_assets.cursor_relocate.clone()),
+            style: Style {
+                width: Val::Px(CURSOR_SIZE),
+                height: Val::Px(CURSOR_SIZE),
+                ..default()
+            },
+            ..default()
+        },
+        MyCursor::default(),
+        Name::new("relocate cursor"),
+    );
+
+    cmds.spawn(cursor);
+}
+
+fn change_cursor(
+    _trigger: Trigger<ChangeCursorEv>,
+    mut cursor_q: Query<&mut MyCursor>,
+    my_assets: Res<MyAssets>,
+    game_cmds: Res<GameCommands>,
+) {
+    let mut cursor = cursor_q.get_single_mut().unwrap();
+    match game_cmds.cursor_state {
+        CursorState::Relocate => cursor.img = my_assets.cursor_relocate.clone(),
+        CursorState::Standard => cursor.img = my_assets.cursor_standard.clone(),
+        CursorState::Select => cursor.img = my_assets.cursor_select.clone(),
+    }
+}
+
 fn update_cursor_pos(
-    mut cursor_q: Query<(&mut Style, &MyCursor), With<MyCursor>>,
+    mut cursor_q: Query<(&mut Style, &mut MyCursor), With<MyCursor>>,
     mouse_coords: Res<MouseCoords>,
 ) {
     let (mut style, cursor) = cursor_q.get_single_mut().unwrap();
@@ -89,7 +109,7 @@ fn update_cursor_pos(
 
 fn handle_mouse_input(
     mut cmds: Commands,
-    game_cmds: Res<GameCommands>,
+    mut game_cmds: ResMut<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     cmds.trigger(SetDragSelectEv);
@@ -112,6 +132,11 @@ fn handle_mouse_input(
         if !game_cmds.drag_select {
             cmds.trigger(SetUnitDestinationEv);
             cmds.trigger(SelectSingleUnitEv);
+        }
+
+        if game_cmds.selected {
+            game_cmds.cursor_state = CursorState::Relocate;
+            cmds.trigger(ChangeCursorEv);
         }
     }
 }

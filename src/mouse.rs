@@ -28,11 +28,12 @@ impl Plugin for MousePlugin {
                     draw_select_box,
                     set_drag_select,
                     set_selected,
-                    deselect_all,
+                    // deselect_all,
                 )
                     .chain()
                     .after(set_unit_destination),
             )
+            .observe(deselect_all)
             .observe(single_select)
             .observe(handle_drag_select)
             .observe(set_start_select_box_coords)
@@ -118,6 +119,10 @@ fn handle_mouse_input(
             cmds.trigger(SetUnitDestinationEv);
             cmds.trigger(SelectSingleUnitEv);
         }
+    }
+
+    if input.just_released(MouseButton::Right) {
+        cmds.trigger(DeselectAllEv);
     }
 }
 
@@ -332,13 +337,11 @@ pub fn single_select(
 }
 
 pub fn deselect_all(
+    _trigger: Trigger<DeselectAllEv>,
     mut select_q: Query<&mut Selected, With<Selected>>,
-    input: Res<ButtonInput<MouseButton>>,
 ) {
-    if input.just_pressed(MouseButton::Right) {
-        for mut selected in select_q.iter_mut() {
-            selected.0 = false;
-        }
+    for mut selected in select_q.iter_mut() {
+        selected.0 = false;
     }
 }
 

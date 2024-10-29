@@ -22,6 +22,7 @@ impl Plugin for MousePlugin {
             .add_systems(
                 Update,
                 (
+                    update_cursor_img,
                     border_select_visibility,
                     handle_mouse_input,
                     draw_select_box,
@@ -32,7 +33,6 @@ impl Plugin for MousePlugin {
                     .chain()
                     .after(set_unit_destination),
             )
-            .observe(change_cursor)
             .observe(single_select)
             .observe(handle_drag_select)
             .observe(set_start_select_box_coords)
@@ -68,8 +68,7 @@ fn spawn_cursor(
 
     let cursor = (
         ImageBundle {
-            // visibility: Visibility::Hidden,
-            image: UiImage::new(my_assets.cursor_relocate.clone()),
+            image: UiImage::new(my_assets.cursor_standard.clone()),
             style: Style {
                 width: Val::Px(CURSOR_SIZE),
                 height: Val::Px(CURSOR_SIZE),
@@ -84,20 +83,6 @@ fn spawn_cursor(
     cmds.spawn(cursor);
 }
 
-fn change_cursor(
-    _trigger: Trigger<ChangeCursorEv>,
-    mut cursor_q: Query<&mut MyCursor>,
-    my_assets: Res<MyAssets>,
-    game_cmds: Res<GameCommands>,
-) {
-    let mut cursor = cursor_q.get_single_mut().unwrap();
-    match game_cmds.cursor_state {
-        CursorState::Relocate => cursor.img = my_assets.cursor_relocate.clone(),
-        CursorState::Standard => cursor.img = my_assets.cursor_standard.clone(),
-        CursorState::Select => cursor.img = my_assets.cursor_select.clone(),
-    }
-}
-
 fn update_cursor_pos(
     mut cursor_q: Query<(&mut Style, &mut MyCursor), With<MyCursor>>,
     mouse_coords: Res<MouseCoords>,
@@ -109,7 +94,7 @@ fn update_cursor_pos(
 
 fn handle_mouse_input(
     mut cmds: Commands,
-    mut game_cmds: ResMut<GameCommands>,
+    game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     cmds.trigger(SetDragSelectEv);
@@ -132,11 +117,6 @@ fn handle_mouse_input(
         if !game_cmds.drag_select {
             cmds.trigger(SetUnitDestinationEv);
             cmds.trigger(SelectSingleUnitEv);
-        }
-
-        if game_cmds.selected {
-            game_cmds.cursor_state = CursorState::Relocate;
-            cmds.trigger(ChangeCursorEv);
         }
     }
 }
@@ -293,6 +273,45 @@ pub fn handle_drag_select(
     }
 }
 
+pub fn update_cursor_img(
+    game_cmds: Res<GameCommands>,
+    mut cursor_state: ResMut<CursorState>,
+    rapier_context: Res<RapierContext>,
+    my_assets: Res<MyAssets>,
+    mouse_coords: Res<MouseCoords>,
+    cam_q: Query<(&Camera, &GlobalTransform)>,
+    mut cursor_q: Query<(&mut UiImage, &mut MyCursor)>,
+    mut select_q: Query<Entity, With<Friendly>>,
+) {
+    let (cam, cam_trans) = cam_q.single();
+    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+
+    if let Some((ent, _)) = hit {
+        for selected_entity in select_q.iter_mut() {
+            let tmp = selected_entity.index() == ent.index();
+
+            if tmp && !game_cmds.drag_select {
+                *cursor_state = CursorState::Select;
+            }
+        }
+    } else if game_cmds.selected && !game_cmds.drag_select {
+        *cursor_state = CursorState::Relocate;
+    } else {
+        *cursor_state = CursorState::Standard;
+    }
+
+    let (mut img, mut cursor) = cursor_q.get_single_mut().unwrap();
+    // println!("Change Cursor: {:?}", game_cmds.cursor_state);
+
+    match *cursor_state {
+        CursorState::Relocate => cursor.img = my_assets.cursor_relocate.clone(),
+        CursorState::Standard => cursor.img = my_assets.cursor_standard.clone(),
+        CursorState::Select => cursor.img = my_assets.cursor_select.clone(),
+    }
+
+    img.texture = cursor.img.clone();
+}
+
 pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
@@ -301,10 +320,10 @@ pub fn single_select(
     mouse_coords: Res<MouseCoords>,
 ) {
     let (cam, cam_trans) = cam_q.single();
-    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
+    // deselect all currently selected entities
     if let Some((ent, _)) = hit {
-        // deselect all currently selected entities
         for (selected_entity, mut selected) in select_q.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
             selected.0 = tmp && !selected.0;

@@ -69,7 +69,7 @@ pub fn set_unit_destination(
     rapier_context: Res<RapierContext>,
 ) {
     let (cam, cam_trans) = cam_q.single();
-    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
     // return if selecting another object (select another unit for example)
     if let Some(_) = hit {
@@ -81,7 +81,7 @@ pub fn set_unit_destination(
             let mut destination = mouse_coords.world;
             destination.y += trans.scale.y / 2.0; // calculate for entity height
             friendly_destination.0 = Some(destination);
-            println!("Unit Moving to ({}, {})", destination.x, destination.y);
+            // println!("Unit Moving to ({}, {})", destination.x, destination.y);
         }
     }
 }

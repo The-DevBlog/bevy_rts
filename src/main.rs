@@ -5,13 +5,14 @@ use bevy_rapier3d::{
     // render::RapierDebugRenderPlugin,
 };
 
-use bevy::prelude::*;
+use bevy::{color::palettes::css::*, prelude::*};
 
 mod camera;
 mod components;
 mod events;
 mod map;
 mod mouse;
+mod path_finding;
 mod resources;
 mod tank;
 mod utils;
@@ -19,9 +20,13 @@ mod utils;
 use camera::CameraPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
+use path_finding::PathFindingPlugin;
 use resources::ResourcesPlugin;
 use tank::TankPlugin;
 
+const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
+const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
+const COLOR_PATH_FINDING: Srgba = YELLOW;
 const CURSOR_SIZE: f32 = 25.0;
 const MAP_SIZE: f32 = 800.0;
 const SPEED_QUANTIFIER: f32 = 1000.0;
@@ -37,6 +42,7 @@ fn main() {
             WorldInspectorPlugin::new(),
             ResourcesPlugin,
             BillboardPlugin,
+            PathFindingPlugin,
             CameraPlugin,
             MapPlugin,
             MousePlugin,

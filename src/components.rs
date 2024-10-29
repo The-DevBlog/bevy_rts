@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+use crate::CURSOR_SIZE;
+
 #[derive(Component)]
 pub struct Selected(pub bool);
 
@@ -16,6 +18,21 @@ pub struct UnitBorderBoxImg {
 impl UnitBorderBoxImg {
     pub fn new(width: f32, height: f32) -> Self {
         Self { width, height }
+    }
+}
+
+#[derive(Component)]
+pub struct MyCursor {
+    pub img: Handle<Image>,
+    pub size: f32,
+}
+
+impl Default for MyCursor {
+    fn default() -> Self {
+        MyCursor {
+            img: Handle::default(),
+            size: CURSOR_SIZE,
+        }
     }
 }
 

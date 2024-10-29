@@ -22,9 +22,10 @@ use mouse::MousePlugin;
 use resources::ResourcesPlugin;
 use tank::TankPlugin;
 
-const TANK_COUNT: usize = 25;
+const CURSOR_SIZE: f32 = 25.0;
 const MAP_SIZE: f32 = 800.0;
 const SPEED_QUANTIFIER: f32 = 1000.0;
+const TANK_COUNT: usize = 25;
 const TANK_SPEED: f32 = 50.0;
 
 fn main() {

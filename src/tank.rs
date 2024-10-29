@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_mod_billboard::{BillboardDepth, BillboardTextureBundle, BillboardTextureHandle};
+use bevy_mod_billboard::*;
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 use events::SetUnitDestinationEv;
 
@@ -38,7 +38,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
     let select_border = || {
         (
             BillboardTextureBundle {
-                texture: BillboardTextureHandle(my_assets.img_select_border.clone()),
+                texture: BillboardTextureHandle(my_assets.select_border.clone()),
                 billboard_depth: BillboardDepth(false),
                 ..default()
             },
@@ -69,7 +69,7 @@ pub fn set_unit_destination(
     rapier_context: Res<RapierContext>,
 ) {
     let (cam, cam_trans) = cam_q.single();
-    let hit = utils::helper(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
     // return if selecting another object (select another unit for example)
     if let Some(_) = hit {
@@ -81,7 +81,7 @@ pub fn set_unit_destination(
             let mut destination = mouse_coords.world;
             destination.y += trans.scale.y / 2.0; // calculate for entity height
             friendly_destination.0 = Some(destination);
-            println!("Unit Moving to ({}, {})", destination.x, destination.y);
+            // println!("Unit Moving to ({}, {})", destination.x, destination.y);
         }
     }
 }

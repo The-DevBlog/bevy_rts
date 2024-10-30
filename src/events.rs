@@ -20,3 +20,6 @@ pub struct SetUnitDestinationEv;
 
 #[derive(Event)]
 pub struct SelectSingleUnitEv;
+
+#[derive(Event)]
+pub struct DeselectAllEv;

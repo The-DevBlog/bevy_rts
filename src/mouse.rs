@@ -1,4 +1,3 @@
-use bevy::color::palettes::css::DARK_GRAY;
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
@@ -8,10 +7,8 @@ use crate::events::*;
 use crate::resources::*;
 use crate::tank::set_unit_destination;
 use crate::utils;
+use crate::*;
 use crate::{components::*, CURSOR_SIZE};
-
-const SELECT_BOX_COLOR: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
-const SELECT_BOX_BORDER_COLOR: Srgba = DARK_GRAY;
 
 pub struct MousePlugin;
 
@@ -28,11 +25,12 @@ impl Plugin for MousePlugin {
                     draw_select_box,
                     set_drag_select,
                     set_selected,
-                    deselect_all,
+                    // deselect_all,
                 )
                     .chain()
                     .after(set_unit_destination),
             )
+            .observe(deselect_all)
             .observe(single_select)
             .observe(handle_drag_select)
             .observe(set_start_select_box_coords)
@@ -44,8 +42,8 @@ impl Plugin for MousePlugin {
 fn spawn_select_box(mut cmds: Commands) {
     let select_box = (
         NodeBundle {
-            background_color: BackgroundColor(SELECT_BOX_COLOR),
-            border_color: BorderColor(SELECT_BOX_BORDER_COLOR.into()),
+            background_color: BackgroundColor(COLOR_SELECT_BOX),
+            border_color: BorderColor(COLOR_SELECT_BOX_BORDER.into()),
             style: Style {
                 position_type: PositionType::Absolute,
                 ..default()
@@ -118,6 +116,10 @@ fn handle_mouse_input(
             cmds.trigger(SetUnitDestinationEv);
             cmds.trigger(SelectSingleUnitEv);
         }
+    }
+
+    if input.just_released(MouseButton::Right) {
+        cmds.trigger(DeselectAllEv);
     }
 }
 
@@ -332,13 +334,11 @@ pub fn single_select(
 }
 
 pub fn deselect_all(
+    _trigger: Trigger<DeselectAllEv>,
     mut select_q: Query<&mut Selected, With<Selected>>,
-    input: Res<ButtonInput<MouseButton>>,
 ) {
-    if input.just_pressed(MouseButton::Right) {
-        for mut selected in select_q.iter_mut() {
-            selected.0 = false;
-        }
+    for mut selected in select_q.iter_mut() {
+        selected.0 = false;
     }
 }
 

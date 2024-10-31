@@ -77,10 +77,10 @@ fn detect_cell(mut gizmos: Gizmos, grid: Res<Grid>, mouse_coords: Res<MouseCoord
         let index = (row * MAP_GRID_SIZE + column) as usize;
         let cell = &grid.0[index];
 
-        println!(
-            "Mouse is over cell at row {}, column {}, position {:?}",
-            cell.row, cell.column, cell.position
-        );
+        // println!(
+        //     "Mouse is over cell at row {}, column {}, position {:?}",
+        //     cell.row, cell.column, cell.position
+        // );
 
         // Draw a rectangle highlighting the cell
         let position = Vec3::new(cell.position.x, 0.1, cell.position.y);

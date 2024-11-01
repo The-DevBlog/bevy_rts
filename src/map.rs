@@ -19,9 +19,9 @@ impl Plugin for MapPlugin {
 }
 
 #[derive(Resource, Default)]
-struct TargetCell {
-    row: Option<u32>,
-    column: Option<u32>,
+pub struct TargetCell {
+    pub row: Option<u32>,
+    pub column: Option<u32>,
 }
 
 #[derive(Resource, Debug)]
@@ -137,10 +137,10 @@ fn highlight_path(
                     let cell = &grid.0[index];
 
                     // Draw a rectangle for each cell in the path
-                    let position = Vec3::new(cell.position.x, 0.1, cell.position.y); // Slightly above ground
+                    let position = Vec3::new(cell.position.x, 0.1, cell.position.y);
                     let rotation = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
                     let size = Vec2::splat(MAP_CELL_SIZE);
-                    let color = Color::rgba(0.0, 1.0, 0.0, 0.5); // Semi-transparent green
+                    let color = LIGHT_GREEN;
 
                     gizmos.rect(position, rotation, size, color);
                 }
@@ -151,7 +151,7 @@ fn highlight_path(
 
 fn set_target_cell(mouse_coords: Res<MouseCoords>, mut target_cell: ResMut<TargetCell>) {
     // Adjust mouse coordinates to the grid's coordinate system
-    let grid_origin = -MAP_SIZE / 2.0; // Grid starts at (-400.0, -400.0)
+    let grid_origin = -MAP_SIZE / 2.0;
     let adjusted_x = mouse_coords.world.x - grid_origin; // Shift origin to (0, 0)
     let adjusted_z = mouse_coords.world.z - grid_origin;
 
@@ -161,17 +161,16 @@ fn set_target_cell(mouse_coords: Res<MouseCoords>, mut target_cell: ResMut<Targe
 
     // Check if indices are within the grid bounds
     if column < MAP_GRID_SIZE && row < MAP_GRID_SIZE {
+        // println!("Mouse is over cell at row {}, column {}, position {:?}", cell.row, cell.column, cell.position);
         target_cell.row = Some(row);
         target_cell.column = Some(column);
-
-        // println!("Mouse is over cell at row {}, column {}, position {:?}", cell.row, cell.column, cell.position);
     } else {
         target_cell.row = None;
         target_cell.column = None;
     }
 }
 
-fn find_path(grid: &Grid, start: (u32, u32), goal: (u32, u32)) -> Option<Vec<(u32, u32)>> {
+pub fn find_path(grid: &Grid, start: (u32, u32), goal: (u32, u32)) -> Option<Vec<(u32, u32)>> {
     let result = astar(
         &start,
         |&(row, column)| successors(grid, row, column),

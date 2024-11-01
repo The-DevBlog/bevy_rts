@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_mod_billboard::*;
 use bevy_rapier3d::{plugin::RapierContext, prelude::*};
 use events::SetUnitDestinationEv;
+use map::{find_path, Grid, TargetCell};
 
 use crate::{components::*, resources::*, utils, *};
 
@@ -10,7 +11,14 @@ pub struct TankPlugin;
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
-            .add_systems(Update, move_unit::<Friendly>)
+            .add_systems(
+                Update,
+                (
+                    move_unit::<Friendly>,
+                    assign_path_system,
+                    unit_movement_system,
+                ),
+            )
             .observe(set_unit_destination);
     }
 }
@@ -99,22 +107,108 @@ fn move_unit<T: Component>(
     >,
     time: Res<Time>,
 ) {
-    for (mut action, mut trans, mut ext_impulse, speed, mut destination) in unit_q.iter_mut() {
-        // only move the object if it has a destination
-        if let Some(new_pos) = destination.0 {
-            let distance = new_pos - trans.translation;
-            let direction = Vec3::new(distance.x, 0.0, distance.z).normalize();
-            rotate_towards(&mut trans, direction);
+    // for (mut action, mut trans, mut ext_impulse, speed, mut destination) in unit_q.iter_mut() {
+    //     // only move the object if it has a destination
+    //     if let Some(new_pos) = destination.0 {
+    //         let distance = new_pos - trans.translation;
+    //         let direction = Vec3::new(distance.x, 0.0, distance.z).normalize();
+    //         rotate_towards(&mut trans, direction);
 
-            if distance.length_squared() <= 5.0 {
-                destination.0 = None;
-                action.0 = Action::None;
-            } else {
-                action.0 = Action::Relocate;
-                ext_impulse.impulse += direction * speed.0 * time.delta_seconds();
+    //         if distance.length_squared() <= 5.0 {
+    //             destination.0 = None;
+    //             action.0 = Action::None;
+    //         } else {
+    //             action.0 = Action::Relocate;
+    //             ext_impulse.impulse += direction * speed.0 * time.delta_seconds();
+    //         }
+    //     }
+    // }
+}
+
+fn unit_movement_system(
+    time: Res<Time>,
+    mut units_query: Query<(&mut Transform, &mut DestinationPath), With<Friendly>>,
+) {
+    let delta_time = time.delta_seconds();
+
+    for (mut transform, mut path_component) in units_query.iter_mut() {
+        if !path_component.waypoints.is_empty() {
+            // Get the next waypoint
+            let target = path_component.waypoints[0];
+
+            // Direction vector
+            let direction = target - transform.translation;
+            let distance = direction.length();
+
+            if distance < 0.1 {
+                // Reached the waypoint
+                path_component.waypoints.remove(0);
+                continue;
+            }
+
+            // Move towards the target
+            let direction_normalized = direction.normalize();
+
+            transform.translation += direction_normalized * TANK_SPEED * delta_time;
+
+            // Optional: Rotate the unit to face the movement direction
+            let target_rotation =
+                Quat::from_rotation_y(-direction_normalized.x.atan2(direction_normalized.z));
+            transform.rotation = transform.rotation.slerp(target_rotation, 0.1);
+        }
+    }
+}
+
+fn assign_path_system(
+    target_cell: Res<TargetCell>,
+    grid: Res<Grid>,
+    // selected_unit: Res<SelectedUnit>,
+    mut units_query: Query<(&Transform, &mut DestinationPath, &mut Destination), With<Friendly>>,
+) {
+    // if let Some(selected_entity) = selected_unit.entity {
+    if let (Some(goal_row), Some(goal_column)) = (target_cell.row, target_cell.column) {
+        // if let Ok((transform, mut path_component, mut destination)) =
+        //     units_query.get_mut(selected_entity)
+        // {
+
+        for (transform, mut path, mut destination) in units_query.iter_mut() {
+            if destination.0.is_none() {
+                continue;
+            }
+
+            // Get the unit's current cell
+            let unit_pos = transform.translation;
+            let grid_origin = -MAP_SIZE / 2.0;
+            let adjusted_x = unit_pos.x - grid_origin;
+            let adjusted_z = unit_pos.z - grid_origin;
+
+            let start_column = (adjusted_x / MAP_CELL_SIZE).floor() as u32;
+            let start_row = (adjusted_z / MAP_CELL_SIZE).floor() as u32;
+
+            // Compute the path
+            if let Some(path_indices) =
+                find_path(&grid, (start_row, start_column), (goal_row, goal_column))
+            {
+                // Convert path indices to world positions
+                let mut waypoints = Vec::new();
+                for (path_row, path_column) in path_indices {
+                    let index = (path_row * MAP_GRID_SIZE + path_column) as usize;
+                    let cell = &grid.0[index];
+                    let waypoint = Vec3::new(cell.position.x, unit_pos.y, cell.position.y);
+                    waypoints.push(waypoint);
+                }
+
+                // Assign the path to the unit
+                path.waypoints = waypoints.clone();
+
+                // Set the unit's destination to the last waypoint
+                destination.0 = Some(waypoints.last().cloned().unwrap());
+
+                // println!("Assigned path to unit {:?}", selected_entity);
             }
         }
     }
+    // }
 }
 
 fn rotate_towards(trans: &mut Transform, direction: Vec3) {

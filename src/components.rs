@@ -46,34 +46,10 @@ pub struct Friendly;
 pub struct Destination(pub Option<Vec3>);
 
 #[derive(Component, Default)]
-pub struct DestinationPath {
-    pub waypoints: Vec<Cell>,
-    pub current_index: usize,
-}
-
-impl DestinationPath {
-    pub fn new(waypoints: Vec<Cell>) -> Self {
-        DestinationPath {
-            waypoints,
-            current_index: 0,
-        }
-    }
-}
-
-// #[derive(Component, Default)]
-// pub struct DestinationPath(pub Vec<Cell>);
+pub struct DestinationPath(pub Vec<Cell>);
 
 #[derive(Component)]
 pub struct MapBase;
-
-#[derive(Component, Debug)]
-pub struct CurrentAction(pub Action);
-
-#[derive(Debug, PartialEq)]
-pub enum Action {
-    Relocate,
-    None,
-}
 
 #[derive(Bundle)]
 pub struct UnitBundle {
@@ -87,7 +63,6 @@ pub struct UnitBundle {
     pub destination_path: DestinationPath,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
-    pub current_action: CurrentAction,
 }
 
 impl UnitBundle {
@@ -110,7 +85,6 @@ impl UnitBundle {
             speed: Speed(speed),
             destination: Destination(None),
             destination_path: DestinationPath::default(),
-            current_action: CurrentAction(Action::None),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::ROTATION_LOCKED_Y

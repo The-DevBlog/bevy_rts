@@ -1,4 +1,5 @@
 use bevy::{color::palettes::css::LIGHT_GREEN, prelude::*};
+use bevy_rapier3d::prelude::ExternalImpulse;
 use pathfinding::prelude::astar;
 
 use crate::{components::*, map::*, resources::*, *};
@@ -10,6 +11,7 @@ impl Plugin for PathFindingPlugin {
         app.add_systems(
             Update,
             (
+                move_units_along_path,
                 draw_line_to_destination,
                 set_target_cell,
                 set_destination_path,
@@ -19,13 +21,63 @@ impl Plugin for PathFindingPlugin {
 }
 
 fn draw_line_to_destination(
-    unit_q: Query<(&Destination, &Transform), With<Friendly>>,
+    unit_q: Query<(&Destination, &DestinationPath, &Transform), With<Friendly>>,
     mut gizmos: Gizmos,
 ) {
-    for (destination, transform) in unit_q.iter() {
-        if let Some(destination) = destination.0 {
-            let unit_pos = transform.translation;
-            gizmos.line(unit_pos, destination, COLOR_PATH_FINDING);
+    for (destination, path, unit_trans) in unit_q.iter() {
+        if let Some(_) = destination.0 {
+            let mut current = unit_trans.translation;
+
+            for cell in path.0.iter() {
+                let next = Vec3::new(cell.position.x, 0.1, cell.position.y);
+                gizmos.line(current, next, COLOR_PATH_FINDING);
+                current = next;
+            }
+        }
+    }
+}
+
+fn move_units_along_path(
+    time: Res<Time>,
+    mut unit_q: Query<(
+        &mut Transform,
+        &mut DestinationPath,
+        &mut Destination,
+        &Speed,
+        &mut ExternalImpulse,
+    )>,
+) {
+    for (mut unit_trans, mut path, mut destination, speed, mut ext_impulse) in unit_q.iter_mut() {
+        // println!("{:?}", destination.0);
+
+        // Check if we've reached the end of the path
+        if path.0.len() == 0 {
+            destination.0 = None;
+            *path = DestinationPath::default();
+            continue;
+        }
+
+        // Get the current waypoint
+        let cell = &path.0[0];
+        let target_pos = Vec3::new(
+            cell.position.x,
+            unit_trans.translation.y, // Keep current y to avoid vertical movement
+            cell.position.y,
+        );
+
+        // Calculate the direction and distance to the target position
+        let direction = target_pos - unit_trans.translation;
+        let distance_sq = direction.length_squared();
+
+        let threshold = 5.0;
+        if distance_sq < threshold {
+            // Reached the waypoint, remove it
+            path.0.remove(0);
+        } else {
+            // Move towards the waypoint
+            let direction_normalized = Vec3::new(direction.x, 0.0, direction.z).normalize();
+            tank::rotate_towards(&mut unit_trans, direction_normalized);
+            ext_impulse.impulse += direction_normalized * speed.0 * time.delta_seconds();
         }
     }
 }
@@ -34,7 +86,7 @@ fn set_destination_path(
     grid: Res<Grid>,
     mut unit_q: Query<(&Transform, &Selected, &mut DestinationPath), With<Selected>>,
     target_cell: Res<TargetCell>,
-    // input: Res<ButtonInput<MouseButton>>,
+    input: Res<ButtonInput<MouseButton>>,
     mut gizmos: Gizmos,
 ) {
     for (transform, selected, mut destination_path) in unit_q.iter_mut() {
@@ -72,9 +124,9 @@ fn set_destination_path(
                     gizmos.rect(position, rotation, size, color);
                 }
 
-                // if input.just_pressed(MouseButton::Left) {
-                //     destination_path.waypoints = waypoints;
-                // }
+                if input.just_pressed(MouseButton::Left) {
+                    destination_path.0 = waypoints;
+                }
             }
         }
     }

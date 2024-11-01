@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::CURSOR_SIZE;
+use crate::{map::Cell, CURSOR_SIZE};
 
 #[derive(Component)]
 pub struct Selected(pub bool);
@@ -47,8 +47,21 @@ pub struct Destination(pub Option<Vec3>);
 
 #[derive(Component, Default)]
 pub struct DestinationPath {
-    pub waypoints: Vec<Vec3>,
+    pub waypoints: Vec<Cell>,
+    pub current_index: usize,
 }
+
+impl DestinationPath {
+    pub fn new(waypoints: Vec<Cell>) -> Self {
+        DestinationPath {
+            waypoints,
+            current_index: 0,
+        }
+    }
+}
+
+// #[derive(Component, Default)]
+// pub struct DestinationPath(pub Vec<Cell>);
 
 #[derive(Component)]
 pub struct MapBase;

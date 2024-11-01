@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::geometry::Collider;
 use bevy_rts_camera::Ground;
-use pathfinding::prelude::astar;
-use resources::MouseCoords;
 
 use super::components::*;
 use super::*;
@@ -27,7 +25,7 @@ pub struct TargetCell {
 #[derive(Resource, Debug)]
 pub struct Grid(pub Vec<Cell>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cell {
     pub row: u32,
     pub column: u32,

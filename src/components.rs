@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::CURSOR_SIZE;
+use crate::{map::Cell, CURSOR_SIZE};
 
 #[derive(Component)]
 pub struct Selected(pub bool);
@@ -45,17 +45,11 @@ pub struct Friendly;
 #[derive(Component)]
 pub struct Destination(pub Option<Vec3>);
 
+#[derive(Component, Default)]
+pub struct DestinationPath(pub Vec<Cell>);
+
 #[derive(Component)]
 pub struct MapBase;
-
-#[derive(Component, Debug)]
-pub struct CurrentAction(pub Action);
-
-#[derive(Debug, PartialEq)]
-pub enum Action {
-    Relocate,
-    None,
-}
 
 #[derive(Bundle)]
 pub struct UnitBundle {
@@ -66,9 +60,9 @@ pub struct UnitBundle {
     pub rigid_body: RigidBody,
     pub speed: Speed,
     pub destination: Destination,
+    pub destination_path: DestinationPath,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
-    pub current_action: CurrentAction,
 }
 
 impl UnitBundle {
@@ -90,7 +84,7 @@ impl UnitBundle {
             rigid_body: RigidBody::Dynamic,
             speed: Speed(speed),
             destination: Destination(None),
-            current_action: CurrentAction(Action::None),
+            destination_path: DestinationPath::default(),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::ROTATION_LOCKED_Y

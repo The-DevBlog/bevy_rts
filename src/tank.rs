@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_mod_billboard::*;
-use bevy_rapier3d::{plugin::RapierContext, prelude::*};
+use bevy_rapier3d::plugin::RapierContext;
 use events::SetUnitDestinationEv;
 
 use crate::{components::*, resources::*, utils, *};
@@ -10,7 +10,6 @@ pub struct TankPlugin;
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
-            .add_systems(Update, move_unit::<Friendly>)
             .observe(set_unit_destination);
     }
 }
@@ -86,38 +85,7 @@ pub fn set_unit_destination(
     }
 }
 
-fn move_unit<T: Component>(
-    mut unit_q: Query<
-        (
-            &mut CurrentAction,
-            &mut Transform,
-            &mut ExternalImpulse,
-            &Speed,
-            &mut Destination,
-        ),
-        With<T>,
-    >,
-    time: Res<Time>,
-) {
-    for (mut action, mut trans, mut ext_impulse, speed, mut destination) in unit_q.iter_mut() {
-        // only move the object if it has a destination
-        if let Some(new_pos) = destination.0 {
-            let distance = new_pos - trans.translation;
-            let direction = Vec3::new(distance.x, 0.0, distance.z).normalize();
-            rotate_towards(&mut trans, direction);
-
-            if distance.length_squared() <= 5.0 {
-                destination.0 = None;
-                action.0 = Action::None;
-            } else {
-                action.0 = Action::Relocate;
-                ext_impulse.impulse += direction * speed.0 * time.delta_seconds();
-            }
-        }
-    }
-}
-
-fn rotate_towards(trans: &mut Transform, direction: Vec3) {
+pub fn rotate_towards(trans: &mut Transform, direction: Vec3) {
     let target_yaw = direction.x.atan2(direction.z);
     trans.rotation = Quat::from_rotation_y(target_yaw);
 }

@@ -1,8 +1,8 @@
-use bevy::prelude::*;
-use map::{Grid, TargetCell};
+use bevy::{color::palettes::css::LIGHT_GREEN, prelude::*};
+use bevy_rapier3d::prelude::ExternalImpulse;
 use pathfinding::prelude::astar;
 
-use crate::{components::*, resources::*, *};
+use crate::{components::*, map::*, resources::*, *};
 
 pub struct PathFindingPlugin;
 
@@ -10,30 +10,86 @@ impl Plugin for PathFindingPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (draw_line_to_destination, highlight_path, set_target_cell),
+            (
+                move_units_along_path,
+                draw_line_to_destination,
+                set_target_cell,
+                set_destination_path,
+            ),
         );
     }
 }
 
 fn draw_line_to_destination(
-    unit_q: Query<(&Destination, &Transform), With<Friendly>>,
+    unit_q: Query<(&Destination, &DestinationPath, &Transform), With<Friendly>>,
     mut gizmos: Gizmos,
 ) {
-    for (destination, transform) in unit_q.iter() {
-        if let Some(destination) = destination.0 {
-            let unit_pos = transform.translation;
-            gizmos.line(unit_pos, destination, COLOR_PATH_FINDING);
+    for (destination, path, unit_trans) in unit_q.iter() {
+        if let Some(_) = destination.0 {
+            let mut current = unit_trans.translation;
+
+            for cell in path.0.iter() {
+                let next = Vec3::new(cell.position.x, 0.1, cell.position.y);
+                gizmos.line(current, next, COLOR_PATH_FINDING);
+                current = next;
+            }
         }
     }
 }
 
-fn highlight_path(
+fn move_units_along_path(
+    time: Res<Time>,
+    mut unit_q: Query<(
+        &mut Transform,
+        &mut DestinationPath,
+        &mut Destination,
+        &Speed,
+        &mut ExternalImpulse,
+    )>,
+) {
+    for (mut unit_trans, mut path, mut destination, speed, mut ext_impulse) in unit_q.iter_mut() {
+        // println!("{:?}", destination.0);
+
+        // Check if we've reached the end of the path
+        if path.0.len() == 0 {
+            destination.0 = None;
+            *path = DestinationPath::default();
+            continue;
+        }
+
+        // Get the current waypoint
+        let cell = &path.0[0];
+        let target_pos = Vec3::new(
+            cell.position.x,
+            unit_trans.translation.y, // Keep current y to avoid vertical movement
+            cell.position.y,
+        );
+
+        // Calculate the direction and distance to the target position
+        let direction = target_pos - unit_trans.translation;
+        let distance_sq = direction.length_squared();
+
+        let threshold = 5.0;
+        if distance_sq < threshold {
+            // Reached the waypoint, remove it
+            path.0.remove(0);
+        } else {
+            // Move towards the waypoint
+            let direction_normalized = Vec3::new(direction.x, 0.0, direction.z).normalize();
+            tank::rotate_towards(&mut unit_trans, direction_normalized);
+            ext_impulse.impulse += direction_normalized * speed.0 * time.delta_seconds();
+        }
+    }
+}
+
+fn set_destination_path(
     grid: Res<Grid>,
-    unit_q: Query<(&Transform, &Selected), With<Selected>>,
+    mut unit_q: Query<(&Transform, &Selected, &mut DestinationPath), With<Selected>>,
     target_cell: Res<TargetCell>,
+    input: Res<ButtonInput<MouseButton>>,
     mut gizmos: Gizmos,
 ) {
-    for (transform, selected) in unit_q.iter() {
+    for (transform, selected, mut destination_path) in unit_q.iter_mut() {
         if !selected.0 {
             continue;
         }
@@ -51,18 +107,25 @@ fn highlight_path(
             // Compute the path
             if let Some(path) = find_path(&grid, (start_row, start_column), (goal_row, goal_column))
             {
+                let mut waypoints: Vec<Cell> = Vec::new();
+
                 // Highlight the path
                 for &(row, column) in &path {
                     let index = (row * MAP_GRID_SIZE + column) as usize;
                     let cell = &grid.0[index];
+                    waypoints.push(cell.clone());
 
                     // Draw a rectangle for each cell in the path
-                    let position = Vec3::new(cell.position.x, 0.1, cell.position.y); // Slightly above ground
+                    let position = Vec3::new(cell.position.x, 0.1, cell.position.y);
                     let rotation = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
                     let size = Vec2::splat(MAP_CELL_SIZE);
-                    let color = Color::rgba(0.0, 1.0, 0.0, 0.5); // Semi-transparent green
+                    let color = LIGHT_GREEN;
 
                     gizmos.rect(position, rotation, size, color);
+                }
+
+                if input.just_pressed(MouseButton::Left) {
+                    destination_path.0 = waypoints;
                 }
             }
         }
@@ -71,7 +134,7 @@ fn highlight_path(
 
 fn set_target_cell(mouse_coords: Res<MouseCoords>, mut target_cell: ResMut<TargetCell>) {
     // Adjust mouse coordinates to the grid's coordinate system
-    let grid_origin = -MAP_SIZE / 2.0; // Grid starts at (-400.0, -400.0)
+    let grid_origin = -MAP_SIZE / 2.0;
     let adjusted_x = mouse_coords.world.x - grid_origin; // Shift origin to (0, 0)
     let adjusted_z = mouse_coords.world.z - grid_origin;
 
@@ -81,17 +144,16 @@ fn set_target_cell(mouse_coords: Res<MouseCoords>, mut target_cell: ResMut<Targe
 
     // Check if indices are within the grid bounds
     if column < MAP_GRID_SIZE && row < MAP_GRID_SIZE {
+        // println!("Mouse is over cell at row {}, column {}, position {:?}", cell.row, cell.column, cell.position);
         target_cell.row = Some(row);
         target_cell.column = Some(column);
-
-        // println!("Mouse is over cell at row {}, column {}, position {:?}", cell.row, cell.column, cell.position);
     } else {
         target_cell.row = None;
         target_cell.column = None;
     }
 }
 
-fn find_path(grid: &Grid, start: (u32, u32), goal: (u32, u32)) -> Option<Vec<(u32, u32)>> {
+pub fn find_path(grid: &Grid, start: (u32, u32), goal: (u32, u32)) -> Option<Vec<(u32, u32)>> {
     let result = astar(
         &start,
         |&(row, column)| successors(grid, row, column),

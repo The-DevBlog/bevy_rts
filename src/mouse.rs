@@ -25,7 +25,6 @@ impl Plugin for MousePlugin {
                     draw_select_box,
                     set_drag_select,
                     set_selected,
-                    // deselect_all,
                 )
                     .chain()
                     .after(set_unit_destination),

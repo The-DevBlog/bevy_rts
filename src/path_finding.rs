@@ -21,7 +21,6 @@ impl Plugin for PathFindingPlugin {
 }
 
 fn draw_line_to_destination(
-    // unit_q: Query<(&Destination, &DestinationPath, &Transform), With<Friendly>>,
     unit_q: Query<(&Destination, &Transform), With<Friendly>>,
     mut gizmos: Gizmos,
 ) {

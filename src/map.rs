@@ -15,7 +15,10 @@ impl Plugin for MapPlugin {
             .init_resource::<SetGridOccupantsOnce>()
             .init_resource::<DelayedRunTimer>()
             .add_systems(Startup, (spawn_map, spawn_obstacle))
-            .add_systems(Update, (draw_grid, set_grid_occupants));
+            .add_systems(
+                Update,
+                (draw_grid, set_grid_occupants, update_grid_occupants),
+            );
     }
 }
 
@@ -45,9 +48,6 @@ pub struct Grid {
 
 #[derive(Debug, Clone)]
 pub struct Cell {
-    pub idx: usize,
-    pub row: u32,
-    pub column: u32,
     pub position: Vec2,
     pub occupied: bool,
 }
@@ -56,7 +56,6 @@ impl Default for Grid {
     fn default() -> Self {
         let mut cells = Vec::new();
 
-        let mut idx = 0;
         for row in 0..MAP_GRID_SIZE {
             for column in 0..MAP_GRID_SIZE {
                 // Calculate the center position of each cell
@@ -65,16 +64,10 @@ impl Default for Grid {
                     -MAP_SIZE / 2.0 + row as f32 * MAP_CELL_SIZE + MAP_CELL_SIZE / 2.0,
                 );
 
-                let cell = Cell {
-                    idx,
-                    row,
-                    column,
+                cells.push(Cell {
                     position,
-                    occupied: true,
-                };
-
-                cells.push(cell);
-                idx += 1;
+                    occupied: false,
+                });
             }
         }
 
@@ -126,18 +119,19 @@ fn spawn_obstacle(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let size = 12.0;
-    cmds.spawn((
-        PbrBundle {
-            mesh: meshes.add(Cuboid::new(size, size, size)),
-            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-            transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
-            ..default()
-        },
-        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-    ));
+    // let size = 12.0;
+    // cmds.spawn((
+    //     PbrBundle {
+    //         mesh: meshes.add(Cuboid::new(size, size, size)),
+    //         material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+    //         transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
+    //         ..default()
+    //     },
+    //     Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+    // ));
 }
 
+// runs once at Update
 fn set_grid_occupants(
     mut grid: ResMut<Grid>,
     rapier_context: Res<RapierContext>,
@@ -165,14 +159,71 @@ fn set_grid_occupants(
             ) {
                 occupied_cells.push(idx);
                 cell.occupied = true;
-            } else {
-                cell.occupied = false;
             }
         }
 
         grid.occupied_cells = occupied_cells;
         track.0 = true;
     }
+}
+
+fn update_grid_occupants(mut grid: ResMut<Grid>, rapier_context: Res<RapierContext>) {
+    let half_size = MAP_CELL_SIZE / 2.0;
+
+    // Create a new vector to hold indices of cells that are still occupied
+    let mut still_occupied_cells = Vec::new();
+
+    // Clone the occupied_cells list to iterate over to avoid borrowing issues
+    let occupied_cells_snapshot = grid.occupied_cells.clone();
+
+    // First pass: Check currently occupied cells and mark them as unoccupied if necessary
+    for &idx in occupied_cells_snapshot.iter() {
+        if let Some(cell) = grid.cells.get_mut(idx) {
+            let cell_center = Vec3::new(cell.position.x, 0.0, cell.position.y);
+            let cell_shape = Collider::cuboid(half_size, 1.0, half_size);
+
+            // If cell is no longer occupied, mark it as unoccupied
+            if rapier_context
+                .intersection_with_shape(
+                    cell_center,
+                    Quat::IDENTITY,
+                    &cell_shape,
+                    QueryFilter::default().exclude_sensors(),
+                )
+                .is_none()
+            {
+                cell.occupied = false;
+            } else {
+                // If still occupied, add it to the new list
+                still_occupied_cells.push(idx);
+            }
+        }
+    }
+
+    // Second pass: Check all cells to detect new occupied cells
+    for (idx, cell) in grid.cells.iter_mut().enumerate() {
+        // Skip cells that are already marked as occupied in the first pass
+        if cell.occupied {
+            continue;
+        }
+
+        let cell_center = Vec3::new(cell.position.x, 0.0, cell.position.y);
+        let cell_shape = Collider::cuboid(half_size, 1.0, half_size);
+
+        // If a unit is now within this cell, mark it as occupied
+        if let Some(_) = rapier_context.intersection_with_shape(
+            cell_center,
+            Quat::IDENTITY,
+            &cell_shape,
+            QueryFilter::default().exclude_sensors(),
+        ) {
+            cell.occupied = true;
+            still_occupied_cells.push(idx);
+        }
+    }
+
+    // Update the grid's occupied cells list
+    grid.occupied_cells = still_occupied_cells;
 }
 
 fn draw_grid(

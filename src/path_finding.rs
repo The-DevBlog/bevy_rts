@@ -104,7 +104,7 @@ fn set_destination_path(
             let start_column = (adjusted_x / MAP_CELL_SIZE).floor() as u32;
             let start_row = (adjusted_z / MAP_CELL_SIZE).floor() as u32;
 
-            // Compute the path
+            // Compute the path, ensuring only non-occupied cells are included
             if let Some(path) = find_path(&grid, (start_row, start_column), (goal_row, goal_column))
             {
                 let mut waypoints: Vec<Cell> = Vec::new();
@@ -124,6 +124,7 @@ fn set_destination_path(
                     gizmos.rect(position, rotation, size, color);
                 }
 
+                // If a left mouse click is detected, assign the computed path
                 if input.just_pressed(MouseButton::Left) {
                     destination_path.0 = waypoints;
                 }
@@ -153,29 +154,27 @@ fn set_target_cell(mouse_coords: Res<MouseCoords>, mut target_cell: ResMut<Targe
     }
 }
 
-pub fn find_path(grid: &Grid, start: (u32, u32), goal: (u32, u32)) -> Option<Vec<(u32, u32)>> {
-    let result = astar(
+fn find_path(grid: &Grid, start: (u32, u32), goal: (u32, u32)) -> Option<Vec<(u32, u32)>> {
+    astar(
         &start,
-        |&(row, column)| successors(grid, row, column),
+        |&(row, column)| successors(&grid, row, column),
         |&(row, column)| heuristic(row, column, goal.0, goal.1),
         |&pos| pos == goal,
-    );
-
-    result.map(|(path, _cost)| path)
+    )
+    .map(|(path, _cost)| path)
 }
 
 fn successors(grid: &Grid, row: u32, column: u32) -> Vec<((u32, u32), usize)> {
     let mut neighbors = Vec::new();
     let directions = [
-        (-1, 0), // Up
-        (1, 0),  // Down
-        (0, -1), // Left
-        (0, 1),  // Right
-        // diagonal movement
-        (-1, -1), // Up-Left
-        (-1, 1),  // Up-Right
-        (1, -1),  // Down-Left
-        (1, 1),   // Down-Right
+        (-1, 0),  // Up
+        (1, 0),   // Down
+        (0, -1),  // Left
+        (0, 1),   // Right
+        (-1, -1), // Up-Left (diagonal)
+        (-1, 1),  // Up-Right (diagonal)
+        (1, -1),  // Down-Left (diagonal)
+        (1, 1),   // Down-Right (diagonal)
     ];
 
     for (d_row, d_col) in directions.iter() {
@@ -190,7 +189,8 @@ fn successors(grid: &Grid, row: u32, column: u32) -> Vec<((u32, u32), usize)> {
             let index = (new_row as u32 * MAP_GRID_SIZE + new_col as u32) as usize;
             let neighbor_cell = &grid.0[index];
 
-            if neighbor_cell.walkable {
+            // Only add the neighbor if it is not occupied
+            if neighbor_cell.occupied {
                 neighbors.push(((new_row as u32, new_col as u32), 1)); // Cost is 1 per move
             }
         }

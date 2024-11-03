@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use bevy_rapier3d::geometry::Collider;
+use bevy_rapier3d::plugin::RapierContext;
+use bevy_rapier3d::prelude::{Collider, QueryFilter, Sensor};
 use bevy_rts_camera::Ground;
 
 use super::components::*;
@@ -11,8 +12,23 @@ impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Grid>()
             .init_resource::<TargetCell>()
-            .add_systems(Startup, spawn_map)
+            .init_resource::<SetGridOccupantsOnce>()
+            .init_resource::<DelayedRunTimer>()
+            .add_systems(Startup, (spawn_map, spawn_obstacle))
+            .add_systems(Update, set_grid_occupants)
             .add_systems(Update, draw_grid);
+    }
+}
+
+#[derive(Resource, Default)]
+struct SetGridOccupantsOnce(pub bool);
+
+#[derive(Resource)]
+struct DelayedRunTimer(Timer);
+
+impl Default for DelayedRunTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(0.5, TimerMode::Once)) // 0.5 seconds delay
     }
 }
 
@@ -30,7 +46,7 @@ pub struct Cell {
     pub row: u32,
     pub column: u32,
     pub position: Vec2,
-    pub walkable: bool,
+    pub occupied: bool,
 }
 
 impl Default for Grid {
@@ -49,7 +65,7 @@ impl Default for Grid {
                     row,
                     column,
                     position,
-                    walkable: true,
+                    occupied: true,
                 };
 
                 cells.push(cell);
@@ -73,6 +89,7 @@ fn spawn_map(
             ..default()
         },
         Collider::cuboid(MAP_SIZE / 2.0, 0.0, MAP_SIZE / 2.0),
+        Sensor,
         Ground,
         MapBase,
         Name::new("Map Base"),
@@ -93,6 +110,63 @@ fn spawn_map(
         )),
         ..default()
     });
+}
+
+fn spawn_obstacle(
+    mut cmds: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let size = 12.0;
+    cmds.spawn((
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(size, size, size)),
+            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+            transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
+            ..default()
+        },
+        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+    ));
+}
+
+fn set_grid_occupants(
+    mut grid: ResMut<Grid>,
+    rapier_context: Res<RapierContext>,
+    mut track: ResMut<SetGridOccupantsOnce>,
+    time: Res<Time>,
+    mut timer: ResMut<DelayedRunTimer>,
+) {
+    // Wait until the delay timer finishes, then run the system
+    if !track.0 && timer.0.tick(time.delta()).finished() {
+        let mut count = 0.0;
+
+        // let buff = 0.35;
+        let half_size = MAP_CELL_SIZE / 2.0;
+
+        // Loop through each cell in the grid
+        for cell in grid.0.iter_mut() {
+            // count += 1.0;
+
+            // Define the cell's bounding box as a Rapier cuboid (half extents of the cell)
+            let cell_center = Vec3::new(cell.position.x, 0.0, cell.position.y);
+            let cell_shape = Collider::cuboid(half_size, 1.0, half_size);
+
+            if let Some(_) = rapier_context.intersection_with_shape(
+                cell_center,
+                Quat::IDENTITY,
+                &cell_shape,
+                QueryFilter::default().exclude_sensors(),
+            ) {
+                count += 1.0;
+                cell.occupied = false;
+            } else {
+                cell.occupied = true;
+            }
+        }
+
+        track.0 = true;
+        println!("count: {}", count);
+    }
 }
 
 fn draw_grid(mut gizmos: Gizmos) {

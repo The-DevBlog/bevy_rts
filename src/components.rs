@@ -42,11 +42,11 @@ pub struct SelectionBox;
 #[derive(Component)]
 pub struct Friendly;
 
-#[derive(Component)]
-pub struct Destination(pub Option<Vec3>);
-
 #[derive(Component, Default)]
-pub struct DestinationPath(pub Vec<Cell>);
+pub struct Destination {
+    pub endpoint: Option<Vec3>,
+    pub waypoints: Vec<Cell>,
+}
 
 #[derive(Component)]
 pub struct MapBase;
@@ -60,7 +60,6 @@ pub struct UnitBundle {
     pub rigid_body: RigidBody,
     pub speed: Speed,
     pub destination: Destination,
-    pub destination_path: DestinationPath,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
 }
@@ -83,8 +82,7 @@ impl UnitBundle {
             name: Name::new(name),
             rigid_body: RigidBody::Dynamic,
             speed: Speed(speed),
-            destination: Destination(None),
-            destination_path: DestinationPath::default(),
+            destination: Destination::default(),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::ROTATION_LOCKED_Y

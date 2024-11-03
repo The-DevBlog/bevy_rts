@@ -15,8 +15,7 @@ impl Plugin for MapPlugin {
             .init_resource::<SetGridOccupantsOnce>()
             .init_resource::<DelayedRunTimer>()
             .add_systems(Startup, (spawn_map, spawn_obstacle))
-            .add_systems(Update, set_grid_occupants)
-            .add_systems(Update, draw_grid);
+            .add_systems(Update, (draw_grid, set_grid_occupants));
     }
 }
 
@@ -39,10 +38,14 @@ pub struct TargetCell {
 }
 
 #[derive(Resource, Debug)]
-pub struct Grid(pub Vec<Cell>);
+pub struct Grid {
+    pub cells: Vec<Cell>,
+    pub occupied_cells: Vec<usize>,
+}
 
 #[derive(Debug, Clone)]
 pub struct Cell {
+    pub idx: usize,
     pub row: u32,
     pub column: u32,
     pub position: Vec2,
@@ -53,6 +56,7 @@ impl Default for Grid {
     fn default() -> Self {
         let mut cells = Vec::new();
 
+        let mut idx = 0;
         for row in 0..MAP_GRID_SIZE {
             for column in 0..MAP_GRID_SIZE {
                 // Calculate the center position of each cell
@@ -62,6 +66,7 @@ impl Default for Grid {
                 );
 
                 let cell = Cell {
+                    idx,
                     row,
                     column,
                     position,
@@ -69,10 +74,14 @@ impl Default for Grid {
                 };
 
                 cells.push(cell);
+                idx += 1;
             }
         }
 
-        Grid(cells)
+        Grid {
+            cells,
+            occupied_cells: Vec::default(),
+        }
     }
 }
 
@@ -138,15 +147,12 @@ fn set_grid_occupants(
 ) {
     // Wait until the delay timer finishes, then run the system
     if !track.0 && timer.0.tick(time.delta()).finished() {
-        let mut count = 0.0;
-
-        // let buff = 0.35;
         let half_size = MAP_CELL_SIZE / 2.0;
 
-        // Loop through each cell in the grid
-        for cell in grid.0.iter_mut() {
-            // count += 1.0;
+        let mut occupied_cells = Vec::new();
 
+        // Loop through each cell in the grid
+        for (idx, cell) in grid.cells.iter_mut().enumerate() {
             // Define the cell's bounding box as a Rapier cuboid (half extents of the cell)
             let cell_center = Vec3::new(cell.position.x, 0.0, cell.position.y);
             let cell_shape = Collider::cuboid(half_size, 1.0, half_size);
@@ -157,24 +163,69 @@ fn set_grid_occupants(
                 &cell_shape,
                 QueryFilter::default().exclude_sensors(),
             ) {
-                count += 1.0;
-                cell.occupied = false;
-            } else {
+                occupied_cells.push(idx);
                 cell.occupied = true;
+            } else {
+                cell.occupied = false;
             }
         }
 
+        grid.occupied_cells = occupied_cells;
         track.0 = true;
-        println!("count: {}", count);
     }
 }
 
-fn draw_grid(mut gizmos: Gizmos) {
+fn draw_grid(
+    mut gizmos: Gizmos,
+    mut unit_q: Query<(&Transform, &Selected), With<Selected>>,
+    target_cell: Res<TargetCell>,
+    grid: Res<Grid>,
+) {
+    // draw grid
     gizmos.grid(
         Vec3::ZERO,
         Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
         UVec2::new(MAP_GRID_SIZE, MAP_GRID_SIZE),
         Vec2::new(MAP_CELL_SIZE, MAP_CELL_SIZE),
-        ORANGE_RED,
+        COLOR_GRID,
     );
+
+    // highlight unit paths
+    for (unit_trans, selected) in unit_q.iter_mut() {
+        if !selected.0 {
+            continue;
+        }
+        if let (Some(goal_row), Some(goal_column)) = (target_cell.row, target_cell.column) {
+            // Get the unit's current cell
+            let (start_row, start_column) = utils::get_unit_cell_row_and_column(&unit_trans);
+
+            // Compute the path, ensuring only non-occupied cells are included
+            if let Some(path) =
+                path_finding::find_path(&grid, (start_row, start_column), (goal_row, goal_column))
+            {
+                // Highlight the path
+                for &(row, column) in &path {
+                    let index = (row * MAP_GRID_SIZE + column) as usize;
+                    let cell = &grid.cells[index];
+
+                    // Draw a rectangle for each cell in the path
+                    let position = Vec3::new(cell.position.x, 0.1, cell.position.y);
+                    let rotation = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
+                    let size = Vec2::splat(MAP_CELL_SIZE);
+                    let color = COLOR_PATH;
+
+                    gizmos.rect(position, rotation, size, color);
+                }
+            }
+        }
+    }
+
+    // highlight occupied cells
+    for idx in &grid.occupied_cells {
+        let cell = &grid.cells[*idx];
+        let position = Vec3::new(cell.position.x, 0.1, cell.position.y);
+        let rotation = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
+        let size = Vec2::splat(MAP_CELL_SIZE);
+        gizmos.rect(position, rotation, size, COLOR_OCCUPIED_CELL);
+    }
 }

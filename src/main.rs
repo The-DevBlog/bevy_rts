@@ -32,7 +32,7 @@ const MAP_SIZE: f32 = 800.0;
 const MAP_GRID_SIZE: u32 = 60;
 const MAP_CELL_SIZE: f32 = MAP_SIZE / MAP_GRID_SIZE as f32;
 const SPEED_QUANTIFIER: f32 = 1000.0;
-const TANK_COUNT: usize = 3;
+const TANK_COUNT: usize = 1;
 const TANK_SPEED: f32 = 75.0;
 
 fn main() {

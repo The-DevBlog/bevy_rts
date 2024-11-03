@@ -79,7 +79,7 @@ pub fn set_unit_destination(
         if selected.0 {
             let mut destination = mouse_coords.world;
             destination.y += trans.scale.y / 2.0; // calculate for entity height
-            friendly_destination.0 = Some(destination);
+            friendly_destination.endpoint = Some(destination);
             // println!("Unit Moving to ({}, {})", destination.x, destination.y);
         }
     }

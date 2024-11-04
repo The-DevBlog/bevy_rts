@@ -102,8 +102,7 @@ fn set_destination_path(
 
                 // Highlight the path
                 for &(row, column) in &path {
-                    let index = (row * MAP_GRID_SIZE + column) as usize;
-                    let cell = &grid.cells[index];
+                    let cell = grid.cells[row as usize][column as usize];
                     waypoints.push(cell.clone());
                 }
 
@@ -169,8 +168,7 @@ pub fn successors(grid: &Grid, row: u32, column: u32) -> Vec<((u32, u32), usize)
             && new_col >= 0
             && new_col < MAP_GRID_SIZE as i32
         {
-            let index = (new_row as u32 * MAP_GRID_SIZE + new_col as u32) as usize;
-            let neighbor_cell = &grid.cells[index];
+            let neighbor_cell = grid.cells[new_row as usize][new_col as usize];
 
             // Only add the neighbor if it is not occupied
             if !neighbor_cell.occupied {

@@ -18,7 +18,7 @@ fn spawn_camera(mut cmds: Commands) {
         Camera3dBundle::default(),
         pathfinding::GameCamera,
         RtsCamera {
-            bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_SIZE / 2.0, MAP_SIZE / 2.0)),
+            bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_HEIGHT / 2.0)),
             min_angle: 60.0f32.to_radians(),
             height_max: 200.0,
             ..default()

@@ -9,7 +9,7 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_map, spawn_obstacle));
+        app.add_systems(Startup, (spawn_map, spawn_grid, spawn_obstacle));
     }
 }
 
@@ -21,11 +21,11 @@ fn spawn_map(
     // Ground
     cmds.spawn((
         PbrBundle {
-            mesh: meshes.add(Plane3d::default().mesh().size(MAP_SIZE, MAP_SIZE)),
+            mesh: meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_HEIGHT)),
             material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
             ..default()
         },
-        Collider::cuboid(MAP_SIZE / 2.0, 0.0, MAP_SIZE / 2.0),
+        Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_HEIGHT / 2.0),
         Sensor,
         Ground,
         pathfinding::MapBase,
@@ -47,6 +47,22 @@ fn spawn_map(
         )),
         ..default()
     });
+}
+
+fn spawn_grid(mut cmds: Commands) {
+    let grid = (
+        pathfinding::Grid::new(
+            MAP_GRID_ROWS,
+            MAP_GRID_COLUMNS,
+            MAP_WIDTH,
+            MAP_HEIGHT,
+            MAP_CELL_WIDTH,
+            MAP_CELL_HEIGHT,
+        ),
+        Name::new("Grid"),
+    );
+
+    cmds.spawn(grid);
 }
 
 fn spawn_obstacle(

@@ -1,13 +1,7 @@
+use crate::CURSOR_SIZE;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-
-use crate::{map::Cell, CURSOR_SIZE};
-
-#[derive(Component)]
-pub struct Selected(pub bool);
-
-#[derive(Component)]
-pub struct Speed(pub f32);
+use bevy_rts_pathfinding::components as pathfinding;
 
 #[derive(Component)]
 pub struct UnitBorderBoxImg {
@@ -39,18 +33,6 @@ impl Default for MyCursor {
 #[derive(Component)]
 pub struct SelectionBox;
 
-#[derive(Component)]
-pub struct Friendly;
-
-#[derive(Component, Default)]
-pub struct Destination {
-    pub endpoint: Option<Vec3>,
-    pub waypoints: Vec<Cell>,
-}
-
-#[derive(Component)]
-pub struct MapBase;
-
 #[derive(Bundle)]
 pub struct UnitBundle {
     pub collider: Collider,
@@ -58,8 +40,8 @@ pub struct UnitBundle {
     pub external_impulse: ExternalImpulse,
     pub name: Name,
     pub rigid_body: RigidBody,
-    pub speed: Speed,
-    pub destination: Destination,
+    pub speed: pathfinding::Speed,
+    pub destination: pathfinding::Destination,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
 }
@@ -81,8 +63,8 @@ impl UnitBundle {
             external_impulse: ExternalImpulse::default(),
             name: Name::new(name),
             rigid_body: RigidBody::Dynamic,
-            speed: Speed(speed),
-            destination: Destination::default(),
+            speed: pathfinding::Speed(speed),
+            destination: pathfinding::Destination::default(),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::ROTATION_LOCKED_Y

@@ -1,18 +1,17 @@
+use bevy::{color::palettes::css::*, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_billboard::plugin::BillboardPlugin;
 use bevy_rapier3d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
     render::RapierDebugRenderPlugin,
 };
-
-use bevy::{color::palettes::css::*, prelude::*};
+use bevy_rts_pathfinding::BevyRtsPathFindingPlugin;
 
 mod camera;
 mod components;
 mod events;
 mod map;
 mod mouse;
-mod path_finding;
 mod resources;
 mod tank;
 mod utils;
@@ -20,7 +19,6 @@ mod utils;
 use camera::CameraPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
-use path_finding::PathFindingPlugin;
 use resources::ResourcesPlugin;
 use tank::TankPlugin;
 
@@ -45,9 +43,9 @@ fn main() {
             RapierDebugRenderPlugin::default(),
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
+            BevyRtsPathFindingPlugin,
             ResourcesPlugin,
             BillboardPlugin,
-            PathFindingPlugin,
             CameraPlugin,
             MapPlugin,
             MousePlugin,

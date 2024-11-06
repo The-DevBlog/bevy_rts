@@ -323,24 +323,14 @@ pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
-    children_q: Query<&Children>,
-    selected_q: Query<Entity, With<pathfinding::Selected>>,
+    // children_q: Query<&Children>,
+    // selected_q: Query<Entity, With<pathfinding::Selected>>,
     mut unit_q: Query<Entity, With<pathfinding::Unit>>,
     mut cmds: Commands,
     mouse_coords: Res<MouseCoords>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
-
-    // for entity in selected_units_q.iter() {
-    //     for child in children_q.iter_descendants(entity) {
-    //         if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
-    //             // let mut border_xy = Vec2::new(0.0, 0.0);
-    //             let border_xy = Vec2::new(border.width, border.height);
-    //             *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
-    //         }
-    //     }
-    // }
 
     // deselect all currently selected entities
     if let Some((ent, _)) = hit {
@@ -351,12 +341,12 @@ pub fn single_select(
                 cmds.entity(selected_entity)
                     .remove::<pathfinding::Selected>();
             } else {
-                for child in children_q.iter_descendants(ent) {
-                    if let Ok(_) = selected_q.get(child) {
-                        println!("DONE");
-                        cmds.entity(ent).remove::<pathfinding::Selected>();
-                    }
-                }
+                // for child in children_q.iter_descendants(ent) {
+                //     if let Ok(_) = selected_q.get(child) {
+                //         println!("DONE");
+                //         cmds.entity(ent).remove::<pathfinding::Selected>();
+                //     }
+                // }
                 cmds.entity(selected_entity).insert(pathfinding::Selected);
             }
         }

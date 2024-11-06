@@ -2,6 +2,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
+use bevy_rts_pathfinding::components as pathfinding;
 
 use crate::events::*;
 use crate::resources::*;
@@ -149,7 +150,7 @@ fn set_select_box_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut select_box: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
-    map_base_q: Query<&GlobalTransform, With<MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<pathfinding::MapBase>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     let viewport = select_box.viewport.clone();
@@ -180,7 +181,7 @@ fn set_mouse_coords(
     mut mouse_coords: ResMut<MouseCoords>,
     window_q: Query<&Window, With<PrimaryWindow>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
-    map_base_q: Query<&GlobalTransform, With<MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<pathfinding::MapBase>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let Some(viewport_cursor) = window_q.single().cursor_position() else {
@@ -230,7 +231,7 @@ fn draw_select_box(
 
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
-    mut friendly_q: Query<(&Transform, &mut Selected), With<Friendly>>,
+    mut friendly_q: Query<(&Transform, &mut pathfinding::Selected), With<pathfinding::Unit>>,
     box_coords: Res<SelectBox>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
@@ -282,7 +283,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     mut cursor_q: Query<(&mut UiImage, &mut MyCursor)>,
-    mut select_q: Query<Entity, With<Friendly>>,
+    mut select_q: Query<Entity, With<pathfinding::Unit>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
@@ -317,7 +318,7 @@ pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
-    mut select_q: Query<(Entity, &mut Selected), With<Friendly>>,
+    mut select_q: Query<(Entity, &mut pathfinding::Selected), With<pathfinding::Unit>>,
     mouse_coords: Res<MouseCoords>,
 ) {
     let (cam, cam_trans) = cam_q.single();
@@ -334,14 +335,14 @@ pub fn single_select(
 
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
-    mut select_q: Query<&mut Selected, With<Selected>>,
+    mut select_q: Query<&mut pathfinding::Selected, With<pathfinding::Selected>>,
 ) {
     for mut selected in select_q.iter_mut() {
         selected.0 = false;
     }
 }
 
-fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>) {
+fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pathfinding::Selected>) {
     game_cmds.selected = false;
     for selected in select_q.iter() {
         if selected.0 {
@@ -351,7 +352,7 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
 }
 
 fn border_select_visibility(
-    friendly_q: Query<(Entity, &Selected), With<Friendly>>,
+    friendly_q: Query<(Entity, &pathfinding::Selected), With<pathfinding::Unit>>,
     mut border_select_q: Query<
         (&mut BillboardMeshHandle, &UnitBorderBoxImg),
         With<UnitBorderBoxImg>,

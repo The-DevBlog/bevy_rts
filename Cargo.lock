@@ -1019,6 +1019,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_rts_pathfinding"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_rapier3d",
+ "pathfinding",
+]
+
+[[package]]
 name = "bevy_scene"
 version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3665,6 +3674,7 @@ dependencies = [
  "bevy_mod_billboard",
  "bevy_rapier3d",
  "bevy_rts_camera",
+ "bevy_rts_pathfinding",
  "pathfinding",
 ]
 

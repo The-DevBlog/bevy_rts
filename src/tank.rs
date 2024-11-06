@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_mod_billboard::*;
 use bevy_rapier3d::plugin::RapierContext;
+use bevy_rts_pathfinding::components as pathfinding;
 use events::SetUnitDestinationEv;
 
 use crate::{components::*, resources::*, utils, *};
@@ -29,8 +30,8 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
                 assets.load("tank.glb#Scene0"),
                 pos,
             ),
-            Selected(false),
-            Friendly,
+            pathfinding::Selected(false),
+            pathfinding::Unit,
         )
     };
 
@@ -63,7 +64,14 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
 pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
-    mut friendly_q: Query<(&mut Destination, &Transform, &Selected), With<Friendly>>,
+    mut friendly_q: Query<
+        (
+            &mut pathfinding::Destination,
+            &Transform,
+            &pathfinding::Selected,
+        ),
+        With<pathfinding::Unit>,
+    >,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -85,7 +93,7 @@ pub fn set_unit_destination(
     }
 }
 
-pub fn rotate_towards(trans: &mut Transform, direction: Vec3) {
-    let target_yaw = direction.x.atan2(direction.z);
-    trans.rotation = Quat::from_rotation_y(target_yaw);
-}
+// pub fn rotate_towards(trans: &mut Transform, direction: Vec3) {
+//     let target_yaw = direction.x.atan2(direction.z);
+//     trans.rotation = Quat::from_rotation_y(target_yaw);
+// }

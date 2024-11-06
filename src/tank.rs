@@ -30,7 +30,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
                 assets.load("tank.glb#Scene0"),
                 pos,
             ),
-            pathfinding::Selected(false),
+            // pathfinding::Selected(false),
             pathfinding::Unit,
         )
     };
@@ -70,7 +70,7 @@ pub fn set_unit_destination(
             &Transform,
             &pathfinding::Selected,
         ),
-        With<pathfinding::Unit>,
+        With<pathfinding::Selected>,
     >,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     rapier_context: Res<RapierContext>,
@@ -84,12 +84,12 @@ pub fn set_unit_destination(
     }
 
     for (mut friendly_destination, trans, selected) in friendly_q.iter_mut() {
-        if selected.0 {
-            let mut destination = mouse_coords.world;
-            destination.y += trans.scale.y / 2.0; // calculate for entity height
-            friendly_destination.endpoint = Some(destination);
-            // println!("Unit Moving to ({}, {})", destination.x, destination.y);
-        }
+        // if selected.0 {
+        let mut destination = mouse_coords.world;
+        destination.y += trans.scale.y / 2.0; // calculate for entity height
+        friendly_destination.endpoint = Some(destination);
+        // println!("Unit Moving to ({}, {})", destination.x, destination.y);
+        // }
     }
 }
 

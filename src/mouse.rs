@@ -231,7 +231,8 @@ fn draw_select_box(
 
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
-    mut friendly_q: Query<(&Transform, &mut pathfinding::Selected), With<pathfinding::Unit>>,
+    mut cmds: Commands,
+    mut friendly_q: Query<(Entity, &Transform), With<pathfinding::Unit>>,
     box_coords: Res<SelectBox>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
@@ -245,7 +246,7 @@ pub fn handle_drag_select(
     let d = box_coords.world.end_1;
 
     // check to see if units are within selection rectangle
-    for (friendly_trans, mut selected) in friendly_q.iter_mut() {
+    for (friendly_ent, friendly_trans) in friendly_q.iter_mut() {
         let unit_pos = friendly_trans.translation;
 
         // Calculate cross products for each edge
@@ -271,7 +272,11 @@ pub fn handle_drag_select(
             || (cross_ab_ap < 0.0 && cross_bc_bp < 0.0 && cross_cd_cp < 0.0 && cross_da_dp < 0.0);
 
         // Set the selection status
-        selected.0 = in_box_bounds;
+        if in_box_bounds {
+            cmds.entity(friendly_ent).insert(pathfinding::Selected);
+        } else {
+            cmds.entity(friendly_ent).remove::<pathfinding::Selected>();
+        }
     }
 }
 
@@ -318,41 +323,66 @@ pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
-    mut select_q: Query<(Entity, &mut pathfinding::Selected), With<pathfinding::Unit>>,
+    children_q: Query<&Children>,
+    selected_q: Query<Entity, With<pathfinding::Selected>>,
+    mut unit_q: Query<Entity, With<pathfinding::Unit>>,
+    mut cmds: Commands,
     mouse_coords: Res<MouseCoords>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
+    // for entity in selected_units_q.iter() {
+    //     for child in children_q.iter_descendants(entity) {
+    //         if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
+    //             // let mut border_xy = Vec2::new(0.0, 0.0);
+    //             let border_xy = Vec2::new(border.width, border.height);
+    //             *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+    //         }
+    //     }
+    // }
+
     // deselect all currently selected entities
     if let Some((ent, _)) = hit {
-        for (selected_entity, mut selected) in select_q.iter_mut() {
+        for selected_entity in unit_q.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
-            selected.0 = tmp && !selected.0;
+
+            if !tmp {
+                cmds.entity(selected_entity)
+                    .remove::<pathfinding::Selected>();
+            } else {
+                for child in children_q.iter_descendants(ent) {
+                    if let Ok(_) = selected_q.get(child) {
+                        println!("DONE");
+                        cmds.entity(ent).remove::<pathfinding::Selected>();
+                    }
+                }
+                cmds.entity(selected_entity).insert(pathfinding::Selected);
+            }
         }
     }
 }
 
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
-    mut select_q: Query<&mut pathfinding::Selected, With<pathfinding::Selected>>,
+    mut cmds: Commands,
+    mut select_q: Query<Entity, With<pathfinding::Selected>>,
 ) {
-    for mut selected in select_q.iter_mut() {
-        selected.0 = false;
+    for entity in select_q.iter_mut() {
+        cmds.entity(entity).remove::<pathfinding::Selected>();
     }
 }
 
 fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pathfinding::Selected>) {
     game_cmds.selected = false;
-    for selected in select_q.iter() {
-        if selected.0 {
-            game_cmds.selected = true;
-        }
+    if !select_q.is_empty() {
+        game_cmds.selected = true;
     }
 }
 
 fn border_select_visibility(
-    friendly_q: Query<(Entity, &pathfinding::Selected), With<pathfinding::Unit>>,
+    selected_units_q: Query<Entity, With<pathfinding::Selected>>,
+    non_selected_units_q: Query<Entity, Without<pathfinding::Selected>>,
     mut border_select_q: Query<
         (&mut BillboardMeshHandle, &UnitBorderBoxImg),
         With<UnitBorderBoxImg>,
@@ -360,14 +390,20 @@ fn border_select_visibility(
     children_q: Query<&Children>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    for (friendly_ent, selected) in friendly_q.iter() {
-        for child in children_q.iter_descendants(friendly_ent) {
+    for entity in selected_units_q.iter() {
+        for child in children_q.iter_descendants(entity) {
             if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
-                let mut border_xy = Vec2::new(0.0, 0.0);
-                if selected.0 {
-                    border_xy = Vec2::new(border.width, border.height);
-                }
+                // let mut border_xy = Vec2::new(0.0, 0.0);
+                let border_xy = Vec2::new(border.width, border.height);
+                *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+            }
+        }
+    }
 
+    for entity in non_selected_units_q.iter() {
+        for child in children_q.iter_descendants(entity) {
+            if let Ok((mut billboard_mesh, _border)) = border_select_q.get_mut(child) {
+                let border_xy = Vec2::new(0.0, 0.0);
                 *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
             }
         }

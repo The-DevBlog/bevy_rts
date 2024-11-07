@@ -30,7 +30,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
                 assets.load("tank.glb#Scene0"),
                 pos,
             ),
-            // pathfinding::Selected(false),
             pathfinding::Unit,
         )
     };

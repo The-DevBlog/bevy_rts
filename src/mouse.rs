@@ -6,7 +6,7 @@ use bevy_rts_pathfinding::components as pathfinding;
 
 use crate::events::*;
 use crate::resources::*;
-use crate::tank::set_unit_destination;
+// use crate::tank::set_unit_destination;
 use crate::utils;
 use crate::*;
 use crate::{components::*, CURSOR_SIZE};
@@ -27,8 +27,7 @@ impl Plugin for MousePlugin {
                     set_drag_select,
                     set_selected,
                 )
-                    .chain()
-                    .after(set_unit_destination),
+                    .chain(), // .after(set_unit_destination),
             )
             .observe(deselect_all)
             .observe(single_select)
@@ -372,6 +371,7 @@ fn border_select_visibility(
     children_q: Query<&Children>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
+    // make border visible for selected entities
     for entity in selected_units_q.iter() {
         for child in children_q.iter_descendants(entity) {
             if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
@@ -381,6 +381,7 @@ fn border_select_visibility(
         }
     }
 
+    // make border invisible for unselected entities
     for entity in non_selected_units_q.iter() {
         for child in children_q.iter_descendants(entity) {
             if let Ok((mut billboard_mesh, _border)) = border_select_q.get_mut(child) {

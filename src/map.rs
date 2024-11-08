@@ -62,7 +62,15 @@ fn spawn_grid(mut cmds: Commands) {
         Name::new("Grid"),
     );
 
+    let grid_colors = pathfinding::GridColors {
+        grid: COLOR_GRID,
+        path: COLOR_PATH,
+        path_finding: COLOR_PATH_FINDING,
+        occupied: COLOR_OCCUPIED_CELL,
+    };
+
     cmds.spawn(grid);
+    cmds.spawn(grid_colors);
 }
 
 fn spawn_obstacle(

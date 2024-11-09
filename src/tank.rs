@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_mod_billboard::*;
-use bevy_rapier3d::plugin::RapierContext;
-use bevy_rts_pathfinding::components as pathfinding;
-use events::SetUnitDestinationEv;
+// use bevy_rapier3d::plugin::RapierContext;
+// use bevy_rts_pathfinding::components as pathfinding;
+// use events::SetUnitDestinationEv;
 
 use crate::{components::*, resources::*, utils, *};
 
@@ -30,7 +30,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
                 assets.load("tank.glb#Scene0"),
                 pos,
             ),
-            pathfinding::Unit,
+            // Unit,
         )
     };
 

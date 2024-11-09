@@ -2,7 +2,6 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
-use bevy_rts_pathfinding::components as pathfinding;
 
 use crate::events::*;
 use crate::resources::*;
@@ -149,7 +148,7 @@ fn set_select_box_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut select_box: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
-    map_base_q: Query<&GlobalTransform, With<pathfinding::MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<MapBase>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     let viewport = select_box.viewport.clone();
@@ -180,7 +179,7 @@ fn set_mouse_coords(
     mut mouse_coords: ResMut<MouseCoords>,
     window_q: Query<&Window, With<PrimaryWindow>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
-    map_base_q: Query<&GlobalTransform, With<pathfinding::MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<MapBase>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let Some(viewport_cursor) = window_q.single().cursor_position() else {
@@ -231,7 +230,8 @@ fn draw_select_box(
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
-    mut friendly_q: Query<(Entity, &Transform), With<pathfinding::Unit>>,
+    mut friendly_q: Query<(Entity, &Transform), With<Unit>>,
+    // mut friendly_q: Query<(Entity, &Transform), With<pathfinding::Unit>>,
     box_coords: Res<SelectBox>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
@@ -272,9 +272,9 @@ pub fn handle_drag_select(
 
         // Set the selection status
         if in_box_bounds {
-            cmds.entity(friendly_ent).insert(pathfinding::Selected);
+            cmds.entity(friendly_ent).insert(Selected);
         } else {
-            cmds.entity(friendly_ent).remove::<pathfinding::Selected>();
+            cmds.entity(friendly_ent).remove::<Selected>();
         }
     }
 }
@@ -287,7 +287,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     mut cursor_q: Query<(&mut UiImage, &mut MyCursor)>,
-    mut select_q: Query<Entity, With<pathfinding::Unit>>,
+    mut select_q: Query<Entity, With<Unit>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
@@ -322,7 +322,7 @@ pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
-    mut unit_q: Query<Entity, With<pathfinding::Unit>>,
+    mut unit_q: Query<Entity, With<Unit>>,
     mut cmds: Commands,
     mouse_coords: Res<MouseCoords>,
 ) {
@@ -335,10 +335,9 @@ pub fn single_select(
             let tmp = selected_entity.index() == ent.index();
 
             if !tmp {
-                cmds.entity(selected_entity)
-                    .remove::<pathfinding::Selected>();
+                cmds.entity(selected_entity).remove::<Selected>();
             } else {
-                cmds.entity(selected_entity).insert(pathfinding::Selected);
+                cmds.entity(selected_entity).insert(Selected);
             }
         }
     }
@@ -347,14 +346,14 @@ pub fn single_select(
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
-    mut select_q: Query<Entity, With<pathfinding::Selected>>,
+    mut select_q: Query<Entity, With<Selected>>,
 ) {
     for entity in select_q.iter_mut() {
-        cmds.entity(entity).remove::<pathfinding::Selected>();
+        cmds.entity(entity).remove::<Selected>();
     }
 }
 
-fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pathfinding::Selected>) {
+fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>) {
     game_cmds.selected = false;
     if !select_q.is_empty() {
         game_cmds.selected = true;
@@ -362,8 +361,8 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pathfindin
 }
 
 fn border_select_visibility(
-    selected_units_q: Query<Entity, With<pathfinding::Selected>>,
-    non_selected_units_q: Query<Entity, Without<pathfinding::Selected>>,
+    selected_units_q: Query<Entity, With<Selected>>,
+    non_selected_units_q: Query<Entity, Without<Selected>>,
     mut border_select_q: Query<
         (&mut BillboardMeshHandle, &UnitBorderBoxImg),
         With<UnitBorderBoxImg>,

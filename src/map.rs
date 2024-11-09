@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::{Collider, Sensor};
 use bevy_rts_camera::Ground;
-use bevy_rts_pathfinding::components as pathfinding;
+use bevy_rts_pathfinding as pf;
+use components::MapBase;
 
 use super::*;
 
@@ -9,8 +10,17 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_map, spawn_grid, spawn_obstacle));
+        app.add_systems(PreStartup, spawn_grid)
+            .add_systems(Startup, (spawn_map, spawn_obstacle));
     }
+}
+
+fn spawn_grid(mut cmds: Commands) {
+    let grid = pf::Grid::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS);
+    let target_cell = pf::TargetCell::new(40, 40);
+
+    cmds.insert_resource(grid);
+    cmds.insert_resource(target_cell);
 }
 
 fn spawn_map(
@@ -21,14 +31,14 @@ fn spawn_map(
     // Ground
     cmds.spawn((
         PbrBundle {
-            mesh: meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_HEIGHT)),
+            mesh: meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_DEPTH)),
             material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
             ..default()
         },
-        Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_HEIGHT / 2.0),
+        Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_DEPTH / 2.0),
         Sensor,
         Ground,
-        pathfinding::MapBase,
+        MapBase,
         Name::new("Map Base"),
     ));
 
@@ -47,30 +57,6 @@ fn spawn_map(
         )),
         ..default()
     });
-}
-
-fn spawn_grid(mut cmds: Commands) {
-    let grid = (
-        pathfinding::Grid::new(
-            MAP_GRID_ROWS,
-            MAP_GRID_COLUMNS,
-            MAP_WIDTH,
-            MAP_HEIGHT,
-            MAP_CELL_WIDTH,
-            MAP_CELL_HEIGHT,
-        ),
-        Name::new("Grid"),
-    );
-
-    let grid_colors = pathfinding::GridColors {
-        grid: COLOR_GRID,
-        path: COLOR_PATH,
-        path_finding: COLOR_PATH_FINDING,
-        occupied: COLOR_OCCUPIED_CELL,
-    };
-
-    cmds.spawn(grid);
-    cmds.spawn(grid_colors);
 }
 
 fn spawn_obstacle(

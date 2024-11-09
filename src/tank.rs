@@ -3,6 +3,7 @@ use bevy_mod_billboard::*;
 // use bevy_rapier3d::plugin::RapierContext;
 // use bevy_rts_pathfinding::components as pathfinding;
 // use events::SetUnitDestinationEv;
+use bevy_rts_pathfinding as pf;
 
 use crate::{components::*, resources::*, utils, *};
 
@@ -14,6 +15,47 @@ impl Plugin for TankPlugin {
         // .observe(set_unit_destination);
     }
 }
+
+// fn set_destination_path(
+//     grid: Res<pf::Grid>,
+//     // grid_q: Query<&Grid>,
+//     mut unit_q: Query<(&Transform, &mut Destination), With<Selected>>,
+//     target_cell: Res<TargetCell>,
+//     input: Res<ButtonInput<MouseButton>>,
+// ) {
+//     // let grid = match grid_q.get_single() {
+//     //     Ok(grid) => grid,
+//     //     Err(_e) => return,
+//     // };
+
+//     for (unit_transform, mut destination) in unit_q.iter_mut() {
+//         if let (Some(goal_row), Some(goal_column)) = (target_cell.row, target_cell.column) {
+//             // Get the unit's current cell
+//             let (start_row, start_column) = get_unit_cell_row_and_column(&grid, &unit_transform);
+
+//             // Compute the path, ensuring only non-occupied cells are included
+//             if let Some(path) = find_path(&grid, (start_row, start_column), (goal_row, goal_column))
+//             {
+//                 let mut waypoints: Vec<Cell> = Vec::new();
+
+//                 // Highlight the path
+//                 for &(row, column) in &path {
+//                     let cell = grid.cells[row as usize][column as usize];
+//                     waypoints.push(cell.clone());
+//                 }
+
+//                 // If a left mouse click is detected, assign the computed path
+//                 if input.just_pressed(MouseButton::Left) {
+//                     let destination_cell =
+//                         grid.cells[goal_row as usize][goal_column as usize].position;
+//                     destination.endpoint =
+//                         Some(Vec3::new(destination_cell.x, 0.0, destination_cell.y));
+//                     destination.waypoints = waypoints;
+//                 }
+//             }
+//         }
+//     }
+// }
 
 fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAssets>) {
     let initial_pos = Vec3::new(0.0, 0.0, 0.0);

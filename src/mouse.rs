@@ -2,6 +2,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
+use bevy_rts_pathfinding as pf;
 
 use crate::events::*;
 use crate::resources::*;
@@ -148,7 +149,7 @@ fn set_select_box_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut select_box: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
-    map_base_q: Query<&GlobalTransform, With<MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<pf::MapBase>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     let viewport = select_box.viewport.clone();
@@ -179,7 +180,7 @@ fn set_mouse_coords(
     mut mouse_coords: ResMut<MouseCoords>,
     window_q: Query<&Window, With<PrimaryWindow>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
-    map_base_q: Query<&GlobalTransform, With<MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<pf::MapBase>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let Some(viewport_cursor) = window_q.single().cursor_position() else {

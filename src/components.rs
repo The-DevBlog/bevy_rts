@@ -6,8 +6,8 @@ use bevy_rapier3d::prelude::*;
 #[derive(Component)]
 pub struct Selected;
 
-#[derive(Component)]
-pub struct MapBase;
+// #[derive(Component)]
+// pub struct MapBase;
 
 #[derive(Component)]
 pub struct Unit;

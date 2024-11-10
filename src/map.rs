@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::{Collider, Sensor};
 use bevy_rts_camera::Ground;
-use bevy_rts_pathfinding as pf;
-// use components::MapBase;
+use bevy_rts_pathfinding::components as pf_comps;
+use bevy_rts_pathfinding::resources as pf_res;
 
 use super::*;
 
@@ -16,8 +16,8 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_grid(mut cmds: Commands) {
-    let grid = pf::Grid::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS, MAP_WIDTH, MAP_DEPTH);
-    let target_cell = pf::TargetCell::new(40, 40);
+    let grid = pf_res::Grid::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS, MAP_WIDTH, MAP_DEPTH);
+    let target_cell = pf_res::TargetCell::new(40, 40);
 
     cmds.insert_resource(grid);
     cmds.insert_resource(target_cell);
@@ -38,7 +38,7 @@ fn spawn_map(
         Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_DEPTH / 2.0),
         Sensor,
         Ground,
-        pf::MapBase,
+        pf_comps::MapBase,
         Name::new("Map Base"),
     ));
 

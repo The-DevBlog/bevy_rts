@@ -1,9 +1,5 @@
-use bevy::{
-    math::{bounding::Aabb2d, VectorSpace},
-    prelude::*,
-};
+use bevy::{math::bounding::Aabb2d, prelude::*};
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
-// use bevy_rts_pathfinding::components as pathfinding;
 use bevy_rts_pathfinding as pf;
 
 use super::*;
@@ -22,11 +18,7 @@ fn spawn_camera(mut cmds: Commands) {
         Camera3dBundle::default(),
         pf::GameCamera,
         RtsCamera {
-            bounds: Aabb2d::new(
-                // Vec2::new(200.0, -200.0),
-                Vec2::ZERO,
-                Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0),
-            ),
+            bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),
             min_angle: 60.0f32.to_radians(),
             height_max: 200.0,
             ..default()

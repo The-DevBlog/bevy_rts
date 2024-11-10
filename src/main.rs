@@ -5,15 +5,13 @@ use bevy_rapier3d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
     render::RapierDebugRenderPlugin,
 };
-use bevy_rts_pathfinding::BevyRtsPathFindingPlugin;
-
+use bevy_rts_pathfinding;
 mod camera;
 mod components;
 mod events;
 mod map;
 mod mouse;
 mod pathfinding;
-// mod path_finding;
 mod resources;
 mod tank;
 mod utils;
@@ -22,7 +20,6 @@ use camera::CameraPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use pathfinding::PathFindingPlugin;
-// use path_finding::PathFindingPlugin;
 use resources::ResourcesPlugin;
 use tank::TankPlugin;
 
@@ -52,7 +49,8 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
             PathFindingPlugin,
-            BevyRtsPathFindingPlugin,
+            bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
+            bevy_rts_pathfinding::debug_plugin::DebugPlugin,
             ResourcesPlugin,
             BillboardPlugin,
             CameraPlugin,

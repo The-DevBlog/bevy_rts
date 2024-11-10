@@ -1,13 +1,27 @@
 use crate::CURSOR_SIZE;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use bevy_rts_pathfinding::components as pf_comps;
-
-// #[derive(Component)]
-// pub struct Selected;
 
 // #[derive(Component)]
 // pub struct MapBase;
+
+// #[derive(Component, Default)]
+// pub struct Destination {
+// pub endpoint: Option<Vec3>,
+// pub waypoints: Vec<Cell>,
+// }
+
+#[derive(Component)]
+pub struct Destination(pub (usize, usize));
+
+impl Destination {
+    pub fn new(row: usize, column: usize) -> Self {
+        Self((row, column))
+    }
+}
+
+// #[derive(Component)]
+// pub struct Destination(pub Option<(usize, usize)>);
 
 #[derive(Component)]
 pub struct Unit;
@@ -23,6 +37,9 @@ impl UnitBorderBoxImg {
         Self { width, height }
     }
 }
+
+#[derive(Component)]
+pub struct Speed(pub f32);
 
 #[derive(Component)]
 pub struct MyCursor {
@@ -50,8 +67,7 @@ pub struct UnitBundle {
     pub external_impulse: ExternalImpulse,
     pub name: Name,
     pub rigid_body: RigidBody,
-    // pub speed: pathfinding::Speed,
-    // pub destination: pathfinding::Destination,
+    pub speed: Speed,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
 }
@@ -74,8 +90,7 @@ impl UnitBundle {
             external_impulse: ExternalImpulse::default(),
             name: Name::new(name),
             rigid_body: RigidBody::Dynamic,
-            // speed: pathfinding::Speed(speed),
-            // destination: pathfinding::Destination::default(),
+            speed: Speed(speed),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::ROTATION_LOCKED_Y

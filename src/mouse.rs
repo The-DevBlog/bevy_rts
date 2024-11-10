@@ -113,11 +113,7 @@ fn handle_mouse_input(
 
         if !game_cmds.drag_select {
             cmds.trigger(SetUnitDestinationEv);
-            // cmds.trigger(SelectSingleUnitEv);
-        }
-
-        if game_cmds.selected && !game_cmds.drag_select {
-            cmds.trigger(pf_events::SetTargetCellEv);
+            cmds.trigger(SelectSingleUnitEv);
         }
     }
 

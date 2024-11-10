@@ -1,27 +1,10 @@
-use crate::CURSOR_SIZE;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-// #[derive(Component)]
-// pub struct MapBase;
-
-// #[derive(Component, Default)]
-// pub struct Destination {
-// pub endpoint: Option<Vec3>,
-// pub waypoints: Vec<Cell>,
-// }
+use crate::CURSOR_SIZE;
 
 #[derive(Component)]
-pub struct Destination(pub (usize, usize));
-
-impl Destination {
-    pub fn new(row: usize, column: usize) -> Self {
-        Self((row, column))
-    }
-}
-
-// #[derive(Component)]
-// pub struct Destination(pub Option<(usize, usize)>);
+pub struct Destination;
 
 #[derive(Component)]
 pub struct Unit;

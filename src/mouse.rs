@@ -2,7 +2,6 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
-use bevy_rts_pathfinding::events as pf_events;
 
 use crate::events::*;
 use crate::resources::*;

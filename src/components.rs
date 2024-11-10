@@ -1,10 +1,10 @@
 use crate::CURSOR_SIZE;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-// use bevy_rts_pathfinding::components as pathfinding;
+use bevy_rts_pathfinding::components as pf_comps;
 
-#[derive(Component)]
-pub struct Selected;
+// #[derive(Component)]
+// pub struct Selected;
 
 // #[derive(Component)]
 // pub struct MapBase;

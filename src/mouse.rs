@@ -113,11 +113,11 @@ fn handle_mouse_input(
 
         if !game_cmds.drag_select {
             cmds.trigger(SetUnitDestinationEv);
-            cmds.trigger(SelectSingleUnitEv);
+            // cmds.trigger(SelectSingleUnitEv);
         }
 
         if game_cmds.selected && !game_cmds.drag_select {
-            cmds.trigger(pf_events::SetTargetCellEv)
+            cmds.trigger(pf_events::SetTargetCellEv);
         }
     }
 
@@ -235,8 +235,7 @@ fn draw_select_box(
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
-    mut friendly_q: Query<(Entity, &Transform), With<Unit>>,
-    // mut friendly_q: Query<(Entity, &Transform), With<pathfinding::Unit>>,
+    mut unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<SelectBox>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
@@ -250,7 +249,7 @@ pub fn handle_drag_select(
     let d = box_coords.world.end_1;
 
     // check to see if units are within selection rectangle
-    for (friendly_ent, friendly_trans) in friendly_q.iter_mut() {
+    for (friendly_ent, friendly_trans) in unit_q.iter_mut() {
         let unit_pos = friendly_trans.translation;
 
         // Calculate cross products for each edge
@@ -277,9 +276,9 @@ pub fn handle_drag_select(
 
         // Set the selection status
         if in_box_bounds {
-            cmds.entity(friendly_ent).insert(Selected);
+            cmds.entity(friendly_ent).insert(pf_comps::Selected);
         } else {
-            cmds.entity(friendly_ent).remove::<Selected>();
+            cmds.entity(friendly_ent).remove::<pf_comps::Selected>();
         }
     }
 }
@@ -334,15 +333,15 @@ pub fn single_select(
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
-    // deselect all currently selected entities
+    // deselect all currently pf_comps::selected entities
     if let Some((ent, _)) = hit {
         for selected_entity in unit_q.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
 
             if !tmp {
-                cmds.entity(selected_entity).remove::<Selected>();
+                cmds.entity(selected_entity).remove::<pf_comps::Selected>();
             } else {
-                cmds.entity(selected_entity).insert(Selected);
+                cmds.entity(selected_entity).insert(pf_comps::Selected);
             }
         }
     }
@@ -351,14 +350,14 @@ pub fn single_select(
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
-    mut select_q: Query<Entity, With<Selected>>,
+    mut select_q: Query<Entity, With<pf_comps::Selected>>,
 ) {
     for entity in select_q.iter_mut() {
-        cmds.entity(entity).remove::<Selected>();
+        cmds.entity(entity).remove::<pf_comps::Selected>();
     }
 }
 
-fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>) {
+fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pf_comps::Selected>) {
     game_cmds.selected = false;
     if !select_q.is_empty() {
         game_cmds.selected = true;
@@ -366,8 +365,8 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&Selected>)
 }
 
 fn border_select_visibility(
-    selected_units_q: Query<Entity, With<Selected>>,
-    non_selected_units_q: Query<Entity, Without<Selected>>,
+    selected_units_q: Query<Entity, With<pf_comps::Selected>>,
+    non_selected_units_q: Query<Entity, Without<pf_comps::Selected>>,
     mut border_select_q: Query<
         (&mut BillboardMeshHandle, &UnitBorderBoxImg),
         With<UnitBorderBoxImg>,

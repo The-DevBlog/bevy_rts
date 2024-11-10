@@ -1,14 +1,15 @@
+use crate::{components::*, resources::*, *};
 use bevy::prelude::*;
 use bevy_mod_billboard::*;
-
-use crate::{components::*, resources::*, *};
+use bevy_rts_pathfinding::components as pf_comps;
+use events::SetUnitDestinationEv;
 
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_tanks);
-        // .observe(set_unit_destination);
+        app.add_systems(Startup, spawn_tanks)
+            .observe(set_unit_destination);
     }
 }
 
@@ -57,30 +58,30 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
     }
 }
 
-// pub fn set_unit_destination(
-//     _trigger: Trigger<SetUnitDestinationEv>,
-//     mouse_coords: ResMut<MouseCoords>,
-//     mut friendly_q: Query<(&mut pathfinding::Destination, &Transform), With<pathfinding::Selected>>,
-//     cam_q: Query<(&Camera, &GlobalTransform)>,
-//     rapier_context: Res<RapierContext>,
-// ) {
-//     let (cam, cam_trans) = cam_q.single();
-//     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+pub fn set_unit_destination(
+    _trigger: Trigger<SetUnitDestinationEv>,
+    mouse_coords: ResMut<MouseCoords>,
+    mut friendly_q: Query<(&mut pathfinding::Destination, &Transform), With<pf_comps::Selected>>,
+    cam_q: Query<(&Camera, &GlobalTransform)>,
+    rapier_context: Res<RapierContext>,
+) {
+    let (cam, cam_trans) = cam_q.single();
+    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
-//     // return if selecting another object (select another unit for example)
-//     if let Some(_) = hit {
-//         return;
-//     }
+    // return if selecting another object (select another unit for example)
+    if let Some(_) = hit {
+        return;
+    }
 
-//     for (mut friendly_destination, trans) in friendly_q.iter_mut() {
-//         let mut destination = mouse_coords.world;
-//         destination.y += trans.scale.y / 2.0; // calculate for entity height
-//                                               // friendly_destination.endpoint = Some(destination);
-//                                               // println!("Unit Moving to ({}, {})", destination.x, destination.y);
-//     }
-// }
+    for (mut friendly_destination, trans) in friendly_q.iter_mut() {
+        let mut destination = mouse_coords.world;
+        destination.y += trans.scale.y / 2.0; // calculate for entity height
+                                              // friendly_destination.endpoint = Some(destination);
+                                              // println!("Unit Moving to ({}, {})", destination.x, destination.y);
+    }
+}
 
-// pub fn rotate_towards(trans: &mut Transform, direction: Vec3) {
-//     let target_yaw = direction.x.atan2(direction.z);
-//     trans.rotation = Quat::from_rotation_y(target_yaw);
-// }
+pub fn rotate_towards(trans: &mut Transform, direction: Vec3) {
+    let target_yaw = direction.x.atan2(direction.z);
+    trans.rotation = Quat::from_rotation_y(target_yaw);
+}

@@ -16,12 +16,12 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_grid(mut cmds: Commands) {
-    let flowfield = pf_comps::FlowField::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS);
-    let target_cell = pf_res::TargetCell::new(40, 40);
+    // let flowfield = pf_comps::FlowField::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS);
+    // let target_cell = pf_res::TargetCell::new(40, 40);
     let grid = pf_res::Grid::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS, MAP_WIDTH, MAP_DEPTH);
 
-    cmds.spawn(flowfield);
-    cmds.insert_resource(target_cell);
+    // cmds.spawn(flowfield);
+    // cmds.insert_resource(target_cell);
     cmds.insert_resource(grid);
 }
 

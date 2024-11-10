@@ -12,6 +12,7 @@ mod components;
 mod events;
 mod map;
 mod mouse;
+mod pathfinding;
 // mod path_finding;
 mod resources;
 mod tank;
@@ -20,6 +21,7 @@ mod utils;
 use camera::CameraPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
+use pathfinding::PathFindingPlugin;
 // use path_finding::PathFindingPlugin;
 use resources::ResourcesPlugin;
 use tank::TankPlugin;
@@ -39,7 +41,7 @@ const MAP_GRID_ROWS: usize = 40;
 // const MAP_CELL_WIDTH: f32 = MAP_WIDTH / MAP_GRID_COLUMNS as f32;
 // const MAP_CELL_HEIGHT: f32 = MAP_HEIGHT / MAP_GRID_ROWS as f32;
 const SPEED_QUANTIFIER: f32 = 1000.0;
-const TANK_COUNT: usize = 1;
+const TANK_COUNT: usize = 5;
 const TANK_SPEED: f32 = 75.0;
 
 fn main() {
@@ -49,7 +51,7 @@ fn main() {
             RapierDebugRenderPlugin::default(),
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
-            // PathFindingPlugin,
+            PathFindingPlugin,
             BevyRtsPathFindingPlugin,
             ResourcesPlugin,
             BillboardPlugin,

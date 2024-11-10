@@ -31,7 +31,7 @@ const MAP_GRID_COLUMNS: usize = 40;
 const MAP_GRID_ROWS: usize = 40;
 const SPEED_QUANTIFIER: f32 = 1000.0;
 const TANK_COUNT: usize = 5;
-const TANK_SPEED: f32 = 75.0;
+const TANK_SPEED: f32 = 115.0;
 
 fn main() {
     App::new()

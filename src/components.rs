@@ -67,7 +67,8 @@ impl UnitBundle {
             unit: Unit,
             collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
-                linear_damping: 5.0,
+                linear_damping: 10.0,
+                angular_damping: 5.0,
                 ..default()
             },
             external_impulse: ExternalImpulse::default(),

@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::Friction;
-use bevy_rapier3d::prelude::{Collider, Sensor};
+use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::resources as pf_res;
@@ -34,10 +33,6 @@ fn spawn_map(
             ..default()
         },
         Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_DEPTH / 2.0),
-        Friction {
-            coefficient: 10.0,
-            ..default()
-        },
         Sensor,
         Ground,
         pf_comps::MapBase,

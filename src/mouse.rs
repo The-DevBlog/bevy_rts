@@ -26,7 +26,7 @@ impl Plugin for MousePlugin {
                     set_drag_select,
                     set_selected,
                 )
-                    .chain(), // .after(set_unit_destination),
+                    .chain(),
             )
             .observe(deselect_all)
             .observe(single_select)
@@ -192,7 +192,7 @@ fn set_mouse_coords(
 }
 
 fn draw_select_box(
-    // mut gizmos: Gizmos,
+    mut _gizmos: Gizmos,
     mut query: Query<&mut Style, With<SelectionBox>>,
     box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
@@ -221,10 +221,10 @@ fn draw_select_box(
     // debug purposes only. This will draw the select box on the 3d world
     // let color = RED;
     // let world = box_coords.world.clone();
-    // gizmos.line(world.start_1, world.start_2, color); // top
-    // gizmos.line(world.end_1, world.end_2, color); // bottom
-    // gizmos.line(world.start_2, world.end_2, color); // side
-    // gizmos.line(world.start_1, world.end_1, color); // side
+    // _gizmos.line(world.start_1, world.start_2, color); // top
+    // _gizmos.line(world.end_1, world.end_2, color); // bottom
+    // _gizmos.line(world.start_2, world.end_2, color); // side
+    // _gizmos.line(world.start_1, world.end_1, color); // side
 }
 
 pub fn handle_drag_select(

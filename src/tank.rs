@@ -82,20 +82,23 @@ pub fn set_unit_destination(
     cmds.trigger(pf_events::SetTargetCellEv);
 }
 
+// TODO: Cleanup this method
 fn move_unit(
     mut flowfield_q: Query<&mut pf_comps::FlowField>,
-    mut unit_q: Query<(&mut ExternalImpulse, &mut Transform, &Speed), With<Destination>>,
+    mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<Destination>>,
     grid: Res<pf_res::Grid>,
     time: Res<Time>,
 ) {
+    let delta_time = time.delta_seconds();
+    let rotation_magnitude = 5.0; // Set this to control the constant rotation speed
+    let movement_threshold = 15.0_f32.to_radians(); // 15 degrees in radians
+
     for mut flowfield in flowfield_q.iter_mut() {
         let mut units_to_remove = Vec::new();
 
         for &unit_entity in flowfield.entities.iter() {
-            // Get the unit's ExternalImpulse and Transform
-            if let Ok((mut external_impulse, mut unit_transform, speed)) =
-                unit_q.get_mut(unit_entity)
-            {
+            // Retrieve the unit's ExternalImpulse, Speed, and Transform
+            if let Ok((mut external_impulse, unit_transform, speed)) = unit_q.get_mut(unit_entity) {
                 let (row, column) = pf_utils::get_cell(&grid, &unit_transform.translation);
 
                 // Check if the unit has reached the destination cell
@@ -104,26 +107,44 @@ fn move_unit(
                     continue;
                 }
 
-                // Get the flow vector from the flow field's cells
                 let flow_vector = flowfield.cells[row as usize][column as usize].flow_vector;
                 if flow_vector == Vec3::ZERO {
                     continue;
                 }
 
-                // Apply external impulse along the flow vector
-                let impulse = flow_vector.normalize_or_zero() * speed.0 * time.delta_seconds();
+                // Normalize the flow vector to get the movement direction
+                let desired_direction = flow_vector.normalize_or_zero();
 
-                external_impulse.impulse += impulse;
-                rotate_towards(&mut unit_transform, flow_vector);
+                // Calculate the angle difference using dot product for accurate alignment
+                let forward = unit_transform.forward();
+                let angle_difference = forward.dot(desired_direction).acos();
+
+                // Determine the rotation axis
+                let rotation_axis = forward.cross(desired_direction).normalize_or_zero();
+
+                // Print angle for debugging
+                println!(
+                    "angle: {}, threshold: {}",
+                    angle_difference, movement_threshold
+                );
+
+                // Apply rotation if the unit is not yet within 15 degrees of the desired direction
+                if angle_difference > movement_threshold {
+                    let torque_impulse = rotation_axis * rotation_magnitude * delta_time * 20.0;
+                    external_impulse.torque_impulse += torque_impulse;
+                    continue;
+                }
+
+                // Apply movement only when facing within the threshold
+                let torque_impulse = rotation_axis * rotation_magnitude * delta_time * 20.0;
+                external_impulse.torque_impulse += torque_impulse;
+
+                let movement_impulse = desired_direction * speed.0 * delta_time;
+                external_impulse.impulse += movement_impulse;
             }
         }
 
         // Remove units that have reached the target or are invalid
         flowfield.entities.retain(|e| !units_to_remove.contains(e));
     }
-}
-
-pub fn rotate_towards(trans: &mut Transform, direction: Vec3) {
-    let target_yaw = direction.x.atan2(direction.z);
-    trans.rotation = Quat::from_rotation_y(target_yaw);
 }

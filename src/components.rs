@@ -53,6 +53,7 @@ pub struct UnitBundle {
     pub speed: Speed,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
+    pub mass_properties: ColliderMassProperties,
 }
 
 impl UnitBundle {
@@ -64,11 +65,16 @@ impl UnitBundle {
         translation: Vec3,
     ) -> Self {
         Self {
+            mass_properties: ColliderMassProperties::MassProperties(MassProperties {
+                principal_inertia: Vec3::new(1.0, 1.0, 1.0),
+                mass: 1.0,
+                ..default()
+            }),
             unit: Unit,
             collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,
-                angular_damping: 5.0,
+                angular_damping: 20.0,
                 ..default()
             },
             external_impulse: ExternalImpulse::default(),
@@ -77,7 +83,7 @@ impl UnitBundle {
             speed: Speed(speed),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
-                | LockedAxes::ROTATION_LOCKED_Y
+                // | LockedAxes::ROTATION_LOCKED_Y
                 | LockedAxes::TRANSLATION_LOCKED_Y),
             scene_bundle: SceneBundle {
                 scene: scene,

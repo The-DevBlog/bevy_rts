@@ -110,9 +110,12 @@ fn handle_mouse_input(
     if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
 
-        if !game_cmds.drag_select {
-            cmds.trigger(SetUnitDestinationEv);
+        if !game_cmds.drag_select && !game_cmds.selected {
             cmds.trigger(SelectSingleUnitEv);
+        }
+
+        if !game_cmds.drag_select && game_cmds.selected {
+            cmds.trigger(SetUnitDestinationEv);
         }
     }
 

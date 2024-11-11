@@ -80,19 +80,25 @@ pub fn set_unit_destination(
     }
 
     for unit_entity in unit_q.iter_mut() {
-        cmds.entity(unit_entity).insert(Destination);
+        cmds.entity(unit_entity).insert(pf_comps::Destination);
     }
 
+    println!("Set Destination");
     cmds.trigger(pf_events::SetTargetCellEv);
 }
 
 // TODO: Cleanup this method
 fn move_unit(
     mut flowfield_q: Query<&mut pf_comps::FlowField>,
-    mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<Destination>>,
+    mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<pf_comps::Destination>>,
     grid: Res<pf_res::Grid>,
     time: Res<Time>,
+    mut cmds: Commands,
 ) {
+    if flowfield_q.is_empty() {
+        return;
+    }
+
     let delta_time = time.delta_seconds();
     let rotation_magnitude = 5.0; // Set this to control the constant rotation speed
     let movement_threshold = 15.0_f32.to_radians();
@@ -144,4 +150,8 @@ fn move_unit(
         // Remove units that have reached the target or are invalid
         flowfield.entities.retain(|e| !units_to_remove.contains(e));
     }
+
+    // TODO: Make this run every cell that is crossed, not every frame. This is expensive
+    println!("In move functin");
+    cmds.trigger(pf_events::DetectCollidersEv);
 }

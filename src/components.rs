@@ -4,9 +4,6 @@ use bevy_rapier3d::prelude::*;
 use crate::CURSOR_SIZE;
 
 #[derive(Component)]
-pub struct Destination;
-
-#[derive(Component)]
 pub struct Unit;
 
 #[derive(Component)]

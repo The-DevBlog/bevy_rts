@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::*;
+
 pub struct ResourcesPlugin;
 
 impl Plugin for ResourcesPlugin {
@@ -25,6 +27,16 @@ pub struct MyAssets {
 pub struct MouseCoords {
     pub world: Vec3,
     pub viewport: Vec2,
+}
+
+impl MouseCoords {
+    pub fn in_bounds(&self) -> bool {
+        if self.world.x.abs() > MAP_WIDTH / 2.0 || self.world.z.abs() > MAP_DEPTH / 2.0 {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 #[derive(Resource, Default, Debug)]

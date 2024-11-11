@@ -68,6 +68,10 @@ pub fn set_unit_destination(
     rapier_context: Res<RapierContext>,
     mut cmds: Commands,
 ) {
+    if !mouse_coords.in_bounds() {
+        return;
+    }
+
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
@@ -91,7 +95,7 @@ fn move_unit(
 ) {
     let delta_time = time.delta_seconds();
     let rotation_magnitude = 5.0; // Set this to control the constant rotation speed
-    let movement_threshold = 15.0_f32.to_radians(); // 15 degrees in radians
+    let movement_threshold = 15.0_f32.to_radians();
 
     for mut flowfield in flowfield_q.iter_mut() {
         let mut units_to_remove = Vec::new();
@@ -115,9 +119,8 @@ fn move_unit(
                 // Normalize the flow vector to get the movement direction
                 let desired_direction = flow_vector.normalize_or_zero();
 
-                // Calculate the angle difference using dot product for accurate alignment
                 let forward = unit_transform.forward();
-                let angle_difference = forward.dot(desired_direction).acos();
+                let angle_difference = forward.angle_between(desired_direction);
 
                 // Determine the rotation axis
                 let rotation_axis = forward.cross(desired_direction).normalize_or_zero();

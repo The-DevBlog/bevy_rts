@@ -29,7 +29,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
             "Tank".to_string(),
             TANK_SPEED * SPEED_QUANTIFIER,
             Vec3::new(4., 2., 6.),
-            assets.load("tank.glb#Scene0"),
+            assets.load("tank_tan.glb#Scene0"),
             pos,
         ),)
     };
@@ -121,12 +121,6 @@ fn move_unit(
 
                 // Determine the rotation axis
                 let rotation_axis = forward.cross(desired_direction).normalize_or_zero();
-
-                // Print angle for debugging
-                println!(
-                    "angle: {}, threshold: {}",
-                    angle_difference, movement_threshold
-                );
 
                 // Apply rotation if the unit is not yet within 15 degrees of the desired direction
                 if angle_difference > movement_threshold {

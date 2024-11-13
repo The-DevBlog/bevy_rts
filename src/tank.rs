@@ -83,11 +83,9 @@ pub fn set_unit_destination(
         cmds.entity(unit_entity).insert(pf_comps::Destination);
     }
 
-    println!("Set Destination");
     cmds.trigger(pf_events::SetTargetCellEv);
 }
 
-// TODO: Cleanup this method
 fn move_unit(
     mut flowfield_q: Query<&mut pf_comps::FlowField>,
     mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<pf_comps::Destination>>,
@@ -100,14 +98,13 @@ fn move_unit(
     }
 
     let delta_time = time.delta_seconds();
-    let rotation_magnitude = 5.0; // Set this to control the constant rotation speed
+    let rotation_speed = 5.0;
     let movement_threshold = 15.0_f32.to_radians();
 
     for mut flowfield in flowfield_q.iter_mut() {
         let mut units_to_remove = Vec::new();
 
         for &unit_entity in flowfield.entities.iter() {
-            // Retrieve the unit's ExternalImpulse, Speed, and Transform
             if let Ok((mut external_impulse, unit_transform, speed)) = unit_q.get_mut(unit_entity) {
                 let (row, column) = pf_utils::get_cell(&grid, &unit_transform.translation);
 
@@ -122,25 +119,23 @@ fn move_unit(
                     continue;
                 }
 
-                // Normalize the flow vector to get the movement direction
                 let desired_direction = flow_vector.normalize_or_zero();
 
                 let forward = unit_transform.forward();
                 let angle_difference = forward.angle_between(desired_direction);
 
-                // Determine the rotation axis
-                let rotation_axis = forward.cross(desired_direction).normalize_or_zero();
+                // Create a quaternion representing the rotation from `forward` to `desired_direction`
+                let rotation_to_target = Quat::from_rotation_arc(*forward, desired_direction);
 
-                // Apply rotation if the unit is not yet within 15 degrees of the desired direction
+                // Convert the quaternion into an axis-angle representation
+                let (rotation_axis, _) = rotation_to_target.to_axis_angle();
+
+                let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
+                external_impulse.torque_impulse += torque_impulse;
+
                 if angle_difference > movement_threshold {
-                    let torque_impulse = rotation_axis * rotation_magnitude * delta_time * 20.0;
-                    external_impulse.torque_impulse += torque_impulse;
                     continue;
                 }
-
-                // Apply movement only when facing within the threshold
-                let torque_impulse = rotation_axis * rotation_magnitude * delta_time * 20.0;
-                external_impulse.torque_impulse += torque_impulse;
 
                 let movement_impulse = desired_direction * speed.0 * delta_time;
                 external_impulse.impulse += movement_impulse;
@@ -152,6 +147,5 @@ fn move_unit(
     }
 
     // TODO: Make this run every cell that is crossed, not every frame. This is expensive
-    println!("In move functin");
     cmds.trigger(pf_events::DetectCollidersEv);
 }

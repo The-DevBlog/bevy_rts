@@ -25,10 +25,10 @@ const CURSOR_SIZE: f32 = 25.0;
 const CELL_SIZE: f32 = 10.0;
 const MAP_WIDTH: f32 = CELL_SIZE * MAP_GRID_COLUMNS as f32;
 const MAP_DEPTH: f32 = CELL_SIZE * MAP_GRID_ROWS as f32;
-const MAP_GRID_COLUMNS: usize = 40;
-const MAP_GRID_ROWS: usize = 40;
+const MAP_GRID_COLUMNS: usize = 120;
+const MAP_GRID_ROWS: usize = 120;
 const SPEED_QUANTIFIER: f32 = 10.0;
-const TANK_COUNT: usize = 3;
+const TANK_COUNT: usize = 12;
 const TANK_SPEED: f32 = 50.0;
 
 fn main() {

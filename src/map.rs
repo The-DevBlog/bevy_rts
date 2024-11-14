@@ -61,26 +61,26 @@ fn spawn_obstacle(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let size = 12.0;
-    cmds.spawn((
-        PbrBundle {
-            mesh: meshes.add(Cuboid::new(size, size, size)),
-            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-            transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
-            ..default()
-        },
-        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-    ));
+    // let size = 12.0;
+    // cmds.spawn((
+    //     PbrBundle {
+    //         mesh: meshes.add(Cuboid::new(size, size, size)),
+    //         material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+    //         transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
+    //         ..default()
+    //     },
+    //     Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+    // ));
 
-    let obst = (
-        PbrBundle {
-            mesh: meshes.add(Cylinder::new(size, size / 2.0)),
-            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-            transform: Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
-            ..default()
-        },
-        Collider::cuboid(size, size / 2.0, size),
-    );
+    // let obst = (
+    //     PbrBundle {
+    //         mesh: meshes.add(Cylinder::new(size, size / 2.0)),
+    //         material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+    //         transform: Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
+    //         ..default()
+    //     },
+    //     Collider::cuboid(size, size / 2.0, size),
+    // );
 
-    cmds.spawn(obst);
+    // cmds.spawn(obst);
 }

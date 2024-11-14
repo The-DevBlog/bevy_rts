@@ -1,5 +1,6 @@
 use crate::{components::*, resources::*, *};
 use bevy_mod_billboard::*;
+use bevy_rapier3d::na::Rotation;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
@@ -19,21 +20,44 @@ impl Plugin for TankPlugin {
 }
 
 fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAssets>) {
-    let initial_pos = Vec3::new(0.0, 0.0, 0.0);
-    let offset = Vec3::new(20.0, 0.0, 20.0);
+    let initial_pos_left = Vec3::new(-200.0, 0.0, 0.0); // Initial position for left group
+    let initial_pos_right = Vec3::new(200.0, 0.0, 0.0); // Initial position for right group
+    let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
-    let create_tank = |row: usize, col: usize| {
-        let pos = initial_pos + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
+    // Create tank on the left side facing right
+    let create_left_tank = |row: usize, col: usize| {
+        let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         (UnitBundle::new(
             "Tank".to_string(),
             TANK_SPEED * SPEED_QUANTIFIER,
             Vec3::new(4., 2., 6.),
             assets.load("tank_tan.glb#Scene0"),
-            pos,
+            Transform {
+                translation: pos,
+                rotation: Quat::from_rotation_y(0.0), // Facing right (positive X direction)
+                ..default()
+            },
         ),)
     };
 
+    // Create tank on the right side facing left
+    let create_right_tank = |row: usize, col: usize| {
+        let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
+        (UnitBundle::new(
+            "Tank".to_string(),
+            TANK_SPEED * SPEED_QUANTIFIER,
+            Vec3::new(4., 2., 6.),
+            assets.load("tank_tan.glb#Scene0"),
+            Transform {
+                translation: pos,
+                rotation: Quat::from_rotation_y(std::f32::consts::PI), // Facing left (negative X direction)
+                ..default()
+            },
+        ),)
+    };
+
+    // Create select border for units
     let select_border = || {
         (
             BillboardTextureBundle {
@@ -46,15 +70,32 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
         )
     };
 
+    // Spawn Left Group (facing right)
     let mut count = 0;
     for row in 0..grid_size {
         for col in 0..grid_size {
             if count >= TANK_COUNT {
                 break;
             }
-            cmds.spawn(create_tank(row, col)).with_children(|parent| {
-                parent.spawn(select_border());
-            });
+            cmds.spawn(create_left_tank(row, col))
+                .with_children(|parent| {
+                    parent.spawn(select_border());
+                });
+            count += 1;
+        }
+    }
+
+    // Spawn Right Group (facing left)
+    let mut count = 0;
+    for row in 0..grid_size {
+        for col in 0..grid_size {
+            if count >= TANK_COUNT {
+                break;
+            }
+            cmds.spawn(create_right_tank(row, col))
+                .with_children(|parent| {
+                    parent.spawn(select_border());
+                });
             count += 1;
         }
     }

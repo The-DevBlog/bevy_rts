@@ -59,7 +59,7 @@ impl UnitBundle {
         speed: f32,
         size: Vec3,
         scene: Handle<Scene>,
-        translation: Vec3,
+        transform: Transform,
     ) -> Self {
         Self {
             mass_properties: ColliderMassProperties::MassProperties(MassProperties {
@@ -80,14 +80,10 @@ impl UnitBundle {
             speed: Speed(speed),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
-                // | LockedAxes::ROTATION_LOCKED_Y
                 | LockedAxes::TRANSLATION_LOCKED_Y),
             scene_bundle: SceneBundle {
-                scene: scene,
-                transform: Transform {
-                    translation: translation,
-                    ..default()
-                },
+                scene,
+                transform,
                 ..default()
             },
         }

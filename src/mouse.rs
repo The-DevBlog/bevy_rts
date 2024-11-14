@@ -2,14 +2,13 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
-use bevy_rts_pathfinding::components as pathfinding;
 
 use crate::events::*;
 use crate::resources::*;
-// use crate::tank::set_unit_destination;
 use crate::utils;
 use crate::*;
 use crate::{components::*, CURSOR_SIZE};
+use bevy_rts_pathfinding::components as pf_comps;
 
 pub struct MousePlugin;
 
@@ -27,7 +26,7 @@ impl Plugin for MousePlugin {
                     set_drag_select,
                     set_selected,
                 )
-                    .chain(), // .after(set_unit_destination),
+                    .chain(),
             )
             .observe(deselect_all)
             .observe(single_select)
@@ -111,9 +110,12 @@ fn handle_mouse_input(
     if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
 
-        if !game_cmds.drag_select {
-            cmds.trigger(SetUnitDestinationEv);
+        if !game_cmds.drag_select && !game_cmds.selected {
             cmds.trigger(SelectSingleUnitEv);
+        }
+
+        if !game_cmds.drag_select && game_cmds.selected {
+            cmds.trigger(SetUnitDestinationEv);
         }
     }
 
@@ -149,7 +151,7 @@ fn set_select_box_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut select_box: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
-    map_base_q: Query<&GlobalTransform, With<pathfinding::MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     let viewport = select_box.viewport.clone();
@@ -180,7 +182,7 @@ fn set_mouse_coords(
     mut mouse_coords: ResMut<MouseCoords>,
     window_q: Query<&Window, With<PrimaryWindow>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
-    map_base_q: Query<&GlobalTransform, With<pathfinding::MapBase>>,
+    map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let Some(viewport_cursor) = window_q.single().cursor_position() else {
@@ -193,7 +195,7 @@ fn set_mouse_coords(
 }
 
 fn draw_select_box(
-    // mut gizmos: Gizmos,
+    mut _gizmos: Gizmos,
     mut query: Query<&mut Style, With<SelectionBox>>,
     box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
@@ -222,16 +224,16 @@ fn draw_select_box(
     // debug purposes only. This will draw the select box on the 3d world
     // let color = RED;
     // let world = box_coords.world.clone();
-    // gizmos.line(world.start_1, world.start_2, color); // top
-    // gizmos.line(world.end_1, world.end_2, color); // bottom
-    // gizmos.line(world.start_2, world.end_2, color); // side
-    // gizmos.line(world.start_1, world.end_1, color); // side
+    // _gizmos.line(world.start_1, world.start_2, color); // top
+    // _gizmos.line(world.end_1, world.end_2, color); // bottom
+    // _gizmos.line(world.start_2, world.end_2, color); // side
+    // _gizmos.line(world.start_1, world.end_1, color); // side
 }
 
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
-    mut friendly_q: Query<(Entity, &Transform), With<pathfinding::Unit>>,
+    mut unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<SelectBox>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
@@ -245,7 +247,7 @@ pub fn handle_drag_select(
     let d = box_coords.world.end_1;
 
     // check to see if units are within selection rectangle
-    for (friendly_ent, friendly_trans) in friendly_q.iter_mut() {
+    for (friendly_ent, friendly_trans) in unit_q.iter_mut() {
         let unit_pos = friendly_trans.translation;
 
         // Calculate cross products for each edge
@@ -272,9 +274,9 @@ pub fn handle_drag_select(
 
         // Set the selection status
         if in_box_bounds {
-            cmds.entity(friendly_ent).insert(pathfinding::Selected);
+            cmds.entity(friendly_ent).insert(pf_comps::Selected);
         } else {
-            cmds.entity(friendly_ent).remove::<pathfinding::Selected>();
+            cmds.entity(friendly_ent).remove::<pf_comps::Selected>();
         }
     }
 }
@@ -287,7 +289,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
     mut cursor_q: Query<(&mut UiImage, &mut MyCursor)>,
-    mut select_q: Query<Entity, With<pathfinding::Unit>>,
+    mut select_q: Query<Entity, With<Unit>>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
@@ -322,23 +324,22 @@ pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
     cam_q: Query<(&Camera, &GlobalTransform)>,
-    mut unit_q: Query<Entity, With<pathfinding::Unit>>,
+    mut unit_q: Query<Entity, With<Unit>>,
     mut cmds: Commands,
     mouse_coords: Res<MouseCoords>,
 ) {
     let (cam, cam_trans) = cam_q.single();
     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
-    // deselect all currently selected entities
+    // deselect all currently pf_comps::selected entities
     if let Some((ent, _)) = hit {
         for selected_entity in unit_q.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
 
             if !tmp {
-                cmds.entity(selected_entity)
-                    .remove::<pathfinding::Selected>();
+                cmds.entity(selected_entity).remove::<pf_comps::Selected>();
             } else {
-                cmds.entity(selected_entity).insert(pathfinding::Selected);
+                cmds.entity(selected_entity).insert(pf_comps::Selected);
             }
         }
     }
@@ -347,14 +348,14 @@ pub fn single_select(
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
-    mut select_q: Query<Entity, With<pathfinding::Selected>>,
+    mut select_q: Query<Entity, With<pf_comps::Selected>>,
 ) {
     for entity in select_q.iter_mut() {
-        cmds.entity(entity).remove::<pathfinding::Selected>();
+        cmds.entity(entity).remove::<pf_comps::Selected>();
     }
 }
 
-fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pathfinding::Selected>) {
+fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pf_comps::Selected>) {
     game_cmds.selected = false;
     if !select_q.is_empty() {
         game_cmds.selected = true;
@@ -362,8 +363,8 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pathfindin
 }
 
 fn border_select_visibility(
-    selected_units_q: Query<Entity, With<pathfinding::Selected>>,
-    non_selected_units_q: Query<Entity, Without<pathfinding::Selected>>,
+    selected_units_q: Query<Entity, With<pf_comps::Selected>>,
+    non_selected_units_q: Query<Entity, Without<pf_comps::Selected>>,
     mut border_select_q: Query<
         (&mut BillboardMeshHandle, &UnitBorderBoxImg),
         With<UnitBorderBoxImg>,

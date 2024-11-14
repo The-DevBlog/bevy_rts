@@ -1,7 +1,10 @@
-use crate::CURSOR_SIZE;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use bevy_rts_pathfinding::components as pathfinding;
+
+use crate::CURSOR_SIZE;
+
+#[derive(Component)]
+pub struct Unit;
 
 #[derive(Component)]
 pub struct UnitBorderBoxImg {
@@ -14,6 +17,9 @@ impl UnitBorderBoxImg {
         Self { width, height }
     }
 }
+
+#[derive(Component)]
+pub struct Speed(pub f32);
 
 #[derive(Component)]
 pub struct MyCursor {
@@ -35,15 +41,16 @@ pub struct SelectionBox;
 
 #[derive(Bundle)]
 pub struct UnitBundle {
+    pub unit: Unit,
     pub collider: Collider,
     pub damping: Damping,
     pub external_impulse: ExternalImpulse,
     pub name: Name,
     pub rigid_body: RigidBody,
-    pub speed: pathfinding::Speed,
-    pub destination: pathfinding::Destination,
+    pub speed: Speed,
     pub locked_axis: LockedAxes,
     pub scene_bundle: SceneBundle,
+    pub mass_properties: ColliderMassProperties,
 }
 
 impl UnitBundle {
@@ -55,19 +62,25 @@ impl UnitBundle {
         translation: Vec3,
     ) -> Self {
         Self {
+            mass_properties: ColliderMassProperties::MassProperties(MassProperties {
+                principal_inertia: Vec3::new(1.0, 1.0, 1.0),
+                mass: 1.0,
+                ..default()
+            }),
+            unit: Unit,
             collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
-                linear_damping: 5.0,
+                linear_damping: 10.0,
+                angular_damping: 20.0,
                 ..default()
             },
             external_impulse: ExternalImpulse::default(),
             name: Name::new(name),
             rigid_body: RigidBody::Dynamic,
-            speed: pathfinding::Speed(speed),
-            destination: pathfinding::Destination::default(),
+            speed: Speed(speed),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
-                | LockedAxes::ROTATION_LOCKED_Y
+                // | LockedAxes::ROTATION_LOCKED_Y
                 | LockedAxes::TRANSLATION_LOCKED_Y),
             scene_bundle: SceneBundle {
                 scene: scene,

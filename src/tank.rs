@@ -1,17 +1,20 @@
-use bevy::prelude::*;
+use crate::{components::*, resources::*, *};
 use bevy_mod_billboard::*;
 use bevy_rapier3d::plugin::RapierContext;
-use bevy_rts_pathfinding::components as pathfinding;
+use bevy_rapier3d::prelude::ExternalImpulse;
+use bevy_rts_pathfinding::components as pf_comps;
+use bevy_rts_pathfinding::events as pf_events;
+use bevy_rts_pathfinding::resources as pf_res;
+use bevy_rts_pathfinding::utils as pf_utils;
 use events::SetUnitDestinationEv;
-
-use crate::{components::*, resources::*, utils, *};
 
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_tanks);
-        // .observe(set_unit_destination);
+        app.add_systems(Startup, spawn_tanks)
+            .add_systems(Update, move_unit)
+            .observe(set_unit_destination);
     }
 }
 
@@ -22,16 +25,13 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
 
     let create_tank = |row: usize, col: usize| {
         let pos = initial_pos + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
-        (
-            UnitBundle::new(
-                "Tank".to_string(),
-                TANK_SPEED * SPEED_QUANTIFIER,
-                Vec3::new(4., 2., 6.),
-                assets.load("tank.glb#Scene0"),
-                pos,
-            ),
-            pathfinding::Unit,
-        )
+        (UnitBundle::new(
+            "Tank".to_string(),
+            TANK_SPEED * SPEED_QUANTIFIER,
+            Vec3::new(4., 2., 6.),
+            assets.load("tank_tan.glb#Scene0"),
+            pos,
+        ),)
     };
 
     let select_border = || {
@@ -60,30 +60,92 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
     }
 }
 
-// pub fn set_unit_destination(
-//     _trigger: Trigger<SetUnitDestinationEv>,
-//     mouse_coords: ResMut<MouseCoords>,
-//     mut friendly_q: Query<(&mut pathfinding::Destination, &Transform), With<pathfinding::Selected>>,
-//     cam_q: Query<(&Camera, &GlobalTransform)>,
-//     rapier_context: Res<RapierContext>,
-// ) {
-//     let (cam, cam_trans) = cam_q.single();
-//     let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+pub fn set_unit_destination(
+    _trigger: Trigger<SetUnitDestinationEv>,
+    mouse_coords: ResMut<MouseCoords>,
+    mut unit_q: Query<Entity, With<pf_comps::Selected>>,
+    cam_q: Query<(&Camera, &GlobalTransform)>,
+    rapier_context: Res<RapierContext>,
+    mut cmds: Commands,
+) {
+    if !mouse_coords.in_bounds() {
+        return;
+    }
 
-//     // return if selecting another object (select another unit for example)
-//     if let Some(_) = hit {
-//         return;
-//     }
+    let (cam, cam_trans) = cam_q.single();
+    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
 
-//     for (mut friendly_destination, trans) in friendly_q.iter_mut() {
-//         let mut destination = mouse_coords.world;
-//         destination.y += trans.scale.y / 2.0; // calculate for entity height
-//                                               // friendly_destination.endpoint = Some(destination);
-//                                               // println!("Unit Moving to ({}, {})", destination.x, destination.y);
-//     }
-// }
+    if let Some(_) = hit {
+        return;
+    }
 
-// pub fn rotate_towards(trans: &mut Transform, direction: Vec3) {
-//     let target_yaw = direction.x.atan2(direction.z);
-//     trans.rotation = Quat::from_rotation_y(target_yaw);
-// }
+    for unit_entity in unit_q.iter_mut() {
+        cmds.entity(unit_entity).insert(pf_comps::Destination);
+    }
+
+    cmds.trigger(pf_events::SetTargetCellEv);
+}
+
+fn move_unit(
+    mut flowfield_q: Query<&mut pf_comps::FlowField>,
+    mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<pf_comps::Destination>>,
+    grid: Res<pf_res::Grid>,
+    time: Res<Time>,
+    mut cmds: Commands,
+) {
+    if flowfield_q.is_empty() {
+        return;
+    }
+
+    let delta_time = time.delta_seconds();
+    let rotation_speed = 5.0;
+    let movement_threshold = 15.0_f32.to_radians();
+
+    for mut flowfield in flowfield_q.iter_mut() {
+        let mut units_to_remove = Vec::new();
+
+        for &unit_entity in flowfield.entities.iter() {
+            if let Ok((mut external_impulse, unit_transform, speed)) = unit_q.get_mut(unit_entity) {
+                let (row, column) = pf_utils::get_cell(&grid, &unit_transform.translation);
+
+                // Check if the unit has reached the destination cell
+                if (row as usize, column as usize) == flowfield.destination {
+                    units_to_remove.push(unit_entity);
+                    continue;
+                }
+
+                let flow_vector = flowfield.cells[row as usize][column as usize].flow_vector;
+                if flow_vector == Vec3::ZERO {
+                    continue;
+                }
+
+                let desired_direction = flow_vector.normalize_or_zero();
+
+                let forward = unit_transform.forward();
+                let angle_difference = forward.angle_between(desired_direction);
+
+                // Create a quaternion representing the rotation from `forward` to `desired_direction`
+                let rotation_to_target = Quat::from_rotation_arc(*forward, desired_direction);
+
+                // Convert the quaternion into an axis-angle representation
+                let (rotation_axis, _) = rotation_to_target.to_axis_angle();
+
+                let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
+                external_impulse.torque_impulse += torque_impulse;
+
+                if angle_difference > movement_threshold {
+                    continue;
+                }
+
+                let movement_impulse = desired_direction * speed.0 * delta_time;
+                external_impulse.impulse += movement_impulse;
+            }
+        }
+
+        // Remove units that have reached the target or are invalid
+        flowfield.entities.retain(|e| !units_to_remove.contains(e));
+    }
+
+    // TODO: Make this run every cell that is crossed, not every frame. This is expensive
+    cmds.trigger(pf_events::DetectCollidersEv);
+}

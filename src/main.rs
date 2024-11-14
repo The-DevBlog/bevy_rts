@@ -39,7 +39,7 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
             bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
-            bevy_rts_pathfinding::debug::DebugPlugin,
+            bevy_rts_pathfinding::debug::BevyRtsPathFindingDebugPlugin,
             ResourcesPlugin,
             BillboardPlugin,
             CameraPlugin,

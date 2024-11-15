@@ -22,6 +22,7 @@ pub fn cast_ray(
     return hit;
 }
 
+// TODO: throws excception if ray is off plane I think
 pub fn get_world_coords(
     map_base_trans: &GlobalTransform,
     cam_trans: &GlobalTransform,

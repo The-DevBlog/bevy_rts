@@ -16,7 +16,7 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_grid(mut cmds: Commands) {
-    let grid = pf_res::Grid::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS, MAP_WIDTH, MAP_DEPTH);
+    let grid = pf_res::Grid::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS, CELL_SIZE);
     cmds.insert_resource(grid);
 }
 

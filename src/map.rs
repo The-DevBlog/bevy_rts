@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
-use bevy_rts_pathfinding::resources as pf_res;
+use bevy_rts_pathfinding::flowfield::FlowField;
+use bevy_rts_pathfinding::grid_controller::GridController;
+// use bevy_rts_pathfinding::resources as pf_res;
 
 use super::*;
 
@@ -16,8 +18,20 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_grid(mut cmds: Commands) {
-    let grid = pf_res::Grid::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS, CELL_SIZE);
-    cmds.insert_resource(grid);
+    // let grid = pf_res::Grid::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS, CELL_SIZE);
+    // cmds.insert_resource(grid);
+
+    let grid_controller = (
+        GridController {
+            map_size: Vec2::new(MAP_WIDTH, MAP_DEPTH),
+            grid_size: IVec2::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS),
+            cell_radius: CELL_SIZE / 2.,
+            current_flowfield: FlowField::default(),
+        },
+        Name::new("Grid Controller"),
+    );
+
+    cmds.spawn(grid_controller);
 }
 
 fn spawn_map(

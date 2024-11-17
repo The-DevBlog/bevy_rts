@@ -1023,6 +1023,7 @@ name = "bevy_rts_pathfinding"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_mod_billboard",
  "bevy_rapier3d",
  "pathfinding",
  "rand",

@@ -4,7 +4,6 @@ use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::flowfield::FlowField;
 use bevy_rts_pathfinding::grid_controller::GridController;
-// use bevy_rts_pathfinding::resources as pf_res;
 
 use super::*;
 
@@ -26,7 +25,7 @@ fn spawn_grid(mut cmds: Commands) {
             map_size: Vec2::new(MAP_WIDTH, MAP_DEPTH),
             grid_size: IVec2::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS),
             cell_radius: CELL_SIZE / 2.,
-            current_flowfield: FlowField::default(),
+            cur_flowfield: FlowField::default(),
         },
         Name::new("Grid Controller"),
     );
@@ -54,20 +53,23 @@ fn spawn_map(
     ));
 
     // Light
-    cmds.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            illuminance: 1000.0,
-            shadows_enabled: true,
+    cmds.spawn((
+        DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                illuminance: 1000.0,
+                shadows_enabled: true,
+                ..default()
+            },
+            transform: Transform::from_rotation(Quat::from_euler(
+                EulerRot::YXZ,
+                150.0f32.to_radians(),
+                -40.0f32.to_radians(),
+                0.0,
+            )),
             ..default()
         },
-        transform: Transform::from_rotation(Quat::from_euler(
-            EulerRot::YXZ,
-            150.0f32.to_radians(),
-            -40.0f32.to_radians(),
-            0.0,
-        )),
-        ..default()
-    });
+        Name::new("Light"),
+    ));
 }
 
 fn spawn_obstacle(

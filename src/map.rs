@@ -26,7 +26,7 @@ fn spawn_grid(mut cmds: Commands) {
             map_size: Vec2::new(MAP_WIDTH, MAP_DEPTH),
             grid_size: IVec2::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS),
             cell_radius: CELL_SIZE / 2.,
-            current_flowfield: FlowField::default(),
+            cur_flowfield: FlowField::default(),
         },
         Name::new("Grid Controller"),
     );

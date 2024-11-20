@@ -125,10 +125,10 @@ fn spawn_obstacle(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let size = 12.0;
+    let size = 24.0;
     cmds.spawn((
         PbrBundle {
-            mesh: meshes.add(Cuboid::new(size, size, size)),
+            mesh: meshes.add(Cuboid::new(size, size / 2., size)),
             material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
             transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
             ..default()

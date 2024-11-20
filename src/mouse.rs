@@ -287,7 +287,7 @@ pub fn update_cursor_img(
     rapier_context: Res<RapierContext>,
     my_assets: Res<MyAssets>,
     mouse_coords: Res<MouseCoords>,
-    cam_q: Query<(&Camera, &GlobalTransform)>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     mut cursor_q: Query<(&mut UiImage, &mut MyCursor)>,
     mut select_q: Query<Entity, With<Unit>>,
 ) {
@@ -323,7 +323,7 @@ pub fn update_cursor_img(
 pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     rapier_context: Res<RapierContext>,
-    cam_q: Query<(&Camera, &GlobalTransform)>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     mut unit_q: Query<Entity, With<Unit>>,
     mut cmds: Commands,
     mouse_coords: Res<MouseCoords>,

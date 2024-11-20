@@ -105,7 +105,7 @@ pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
     mut unit_q: Query<Entity, With<pf_comps::Selected>>,
-    cam_q: Query<(&Camera, &GlobalTransform)>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     rapier_context: Res<RapierContext>,
     mut cmds: Commands,
 ) {

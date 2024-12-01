@@ -20,7 +20,7 @@ opt-level = 3
 
 [profile.dev]
 codegen-units = 1
-opt-level = 3
+opt-level = 0
 
 [profile.release]
 codegen-units = 1

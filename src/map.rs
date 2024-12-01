@@ -17,9 +17,6 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_grid(mut cmds: Commands) {
-    // let grid = pf_res::Grid::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS, CELL_SIZE);
-    // cmds.insert_resource(grid);
-
     let grid_controller = (
         GridController {
             map_size: Vec2::new(MAP_WIDTH, MAP_DEPTH),
@@ -77,26 +74,26 @@ fn spawn_obstacle(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // let size = 12.0;
-    // cmds.spawn((
-    //     PbrBundle {
-    //         mesh: meshes.add(Cuboid::new(size, size, size)),
-    //         material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-    //         transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
-    //         ..default()
-    //     },
-    //     Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-    // ));
+    let size = 12.0;
+    cmds.spawn((
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(size, size, size)),
+            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+            transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
+            ..default()
+        },
+        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+    ));
 
-    // let obst = (
-    //     PbrBundle {
-    //         mesh: meshes.add(Cylinder::new(size, size / 2.0)),
-    //         material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-    //         transform: Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
-    //         ..default()
-    //     },
-    //     Collider::cuboid(size, size / 2.0, size),
-    // );
+    let obst = (
+        PbrBundle {
+            mesh: meshes.add(Cylinder::new(size, size / 2.0)),
+            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+            transform: Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
+            ..default()
+        },
+        Collider::cuboid(size, size / 2.0, size),
+    );
 
-    // cmds.spawn(obst);
+    cmds.spawn(obst);
 }

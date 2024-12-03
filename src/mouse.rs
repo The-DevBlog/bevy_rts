@@ -60,7 +60,7 @@ fn spawn_cursor(
     mut window_q: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let mut window = window_q.get_single_mut().unwrap();
-    window.cursor.visible = false;
+    // window.cursor.visible = false;
 
     let cursor = (
         ImageBundle {

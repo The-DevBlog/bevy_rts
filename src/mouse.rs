@@ -164,10 +164,21 @@ fn set_select_box_coords(
 
     // Convert each viewport corner to world coordinates based on the current camera view
     let viewport = select_box.viewport.clone();
-    select_box.world.start_1 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.start_1);
-    select_box.world.start_2 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.start_2);
-    select_box.world.end_1 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.end_1);
-    select_box.world.end_2 = utils::get_world_coords(&map_base, cam_trans, cam, viewport.end_2);
+    if let Some(coords) = utils::get_world_coords(&map_base, cam_trans, cam, viewport.start_1) {
+        select_box.world.start_1 = coords;
+    }
+
+    if let Some(coords) = utils::get_world_coords(&map_base, cam_trans, cam, viewport.start_2) {
+        select_box.world.start_2 = coords;
+    }
+
+    if let Some(coords) = utils::get_world_coords(&map_base, cam_trans, cam, viewport.end_1) {
+        select_box.world.end_1 = coords;
+    }
+
+    if let Some(coords) = utils::get_world_coords(&map_base, cam_trans, cam, viewport.end_2) {
+        select_box.world.end_2 = coords;
+    }
 }
 
 fn clear_drag_select_coords(
@@ -191,7 +202,10 @@ fn set_mouse_coords(
     let coords = utils::get_world_coords(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
 
     mouse_coords.viewport = viewport_cursor;
-    mouse_coords.world = coords;
+
+    if let Some(coords) = coords {
+        mouse_coords.world = coords;
+    }
 }
 
 fn draw_select_box(

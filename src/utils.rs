@@ -28,10 +28,15 @@ pub fn get_world_coords(
     cam_trans: &GlobalTransform,
     cam: &Camera,
     viewport_pos: Vec2,
-) -> Vec3 {
+) -> Option<Vec3> {
     let plane_origin = map_base_trans.translation();
     let plane = InfinitePlane3d::new(map_base_trans.up());
     let ray = cam.viewport_to_world(cam_trans, viewport_pos).unwrap();
-    let distance = ray.intersect_plane(plane_origin, plane).unwrap();
-    return ray.get_point(distance);
+    let distance = ray.intersect_plane(plane_origin, plane);
+
+    if let Some(distance) = distance {
+        return Some(ray.get_point(distance));
+    }
+
+    None
 }

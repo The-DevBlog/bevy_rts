@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
-use bevy_rts_pathfinding::resources as pf_res;
+use bevy_rts_pathfinding::flowfield::FlowField;
+use bevy_rts_pathfinding::grid_controller::GridController;
 
 use super::*;
 
@@ -16,8 +17,17 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_grid(mut cmds: Commands) {
-    let grid = pf_res::Grid::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS, CELL_SIZE);
-    cmds.insert_resource(grid);
+    let grid_controller = (
+        GridController {
+            map_size: Vec2::new(MAP_WIDTH, MAP_DEPTH),
+            grid_size: IVec2::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS),
+            cell_radius: CELL_SIZE / 2.,
+            cur_flowfield: FlowField::default(),
+        },
+        Name::new("Grid Controller"),
+    );
+
+    cmds.spawn(grid_controller);
 }
 
 fn spawn_map(
@@ -40,20 +50,23 @@ fn spawn_map(
     ));
 
     // Light
-    cmds.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            illuminance: 1000.0,
-            shadows_enabled: true,
+    cmds.spawn((
+        DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                illuminance: 1000.0,
+                shadows_enabled: true,
+                ..default()
+            },
+            transform: Transform::from_rotation(Quat::from_euler(
+                EulerRot::YXZ,
+                150.0f32.to_radians(),
+                -40.0f32.to_radians(),
+                0.0,
+            )),
             ..default()
         },
-        transform: Transform::from_rotation(Quat::from_euler(
-            EulerRot::YXZ,
-            150.0f32.to_radians(),
-            -40.0f32.to_radians(),
-            0.0,
-        )),
-        ..default()
-    });
+        Name::new("Light"),
+    ));
 }
 
 fn spawn_obstacle(
@@ -61,26 +74,26 @@ fn spawn_obstacle(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // let size = 12.0;
-    // cmds.spawn((
-    //     PbrBundle {
-    //         mesh: meshes.add(Cuboid::new(size, size, size)),
-    //         material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-    //         transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
-    //         ..default()
-    //     },
-    //     Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-    // ));
+    let size = 12.0;
+    cmds.spawn((
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(size, size, size)),
+            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+            transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
+            ..default()
+        },
+        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+    ));
 
-    // let obst = (
-    //     PbrBundle {
-    //         mesh: meshes.add(Cylinder::new(size, size / 2.0)),
-    //         material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-    //         transform: Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
-    //         ..default()
-    //     },
-    //     Collider::cuboid(size, size / 2.0, size),
-    // );
+    let obst = (
+        PbrBundle {
+            mesh: meshes.add(Cylinder::new(size, size / 2.0)),
+            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+            transform: Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
+            ..default()
+        },
+        Collider::cuboid(size, size / 2.0, size),
+    );
 
-    // cmds.spawn(obst);
+    cmds.spawn(obst);
 }

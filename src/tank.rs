@@ -105,7 +105,7 @@ pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
     mut unit_q: Query<Entity, With<pf_comps::Selected>>,
-    cam_q: Query<(&Camera, &GlobalTransform)>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     rapier_context: Res<RapierContext>,
     mut cmds: Commands,
 ) {
@@ -124,69 +124,69 @@ pub fn set_unit_destination(
         cmds.entity(unit_entity).insert(pf_comps::Destination);
     }
 
-    cmds.trigger(pf_events::SetTargetCellEv);
+    cmds.trigger(pf_events::InitializeFlowFieldEv);
+    // cmds.trigger(pf_events::SetTargetCellEv);
 }
 
-fn move_unit(
-    mut flowfield_q: Query<&mut pf_comps::FlowField>,
-    mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<pf_comps::Destination>>,
-    grid: Res<pf_res::Grid>,
-    time: Res<Time>,
-    mut cmds: Commands,
+fn move_unit(// mut flowfield_q: Query<&mut pf_comps::FlowField>,
+    // mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<pf_comps::Destination>>,
+    // grid: Res<pf_res::Grid>,
+    // time: Res<Time>,
+    // mut cmds: Commands,
 ) {
-    if flowfield_q.is_empty() {
-        return;
-    }
+    // if flowfield_q.is_empty() {
+    //     return;
+    // }
 
-    let delta_time = time.delta_seconds();
-    let rotation_speed = 5.0;
-    let movement_threshold = 15.0_f32.to_radians();
+    // let delta_time = time.delta_seconds();
+    // let rotation_speed = 5.0;
+    // let movement_threshold = 15.0_f32.to_radians();
 
-    for mut flowfield in flowfield_q.iter_mut() {
-        let mut units_to_remove = Vec::new();
+    // for mut flowfield in flowfield_q.iter_mut() {
+    //     let mut units_to_remove = Vec::new();
 
-        for &unit_entity in flowfield.entities.iter() {
-            if let Ok((mut external_impulse, unit_transform, speed)) = unit_q.get_mut(unit_entity) {
-                let (row, column) = pf_utils::get_cell(&grid, &unit_transform.translation);
+    //     for &unit_entity in flowfield.entities.iter() {
+    //         if let Ok((mut external_impulse, unit_transform, speed)) = unit_q.get_mut(unit_entity) {
+    //             let (row, column) = pf_utils::get_cell(&grid, &unit_transform.translation);
 
-                // Check if the unit has reached the destination cell
-                if (row as usize, column as usize) == flowfield.destination {
-                    units_to_remove.push(unit_entity);
-                    continue;
-                }
+    //             // Check if the unit has reached the destination cell
+    //             if (row as usize, column as usize) == flowfield.destination {
+    //                 units_to_remove.push(unit_entity);
+    //                 continue;
+    //             }
 
-                let flow_vector = flowfield.cells[row as usize][column as usize].flow_vector;
-                if flow_vector == Vec3::ZERO {
-                    continue;
-                }
+    //             let flow_vector = flowfield.cells[row as usize][column as usize].flow_vector;
+    //             if flow_vector == Vec3::ZERO {
+    //                 continue;
+    //             }
 
-                let desired_direction = flow_vector.normalize_or_zero();
+    //             let desired_direction = flow_vector.normalize_or_zero();
 
-                let forward = unit_transform.forward();
-                let angle_difference = forward.angle_between(desired_direction);
+    //             let forward = unit_transform.forward();
+    //             let angle_difference = forward.angle_between(desired_direction);
 
-                // Create a quaternion representing the rotation from `forward` to `desired_direction`
-                let rotation_to_target = Quat::from_rotation_arc(*forward, desired_direction);
+    //             // Create a quaternion representing the rotation from `forward` to `desired_direction`
+    //             let rotation_to_target = Quat::from_rotation_arc(*forward, desired_direction);
 
-                // Convert the quaternion into an axis-angle representation
-                let (rotation_axis, _) = rotation_to_target.to_axis_angle();
+    //             // Convert the quaternion into an axis-angle representation
+    //             let (rotation_axis, _) = rotation_to_target.to_axis_angle();
 
-                let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
-                external_impulse.torque_impulse += torque_impulse;
+    //             let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
+    //             external_impulse.torque_impulse += torque_impulse;
 
-                if angle_difference > movement_threshold {
-                    continue;
-                }
+    //             if angle_difference > movement_threshold {
+    //                 continue;
+    //             }
 
-                let movement_impulse = desired_direction * speed.0 * delta_time;
-                external_impulse.impulse += movement_impulse;
-            }
-        }
+    //             let movement_impulse = desired_direction * speed.0 * delta_time;
+    //             external_impulse.impulse += movement_impulse;
+    //         }
+    //     }
 
-        // Remove units that have reached the target or are invalid
-        flowfield.entities.retain(|e| !units_to_remove.contains(e));
-    }
+    //     // Remove units that have reached the target or are invalid
+    //     flowfield.entities.retain(|e| !units_to_remove.contains(e));
+    // }
 
-    // TODO: Make this run every cell that is crossed, not every frame. This is expensive
-    cmds.trigger(pf_events::DetectCollidersEv);
+    // // TODO: Make this run every cell that is crossed, not every frame. This is expensive
+    // cmds.trigger(pf_events::DetectCollidersEv);
 }

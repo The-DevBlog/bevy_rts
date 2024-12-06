@@ -1,5 +1,5 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_mod_billboard::BillboardMeshHandle;
+// use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 
@@ -20,34 +20,30 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     update_cursor_img,
-                    border_select_visibility,
+                    // border_select_visibility,
                     handle_mouse_input,
                     draw_select_box,
                     set_drag_select,
                     set_selected,
-                )
-                    .chain(),
+                ),
             )
-            .observe(deselect_all)
-            .observe(single_select)
-            .observe(handle_drag_select)
-            .observe(set_start_select_box_coords)
-            .observe(set_select_box_coords)
-            .observe(clear_drag_select_coords);
+            .add_observer(deselect_all)
+            .add_observer(single_select)
+            .add_observer(handle_drag_select)
+            .add_observer(set_start_select_box_coords)
+            .add_observer(set_select_box_coords)
+            .add_observer(clear_drag_select_coords);
     }
 }
 
 fn spawn_select_box(mut cmds: Commands) {
     let select_box = (
-        NodeBundle {
-            background_color: BackgroundColor(COLOR_SELECT_BOX),
-            border_color: BorderColor(COLOR_SELECT_BOX_BORDER.into()),
-            style: Style {
-                position_type: PositionType::Absolute,
-                ..default()
-            },
+        Node {
+            position_type: PositionType::Absolute,
             ..default()
         },
+        BackgroundColor(COLOR_SELECT_BOX),
+        BorderColor(COLOR_SELECT_BOX_BORDER.into()),
         SelectionBox,
     );
 
@@ -63,13 +59,13 @@ fn spawn_cursor(
     // window.cursor.visible = false;
 
     let cursor = (
-        ImageBundle {
-            image: UiImage::new(my_assets.cursor_standard.clone()),
-            style: Style {
-                width: Val::Px(CURSOR_SIZE),
-                height: Val::Px(CURSOR_SIZE),
-                ..default()
-            },
+        ImageNode {
+            image: my_assets.cursor_standard.clone(),
+            ..default()
+        },
+        Node {
+            width: Val::Px(CURSOR_SIZE),
+            height: Val::Px(CURSOR_SIZE),
             ..default()
         },
         MyCursor::default(),
@@ -80,7 +76,7 @@ fn spawn_cursor(
 }
 
 fn update_cursor_pos(
-    mut cursor_q: Query<(&mut Style, &mut MyCursor), With<MyCursor>>,
+    mut cursor_q: Query<(&mut Node, &mut MyCursor), With<MyCursor>>,
     mouse_coords: Res<MouseCoords>,
 ) {
     let (mut style, cursor) = cursor_q.get_single_mut().unwrap();
@@ -210,7 +206,7 @@ fn set_mouse_coords(
 
 fn draw_select_box(
     mut _gizmos: Gizmos,
-    mut query: Query<&mut Style, With<SelectionBox>>,
+    mut query: Query<&mut Node, With<SelectionBox>>,
     box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
 ) {
@@ -298,18 +294,22 @@ pub fn handle_drag_select(
 pub fn update_cursor_img(
     game_cmds: Res<GameCommands>,
     mut cursor_state: ResMut<CursorState>,
-    rapier_context: Res<RapierContext>,
     my_assets: Res<MyAssets>,
     mouse_coords: Res<MouseCoords>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut cursor_q: Query<(&mut UiImage, &mut MyCursor)>,
-    mut select_q: Query<Entity, With<Unit>>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    mut q_cursor: Query<(&mut ImageNode, &mut MyCursor)>,
+    mut q_select: Query<Entity, With<Unit>>,
 ) {
-    let (cam, cam_trans) = cam_q.single();
-    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let (cam, cam_trans) = q_cam.single();
+    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if let Some((ent, _)) = hit {
-        for selected_entity in select_q.iter_mut() {
+        for selected_entity in q_select.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
 
             if tmp && !game_cmds.drag_select {
@@ -322,7 +322,7 @@ pub fn update_cursor_img(
         *cursor_state = CursorState::Standard;
     }
 
-    let (mut img, mut cursor) = cursor_q.get_single_mut().unwrap();
+    let (mut img, mut cursor) = q_cursor.get_single_mut().unwrap();
     // println!("Change Cursor: {:?}", game_cmds.cursor_state);
 
     match *cursor_state {
@@ -331,23 +331,27 @@ pub fn update_cursor_img(
         CursorState::Select => cursor.img = my_assets.cursor_select.clone(),
     }
 
-    img.texture = cursor.img.clone();
+    img.image = cursor.img.clone();
 }
 
 pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
-    rapier_context: Res<RapierContext>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut unit_q: Query<Entity, With<Unit>>,
     mut cmds: Commands,
     mouse_coords: Res<MouseCoords>,
+    mut q_unit: Query<Entity, With<Unit>>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
 ) {
-    let (cam, cam_trans) = cam_q.single();
-    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let (cam, cam_trans) = q_cam.single();
+    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     // deselect all currently pf_comps::selected entities
     if let Some((ent, _)) = hit {
-        for selected_entity in unit_q.iter_mut() {
+        for selected_entity in q_unit.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
 
             if !tmp {
@@ -379,19 +383,21 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pf_comps::
 fn border_select_visibility(
     selected_units_q: Query<Entity, With<pf_comps::Selected>>,
     non_selected_units_q: Query<Entity, Without<pf_comps::Selected>>,
-    mut border_select_q: Query<
-        (&mut BillboardMeshHandle, &UnitBorderBoxImg),
-        With<UnitBorderBoxImg>,
-    >,
+    // mut border_select_q: Query<
+    //     (&mut BillboardMeshHandle, &UnitBorderBoxImg),
+    //     With<UnitBorderBoxImg>,
+    // >,
+    mut border_select_q: Query<&UnitBorderBoxImg, With<UnitBorderBoxImg>>,
     children_q: Query<&Children>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     // make border visible for selected entities
     for entity in selected_units_q.iter() {
         for child in children_q.iter_descendants(entity) {
-            if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
+            if let Ok(border) = border_select_q.get_mut(child) {
+                // if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
                 let border_xy = Vec2::new(border.width, border.height);
-                *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+                // *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
             }
         }
     }
@@ -399,9 +405,10 @@ fn border_select_visibility(
     // make border invisible for unselected entities
     for entity in non_selected_units_q.iter() {
         for child in children_q.iter_descendants(entity) {
-            if let Ok((mut billboard_mesh, _border)) = border_select_q.get_mut(child) {
+            if let Ok(_border) = border_select_q.get_mut(child) {
+                // if let Ok((mut billboard_mesh, _border)) = border_select_q.get_mut(child) {
                 let border_xy = Vec2::new(0.0, 0.0);
-                *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+                // *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
             }
         }
     }

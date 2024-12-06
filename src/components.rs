@@ -49,7 +49,8 @@ pub struct UnitBundle {
     pub rigid_body: RigidBody,
     pub speed: Speed,
     pub locked_axis: LockedAxes,
-    pub scene_bundle: SceneBundle,
+    pub transform: Transform,
+    pub scene_root: SceneRoot,
     pub mass_properties: ColliderMassProperties,
 }
 
@@ -81,11 +82,8 @@ impl UnitBundle {
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::TRANSLATION_LOCKED_Y),
-            scene_bundle: SceneBundle {
-                scene,
-                transform,
-                ..default()
-            },
+            scene_root: SceneRoot(scene),
+            transform,
         }
     }
 }

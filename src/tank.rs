@@ -1,5 +1,5 @@
 use crate::{components::*, resources::*, *};
-use bevy_mod_billboard::*;
+// use bevy_mod_billboard::*;
 use bevy_rapier3d::na::Rotation;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
@@ -15,7 +15,7 @@ impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
             .add_systems(Update, move_unit)
-            .observe(set_unit_destination);
+            .add_observer(set_unit_destination);
     }
 }
 
@@ -60,11 +60,11 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
     // Create select border for units
     let select_border = || {
         (
-            BillboardTextureBundle {
-                texture: BillboardTextureHandle(my_assets.select_border.clone()),
-                billboard_depth: BillboardDepth(false),
-                ..default()
-            },
+            // BillboardTextureBundle {
+            //     texture: BillboardTextureHandle(my_assets.select_border.clone()),
+            //     billboard_depth: BillboardDepth(false),
+            //     ..default()
+            // },
             UnitBorderBoxImg::new(15.0, 15.0),
             Name::new("Border Select"),
         )
@@ -104,23 +104,27 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
 pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
-    mut unit_q: Query<Entity, With<pf_comps::Selected>>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    rapier_context: Res<RapierContext>,
+    mut q_unit: Query<Entity, With<pf_comps::Selected>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     mut cmds: Commands,
 ) {
     if !mouse_coords.in_bounds() {
         return;
     }
 
-    let (cam, cam_trans) = cam_q.single();
-    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let (cam, cam_trans) = q_cam.single();
+    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if let Some(_) = hit {
         return;
     }
 
-    for unit_entity in unit_q.iter_mut() {
+    for unit_entity in q_unit.iter_mut() {
         cmds.entity(unit_entity).insert(pf_comps::Destination);
     }
 

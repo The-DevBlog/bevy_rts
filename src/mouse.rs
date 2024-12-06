@@ -294,18 +294,22 @@ pub fn handle_drag_select(
 pub fn update_cursor_img(
     game_cmds: Res<GameCommands>,
     mut cursor_state: ResMut<CursorState>,
-    rapier_context: ReadDefaultRapierContext,
     my_assets: Res<MyAssets>,
     mouse_coords: Res<MouseCoords>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut cursor_q: Query<(&mut ImageNode, &mut MyCursor)>,
-    mut select_q: Query<Entity, With<Unit>>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    mut q_cursor: Query<(&mut ImageNode, &mut MyCursor)>,
+    mut q_select: Query<Entity, With<Unit>>,
 ) {
-    let (cam, cam_trans) = cam_q.single();
-    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let (cam, cam_trans) = q_cam.single();
+    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if let Some((ent, _)) = hit {
-        for selected_entity in select_q.iter_mut() {
+        for selected_entity in q_select.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
 
             if tmp && !game_cmds.drag_select {
@@ -318,7 +322,7 @@ pub fn update_cursor_img(
         *cursor_state = CursorState::Standard;
     }
 
-    let (mut img, mut cursor) = cursor_q.get_single_mut().unwrap();
+    let (mut img, mut cursor) = q_cursor.get_single_mut().unwrap();
     // println!("Change Cursor: {:?}", game_cmds.cursor_state);
 
     match *cursor_state {
@@ -332,18 +336,22 @@ pub fn update_cursor_img(
 
 pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
-    rapier_context: ReadDefaultRapierContext,
-    cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut unit_q: Query<Entity, With<Unit>>,
     mut cmds: Commands,
     mouse_coords: Res<MouseCoords>,
+    mut q_unit: Query<Entity, With<Unit>>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
 ) {
-    let (cam, cam_trans) = cam_q.single();
-    let hit = utils::cast_ray(rapier_context, &cam, &cam_trans, mouse_coords.viewport);
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let (cam, cam_trans) = q_cam.single();
+    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     // deselect all currently pf_comps::selected entities
     if let Some((ent, _)) = hit {
-        for selected_entity in unit_q.iter_mut() {
+        for selected_entity in q_unit.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
 
             if !tmp {

@@ -1,11 +1,8 @@
 use bevy::prelude::*;
-use bevy_rapier3d::{
-    plugin::{RapierContext, ReadDefaultRapierContext},
-    prelude::QueryFilter,
-};
+use bevy_rapier3d::{plugin::RapierContext, prelude::QueryFilter};
 
 pub fn cast_ray(
-    rapier: ReadDefaultRapierContext,
+    rapier: &RapierContext,
     cam: &Camera,
     cam_trans: &GlobalTransform,
     viewport: Vec2,

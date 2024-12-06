@@ -12,8 +12,13 @@ pub struct MapPlugin;
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, spawn_grid)
-            .add_systems(Startup, (spawn_map, spawn_obstacle));
+            .add_systems(Startup, (spawn_world, spawn_map, spawn_obstacle));
     }
+}
+
+fn spawn_world(mut cmds: Commands) {
+    // let mut world = commands.spawn((RapierContext::default(), WorldId(i)));
+    cmds.spawn(RapierContext::default());
 }
 
 fn spawn_grid(mut cmds: Commands) {

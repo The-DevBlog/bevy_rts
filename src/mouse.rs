@@ -1,21 +1,22 @@
+use bevy::winit::cursor::{CursorIcon, CustomCursor};
 use bevy::{prelude::*, window::PrimaryWindow};
 // use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 
+use crate::components::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;
 use crate::*;
-use crate::{components::*, CURSOR_SIZE};
 use bevy_rts_pathfinding::components as pf_comps;
 
 pub struct MousePlugin;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_select_box, spawn_cursor))
-            .add_systems(PreUpdate, (set_mouse_coords, update_cursor_pos).chain())
+        app.add_systems(Startup, spawn_select_box)
+            .add_systems(PreUpdate, set_mouse_coords)
             .add_systems(
                 Update,
                 (
@@ -48,40 +49,6 @@ fn spawn_select_box(mut cmds: Commands) {
     );
 
     cmds.spawn(select_box);
-}
-
-fn spawn_cursor(
-    mut cmds: Commands,
-    my_assets: Res<MyAssets>,
-    mut window_q: Query<&mut Window, With<PrimaryWindow>>,
-) {
-    let mut window = window_q.get_single_mut().unwrap();
-    // window.cursor.visible = false;
-
-    let cursor = (
-        ImageNode {
-            image: my_assets.cursor_standard.clone(),
-            ..default()
-        },
-        Node {
-            width: Val::Px(CURSOR_SIZE),
-            height: Val::Px(CURSOR_SIZE),
-            ..default()
-        },
-        MyCursor::default(),
-        Name::new("relocate cursor"),
-    );
-
-    cmds.spawn(cursor);
-}
-
-fn update_cursor_pos(
-    mut cursor_q: Query<(&mut Node, &mut MyCursor), With<MyCursor>>,
-    mouse_coords: Res<MouseCoords>,
-) {
-    let (mut style, cursor) = cursor_q.get_single_mut().unwrap();
-    style.left = Val::Px(mouse_coords.viewport.x - cursor.size / 2.0);
-    style.top = Val::Px(mouse_coords.viewport.y - cursor.size / 2.0);
 }
 
 fn handle_mouse_input(
@@ -298,10 +265,14 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut q_cursor: Query<(&mut ImageNode, &mut MyCursor)>,
     mut q_select: Query<Entity, With<Unit>>,
+    mut q_cursor: Query<&mut CursorIcon>,
 ) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let Ok(mut cursor) = q_cursor.get_single_mut() else {
         return;
     };
 
@@ -322,16 +293,27 @@ pub fn update_cursor_img(
         *cursor_state = CursorState::Standard;
     }
 
-    let (mut img, mut cursor) = q_cursor.get_single_mut().unwrap();
-    // println!("Change Cursor: {:?}", game_cmds.cursor_state);
-
+    let img: Handle<Image>;
+    let hotspot: (u16, u16);
     match *cursor_state {
-        CursorState::Relocate => cursor.img = my_assets.cursor_relocate.clone(),
-        CursorState::Standard => cursor.img = my_assets.cursor_standard.clone(),
-        CursorState::Select => cursor.img = my_assets.cursor_select.clone(),
+        CursorState::Relocate => {
+            img = my_assets.cursor_relocate.clone();
+            hotspot = (2, 2)
+        }
+        CursorState::Standard => {
+            img = my_assets.cursor_standard.clone();
+            hotspot = (0, 0)
+        }
+        CursorState::Select => {
+            img = my_assets.cursor_select.clone();
+            hotspot = (25, 25)
+        }
     }
 
-    img.image = cursor.img.clone();
+    *cursor = CursorIcon::Custom(CustomCursor::Image {
+        handle: img,
+        hotspot,
+    });
 }
 
 pub fn single_select(

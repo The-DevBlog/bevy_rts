@@ -1,13 +1,16 @@
 use bevy::prelude::*;
-use bevy_rapier3d::{plugin::RapierContext, prelude::QueryFilter};
+use bevy_rapier3d::{
+    plugin::{RapierContext, ReadDefaultRapierContext},
+    prelude::QueryFilter,
+};
 
 pub fn cast_ray(
-    rapier: Res<RapierContext>,
+    rapier: ReadDefaultRapierContext,
     cam: &Camera,
     cam_trans: &GlobalTransform,
     viewport: Vec2,
 ) -> Option<(Entity, f32)> {
-    let Some(ray) = cam.viewport_to_world(cam_trans, viewport) else {
+    let Ok(ray) = cam.viewport_to_world(cam_trans, viewport) else {
         return None;
     };
 

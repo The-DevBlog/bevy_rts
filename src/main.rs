@@ -1,6 +1,5 @@
 use bevy::{color::palettes::css::*, prelude::*};
-use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
-// use bevy_mod_billboard::plugin::BillboardPlugin;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding;
 
@@ -41,7 +40,6 @@ fn main() {
             bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
             bevy_rts_pathfinding::debug::BevyRtsPathFindingDebugPlugin,
             ResourcesPlugin,
-            // BillboardPlugin,
             CameraPlugin,
             MapPlugin,
             MousePlugin,

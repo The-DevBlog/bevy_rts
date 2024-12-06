@@ -1,5 +1,4 @@
 use crate::{components::*, resources::*, *};
-// use bevy_mod_billboard::*;
 use bevy_rapier3d::na::Rotation;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
@@ -19,7 +18,7 @@ impl Plugin for TankPlugin {
     }
 }
 
-fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAssets>) {
+fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
     let initial_pos_left = Vec3::new(-200.0, 0.0, 0.0); // Initial position for left group
     let initial_pos_right = Vec3::new(200.0, 0.0, 0.0); // Initial position for right group
     let offset = Vec3::new(30.0, 0.0, 30.0);
@@ -57,19 +56,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
         ),)
     };
 
-    // Create select border for units
-    let select_border = || {
-        (
-            // BillboardTextureBundle {
-            //     texture: BillboardTextureHandle(my_assets.select_border.clone()),
-            //     billboard_depth: BillboardDepth(false),
-            //     ..default()
-            // },
-            UnitBorderBoxImg::new(15.0, 15.0),
-            Name::new("Border Select"),
-        )
-    };
-
     // Spawn Left Group (facing right)
     let mut count = 0;
     for row in 0..grid_size {
@@ -79,7 +65,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
             }
             cmds.spawn(create_left_tank(row, col))
                 .with_children(|parent| {
-                    parent.spawn(select_border());
+                    // parent.spawn(select_border());
                 });
             count += 1;
         }
@@ -94,7 +80,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
             }
             cmds.spawn(create_right_tank(row, col))
                 .with_children(|parent| {
-                    parent.spawn(select_border());
+                    // parent.spawn(select_border());
                 });
             count += 1;
         }

@@ -1,5 +1,5 @@
 use crate::{components::*, resources::*, *};
-use bevy_mod_billboard::*;
+// use bevy_mod_billboard::*;
 use bevy_rapier3d::na::Rotation;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
@@ -15,7 +15,7 @@ impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
             .add_systems(Update, move_unit)
-            .observe(set_unit_destination);
+            .add_observer(set_unit_destination);
     }
 }
 
@@ -60,11 +60,11 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>, my_assets: Res<MyAs
     // Create select border for units
     let select_border = || {
         (
-            BillboardTextureBundle {
-                texture: BillboardTextureHandle(my_assets.select_border.clone()),
-                billboard_depth: BillboardDepth(false),
-                ..default()
-            },
+            // BillboardTextureBundle {
+            //     texture: BillboardTextureHandle(my_assets.select_border.clone()),
+            //     billboard_depth: BillboardDepth(false),
+            //     ..default()
+            // },
             UnitBorderBoxImg::new(15.0, 15.0),
             Name::new("Border Select"),
         )
@@ -106,7 +106,7 @@ pub fn set_unit_destination(
     mouse_coords: ResMut<MouseCoords>,
     mut unit_q: Query<Entity, With<pf_comps::Selected>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadDefaultRapierContext,
     mut cmds: Commands,
 ) {
     if !mouse_coords.in_bounds() {

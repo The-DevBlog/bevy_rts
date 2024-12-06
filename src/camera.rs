@@ -15,7 +15,7 @@ impl Plugin for CameraPlugin {
 
 fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
-        Camera3dBundle::default(),
+        Camera3d::default(),
         pf_comps::GameCamera,
         RtsCamera {
             bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),

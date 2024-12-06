@@ -37,11 +37,8 @@ fn spawn_map(
 ) {
     // Ground
     cmds.spawn((
-        PbrBundle {
-            mesh: meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_DEPTH)),
-            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-            ..default()
-        },
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_DEPTH))),
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_DEPTH / 2.0),
         Sensor,
         Ground,
@@ -51,20 +48,17 @@ fn spawn_map(
 
     // Light
     cmds.spawn((
-        DirectionalLightBundle {
-            directional_light: DirectionalLight {
-                illuminance: 1000.0,
-                shadows_enabled: true,
-                ..default()
-            },
-            transform: Transform::from_rotation(Quat::from_euler(
-                EulerRot::YXZ,
-                150.0f32.to_radians(),
-                -40.0f32.to_radians(),
-                0.0,
-            )),
+        DirectionalLight {
+            illuminance: 1000.0,
+            shadows_enabled: true,
             ..default()
         },
+        Transform::from_rotation(Quat::from_euler(
+            EulerRot::YXZ,
+            150.0f32.to_radians(),
+            -40.0f32.to_radians(),
+            0.0,
+        )),
         Name::new("Light"),
     ));
 }
@@ -76,22 +70,16 @@ fn spawn_obstacle(
 ) {
     let size = 12.0;
     cmds.spawn((
-        PbrBundle {
-            mesh: meshes.add(Cuboid::new(size, size, size)),
-            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-            transform: Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
-            ..default()
-        },
+        Mesh3d(meshes.add(Cuboid::new(size, size, size))),
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+        Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
     ));
 
     let obst = (
-        PbrBundle {
-            mesh: meshes.add(Cylinder::new(size, size / 2.0)),
-            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-            transform: Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
-            ..default()
-        },
+        Mesh3d(meshes.add(Cylinder::new(size, size / 2.0))),
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+        Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
         Collider::cuboid(size, size / 2.0, size),
     );
 

@@ -382,9 +382,9 @@ fn border_select_visibility(
         Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
         MeshMaterial3d(materials.add(StandardMaterial {
             base_color_texture: Some(my_assets.select_border.clone()),
-            depth_bias: f32::INFINITY, // TODO: Not working?
+            depth_bias: f32::NEG_INFINITY, // TODO: Not working?
             alpha_mode: AlphaMode::Blend,
-            // unlit: true,
+            unlit: true,
             ..default()
         })),
     );

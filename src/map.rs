@@ -75,14 +75,14 @@ fn spawn_obstacle(
     cmds.spawn((
         Mesh3d(meshes.add(Cuboid::new(size, size, size))),
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(100.0, 6.0, 100.0)),
+        Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
     ));
 
     let obst = (
         Mesh3d(meshes.add(Cylinder::new(size, size / 2.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(-100.0, 6.0, 100.0)),
+        Transform::from_translation(Vec3::new(-100.0, 6.0, 150.0)),
         Collider::cuboid(size, size / 2.0, size),
     );
 

@@ -1,9 +1,12 @@
 use crate::{components::*, resources::*, *};
+use bevy::math::f32;
 use bevy_rapier3d::na::Rotation;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
+use bevy_rts_pathfinding::flowfield::FlowField;
+use bevy_rts_pathfinding::grid_controller::GridController;
 use bevy_rts_pathfinding::resources as pf_res;
 use bevy_rts_pathfinding::utils as pf_utils;
 use events::SetUnitDestinationEv;
@@ -13,14 +16,14 @@ pub struct TankPlugin;
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
-            .add_systems(Update, move_unit)
+            .add_systems(Update, move_unit_2)
             .add_observer(set_unit_destination);
     }
 }
 
 fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
-    let initial_pos_left = Vec3::new(-200.0, 0.0, 0.0);
-    let initial_pos_right = Vec3::new(200.0, 0.0, 0.0);
+    let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
+    let initial_pos_right = Vec3::new(150.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
@@ -34,7 +37,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             assets.load("tank_tan.glb#Scene0"),
             Transform {
                 translation: pos,
-                // rotation: Quat::from_rotation_y(0.0), // Facing right (positive X direction)
                 ..default()
             },
         ),)
@@ -50,7 +52,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             assets.load("tank_tan.glb#Scene0"),
             Transform {
                 translation: pos,
-                // rotation: Quat::from_rotation_y(std::f32::consts::PI), // Facing left (negative X direction)
                 ..default()
             },
         ),)
@@ -110,6 +111,37 @@ pub fn set_unit_destination(
 
     cmds.trigger(pf_events::InitializeFlowFieldEv);
     // cmds.trigger(pf_events::SetTargetCellEv);
+}
+
+fn move_unit_2(
+    mut q_unit: Query<(&Transform, &mut ExternalImpulse, &Speed), With<Unit>>,
+    q_grid: Query<&GridController>,
+    time: Res<Time>,
+) {
+    let Ok(grid) = q_grid.get_single() else {
+        return;
+    };
+
+    if grid.cur_flowfield == FlowField::default() {
+        return;
+    }
+
+    let delta_time = time.delta_secs();
+
+    for (unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+        let cell_below = grid
+            .cur_flowfield
+            .get_cell_from_world_position(unit_transform.translation);
+
+        let move_direction = Vec3::new(
+            cell_below.best_direction.vector().x as f32,
+            0.0,
+            cell_below.best_direction.vector().y as f32,
+        );
+
+        let movement_impulse = move_direction * speed.0 * delta_time;
+        ext_impulse.impulse += movement_impulse;
+    }
 }
 
 fn move_unit(// mut flowfield_q: Query<&mut pf_comps::FlowField>,

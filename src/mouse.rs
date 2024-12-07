@@ -1,6 +1,7 @@
+use core::f32;
+
 use bevy::winit::cursor::{CursorIcon, CustomCursor};
 use bevy::{prelude::*, window::PrimaryWindow};
-// use bevy_mod_billboard::BillboardMeshHandle;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 
@@ -21,7 +22,8 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     update_cursor_img,
-                    // border_select_visibility,
+                    border_select_visibility,
+                    update_select_border_pos,
                     handle_mouse_input,
                     draw_select_box,
                     set_drag_select,
@@ -362,36 +364,67 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pf_comps::
     }
 }
 
+#[derive(Component, Clone)]
+struct UnitSelectBorder;
+
 fn border_select_visibility(
-    selected_units_q: Query<Entity, With<pf_comps::Selected>>,
-    non_selected_units_q: Query<Entity, Without<pf_comps::Selected>>,
-    // mut border_select_q: Query<
-    //     (&mut BillboardMeshHandle, &UnitBorderBoxImg),
-    //     With<UnitBorderBoxImg>,
-    // >,
-    mut border_select_q: Query<&UnitBorderBoxImg, With<UnitBorderBoxImg>>,
-    children_q: Query<&Children>,
+    mut cmds: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    my_assets: Res<MyAssets>,
+    q_selected_units: Query<Entity, With<pf_comps::Selected>>,
+    q_unselected_units: Query<Entity, Without<pf_comps::Selected>>,
+    q_border: Query<&UnitSelectBorder>,
+    q_children: Query<&Children>,
 ) {
-    // make border visible for selected entities
-    for entity in selected_units_q.iter() {
-        for child in children_q.iter_descendants(entity) {
-            if let Ok(border) = border_select_q.get_mut(child) {
-                // if let Ok((mut billboard_mesh, border)) = border_select_q.get_mut(child) {
-                let border_xy = Vec2::new(border.width, border.height);
-                // *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+    let border = (
+        UnitSelectBorder,
+        Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color_texture: Some(my_assets.select_border.clone()),
+            depth_bias: f32::NEG_INFINITY, // TODO: Not working?
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            ..default()
+        })),
+    );
+
+    // spawn select borders for selected units
+    for unit in q_selected_units.iter() {
+        let mut has_border = false;
+        for child in q_children.iter_descendants(unit) {
+            // only spawn a border if one does not already exist
+            if q_border.get(child).is_ok() {
+                has_border = true;
+                break;
             }
+        }
+
+        if !has_border {
+            cmds.entity(unit).with_child(border.clone());
         }
     }
 
-    // make border invisible for unselected entities
-    for entity in non_selected_units_q.iter() {
-        for child in children_q.iter_descendants(entity) {
-            if let Ok(_border) = border_select_q.get_mut(child) {
-                // if let Ok((mut billboard_mesh, _border)) = border_select_q.get_mut(child) {
-                let border_xy = Vec2::new(0.0, 0.0);
-                // *billboard_mesh = BillboardMeshHandle(meshes.add(Rectangle::from_size(border_xy)));
+    // despawn select borders for unselected units
+    for unit in q_unselected_units.iter() {
+        for child in q_children.iter_descendants(unit) {
+            if q_border.get(child).is_ok() {
+                cmds.entity(child).despawn();
             }
         }
+    }
+}
+
+// update the unit border select to always be facing in the direction of the camera
+fn update_select_border_pos(
+    mut q_border: Query<&mut Transform, With<UnitSelectBorder>>,
+    q_cam: Query<&Transform, (With<Camera>, Without<UnitSelectBorder>)>,
+) {
+    let Ok(cam_transform) = q_cam.get_single() else {
+        return;
+    };
+
+    for mut border_transform in q_border.iter_mut() {
+        border_transform.rotation = cam_transform.rotation;
     }
 }

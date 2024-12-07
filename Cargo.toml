@@ -8,8 +8,6 @@ edition = "2021"
 [dependencies]
 bevy = "0.15.0"
 bevy-inspector-egui = "0.28.0"
-# bevy_mod_billboard = "0.7.0"
-# bevy_mod_billbaord = { git = "https://github.com/The-DevBlog/bevy_mod_billboard.git", branch = "main" }
 # bevy_rapier3d = "0.27.0"
 bevy_rapier3d = { git = "https://github.com/Vrixyz/bevy_rapier.git", branch = "master-bevy_0.15" }
 bevy_rts_camera = "0.9.0"

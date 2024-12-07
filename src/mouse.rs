@@ -175,11 +175,14 @@ fn set_mouse_coords(
 
 fn draw_select_box(
     mut _gizmos: Gizmos,
-    mut query: Query<&mut Node, With<SelectionBox>>,
+    mut q_select_box: Query<&mut Node, With<SelectionBox>>,
     box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
 ) {
-    let mut style = query.get_single_mut().unwrap();
+    let Ok(mut style) = q_select_box.get_single_mut() else {
+        return;
+    };
+
     if !game_cmds.drag_select {
         style.width = Val::ZERO;
         style.border = UiRect::ZERO;
@@ -363,9 +366,6 @@ fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pf_comps::
         game_cmds.selected = true;
     }
 }
-
-#[derive(Component, Clone)]
-struct UnitSelectBorder;
 
 fn border_select_visibility(
     mut cmds: Commands,

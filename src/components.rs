@@ -18,6 +18,9 @@ impl UnitBorderBoxImg {
     }
 }
 
+#[derive(Component, Clone)]
+pub struct UnitSelectBorder;
+
 #[derive(Component)]
 pub struct Speed(pub f32);
 

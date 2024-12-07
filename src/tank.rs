@@ -19,8 +19,8 @@ impl Plugin for TankPlugin {
 }
 
 fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
-    let initial_pos_left = Vec3::new(-200.0, 0.0, 0.0); // Initial position for left group
-    let initial_pos_right = Vec3::new(200.0, 0.0, 0.0); // Initial position for right group
+    let initial_pos_left = Vec3::new(-200.0, 0.0, 0.0);
+    let initial_pos_right = Vec3::new(200.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
@@ -34,7 +34,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             assets.load("tank_tan.glb#Scene0"),
             Transform {
                 translation: pos,
-                rotation: Quat::from_rotation_y(0.0), // Facing right (positive X direction)
+                // rotation: Quat::from_rotation_y(0.0), // Facing right (positive X direction)
                 ..default()
             },
         ),)
@@ -50,7 +50,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             assets.load("tank_tan.glb#Scene0"),
             Transform {
                 translation: pos,
-                rotation: Quat::from_rotation_y(std::f32::consts::PI), // Facing left (negative X direction)
+                // rotation: Quat::from_rotation_y(std::f32::consts::PI), // Facing left (negative X direction)
                 ..default()
             },
         ),)
@@ -63,10 +63,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             if count >= TANK_COUNT {
                 break;
             }
-            cmds.spawn(create_left_tank(row, col))
-                .with_children(|parent| {
-                    // parent.spawn(select_border());
-                });
+            cmds.spawn(create_left_tank(row, col));
             count += 1;
         }
     }
@@ -78,10 +75,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             if count >= TANK_COUNT {
                 break;
             }
-            cmds.spawn(create_right_tank(row, col))
-                .with_children(|parent| {
-                    // parent.spawn(select_border());
-                });
+            cmds.spawn(create_right_tank(row, col));
             count += 1;
         }
     }

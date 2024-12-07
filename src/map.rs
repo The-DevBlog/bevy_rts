@@ -17,15 +17,13 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_world(mut cmds: Commands) {
-    // let mut world = commands.spawn((RapierContext::default(), WorldId(i)));
     cmds.spawn(RapierContext::default());
 }
 
 fn spawn_grid(mut cmds: Commands) {
     let grid_controller = (
         GridController {
-            map_size: Vec2::new(MAP_WIDTH, MAP_DEPTH),
-            grid_size: IVec2::new(MAP_GRID_ROWS, MAP_GRID_COLUMNS),
+            grid_size: IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
             cell_radius: CELL_SIZE / 2.,
             cur_flowfield: FlowField::default(),
         },

@@ -1,4 +1,5 @@
 use crate::{components::*, resources::*, *};
+use bevy::gizmos;
 use bevy::math::f32;
 use bevy_rapier3d::na::Rotation;
 use bevy_rapier3d::plugin::RapierContext;
@@ -114,9 +115,10 @@ pub fn set_unit_destination(
 }
 
 fn move_unit_2(
-    mut q_unit: Query<(&Transform, &mut ExternalImpulse, &Speed), With<Unit>>,
+    mut q_unit: Query<(&Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
     q_grid: Query<&GridController>,
     time: Res<Time>,
+    mut gizmos: Gizmos,
 ) {
     let Ok(grid) = q_grid.get_single() else {
         return;
@@ -127,6 +129,8 @@ fn move_unit_2(
     }
 
     let delta_time = time.delta_secs();
+    let rotation_speed = 5.0;
+    let movement_threshold = 15.0_f32.to_radians();
 
     for (unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
         let cell_below = grid
@@ -135,10 +139,38 @@ fn move_unit_2(
 
         let move_direction = Vec3::new(
             cell_below.best_direction.vector().x as f32,
-            0.0,
+            unit_transform.translation.y,
             cell_below.best_direction.vector().y as f32,
-        );
+        )
+        .normalize();
 
+        let forward = unit_transform.forward();
+
+        let rotation_to_target = Quat::from_rotation_arc(*forward, move_direction);
+
+        // Project onto the XZ plane and normalize
+        let forward_2d = Vec2::new(forward.x, forward.z).normalize();
+        let move_2d = Vec2::new(move_direction.x, move_direction.z).normalize();
+
+        // Compute the angle between them (still returns 0 to π)
+        let unsigned_angle = forward_2d.angle_to(move_2d);
+
+        // To get the sign, use the perpendicular dot product (perp_dot)
+        let perp_dot = forward_2d.perp_dot(move_2d);
+        let sign = perp_dot.signum();
+
+        let (rotation_axis, rotation_angle) = rotation_to_target.to_axis_angle();
+        let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
+        // let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
+        ext_impulse.torque_impulse += torque_impulse;
+
+        // Only move unit if it is facing the move direction
+        let angle_difference = unsigned_angle * sign;
+        if angle_difference > movement_threshold {
+            continue;
+        }
+
+        // Move Unit
         let movement_impulse = move_direction * speed.0 * delta_time;
         ext_impulse.impulse += movement_impulse;
     }

@@ -1,15 +1,11 @@
 use crate::{components::*, resources::*, *};
-use bevy::gizmos;
 use bevy::math::f32;
-use bevy_rapier3d::na::Rotation;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
 use bevy_rts_pathfinding::grid_controller::GridController;
-use bevy_rts_pathfinding::resources as pf_res;
-use bevy_rts_pathfinding::utils as pf_utils;
 use events::SetUnitDestinationEv;
 
 pub struct TankPlugin;

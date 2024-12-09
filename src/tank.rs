@@ -1,11 +1,11 @@
 use crate::{components::*, resources::*, *};
-use bevy_rapier3d::na::Rotation;
+use bevy::math::f32;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
-use bevy_rts_pathfinding::resources as pf_res;
-use bevy_rts_pathfinding::utils as pf_utils;
+use bevy_rts_pathfinding::flowfield::FlowField;
+use bevy_rts_pathfinding::grid_controller::GridController;
 use events::SetUnitDestinationEv;
 
 pub struct TankPlugin;
@@ -19,8 +19,8 @@ impl Plugin for TankPlugin {
 }
 
 fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
-    let initial_pos_left = Vec3::new(-200.0, 0.0, 0.0);
-    let initial_pos_right = Vec3::new(200.0, 0.0, 0.0);
+    let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
+    let initial_pos_right = Vec3::new(150.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
@@ -34,7 +34,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             assets.load("tank_tan.glb#Scene0"),
             Transform {
                 translation: pos,
-                // rotation: Quat::from_rotation_y(0.0), // Facing right (positive X direction)
                 ..default()
             },
         ),)
@@ -50,7 +49,6 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             assets.load("tank_tan.glb#Scene0"),
             Transform {
                 translation: pos,
-                // rotation: Quat::from_rotation_y(std::f32::consts::PI), // Facing left (negative X direction)
                 ..default()
             },
         ),)
@@ -109,68 +107,47 @@ pub fn set_unit_destination(
     }
 
     cmds.trigger(pf_events::InitializeFlowFieldEv);
-    // cmds.trigger(pf_events::SetTargetCellEv);
 }
-
-fn move_unit(// mut flowfield_q: Query<&mut pf_comps::FlowField>,
-    // mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<pf_comps::Destination>>,
-    // grid: Res<pf_res::Grid>,
-    // time: Res<Time>,
-    // mut cmds: Commands,
+fn move_unit(
+    mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+    q_grid: Query<&GridController>,
+    time: Res<Time>,
 ) {
-    // if flowfield_q.is_empty() {
-    //     return;
-    // }
+    let Ok(grid) = q_grid.get_single() else {
+        return;
+    };
 
-    // let delta_time = time.delta_seconds();
-    // let rotation_speed = 5.0;
-    // let movement_threshold = 15.0_f32.to_radians();
+    if grid.cur_flowfield == FlowField::default() {
+        return;
+    }
 
-    // for mut flowfield in flowfield_q.iter_mut() {
-    //     let mut units_to_remove = Vec::new();
+    let delta_time = time.delta_secs();
 
-    //     for &unit_entity in flowfield.entities.iter() {
-    //         if let Ok((mut external_impulse, unit_transform, speed)) = unit_q.get_mut(unit_entity) {
-    //             let (row, column) = pf_utils::get_cell(&grid, &unit_transform.translation);
+    for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+        let cell_below = grid
+            .cur_flowfield
+            .get_cell_from_world_position(unit_transform.translation);
 
-    //             // Check if the unit has reached the destination cell
-    //             if (row as usize, column as usize) == flowfield.destination {
-    //                 units_to_remove.push(unit_entity);
-    //                 continue;
-    //             }
+        let raw_direction = Vec3::new(
+            cell_below.best_direction.vector().x as f32,
+            0.0,
+            cell_below.best_direction.vector().y as f32,
+        )
+        .normalize();
 
-    //             let flow_vector = flowfield.cells[row as usize][column as usize].flow_vector;
-    //             if flow_vector == Vec3::ZERO {
-    //                 continue;
-    //             }
+        // Only update rotation and movement if there is a meaningful direction.
+        if raw_direction.length_squared() > 0.000001 {
+            let move_direction = raw_direction.normalize();
 
-    //             let desired_direction = flow_vector.normalize_or_zero();
+            // Compute yaw assuming forward is along +Z axis.
+            let yaw = f32::atan2(-move_direction.x, -move_direction.z);
 
-    //             let forward = unit_transform.forward();
-    //             let angle_difference = forward.angle_between(desired_direction);
+            // Only update rotation if direction is non-zero
+            unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-    //             // Create a quaternion representing the rotation from `forward` to `desired_direction`
-    //             let rotation_to_target = Quat::from_rotation_arc(*forward, desired_direction);
-
-    //             // Convert the quaternion into an axis-angle representation
-    //             let (rotation_axis, _) = rotation_to_target.to_axis_angle();
-
-    //             let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
-    //             external_impulse.torque_impulse += torque_impulse;
-
-    //             if angle_difference > movement_threshold {
-    //                 continue;
-    //             }
-
-    //             let movement_impulse = desired_direction * speed.0 * delta_time;
-    //             external_impulse.impulse += movement_impulse;
-    //         }
-    //     }
-
-    //     // Remove units that have reached the target or are invalid
-    //     flowfield.entities.retain(|e| !units_to_remove.contains(e));
-    // }
-
-    // // TODO: Make this run every cell that is crossed, not every frame. This is expensive
-    // cmds.trigger(pf_events::DetectCollidersEv);
+            // Apply movement
+            let movement_impulse = move_direction * speed.0 * delta_time;
+            ext_impulse.impulse += movement_impulse;
+        }
+    }
 }

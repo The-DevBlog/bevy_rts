@@ -17,7 +17,7 @@ pub struct TankPlugin;
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_tanks)
-            .add_systems(Update, move_unit_2)
+            .add_systems(Update, move_unit)
             .add_observer(set_unit_destination);
     }
 }
@@ -111,14 +111,11 @@ pub fn set_unit_destination(
     }
 
     cmds.trigger(pf_events::InitializeFlowFieldEv);
-    // cmds.trigger(pf_events::SetTargetCellEv);
 }
-
-fn move_unit_2(
-    mut q_unit: Query<(&Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+fn move_unit(
+    mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
     q_grid: Query<&GridController>,
     time: Res<Time>,
-    mut gizmos: Gizmos,
 ) {
     let Ok(grid) = q_grid.get_single() else {
         return;
@@ -129,112 +126,168 @@ fn move_unit_2(
     }
 
     let delta_time = time.delta_secs();
-    let rotation_speed = 5.0;
-    let movement_threshold = 15.0_f32.to_radians();
 
-    for (unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+    for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
         let cell_below = grid
             .cur_flowfield
             .get_cell_from_world_position(unit_transform.translation);
 
-        let move_direction = Vec3::new(
+        let raw_direction = Vec3::new(
             cell_below.best_direction.vector().x as f32,
-            unit_transform.translation.y,
+            0.0,
             cell_below.best_direction.vector().y as f32,
         )
         .normalize();
 
-        let forward = unit_transform.forward();
+        // Only update rotation and movement if there is a meaningful direction.
+        if raw_direction.length_squared() > 0.000001 {
+            let move_direction = raw_direction.normalize();
 
-        let rotation_to_target = Quat::from_rotation_arc(*forward, move_direction);
+            // Compute yaw assuming forward is along +Z axis.
+            let yaw = f32::atan2(-move_direction.x, -move_direction.z);
 
-        // Project onto the XZ plane and normalize
-        let forward_2d = Vec2::new(forward.x, forward.z).normalize();
-        let move_2d = Vec2::new(move_direction.x, move_direction.z).normalize();
+            // Only update rotation if direction is non-zero
+            unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-        // Compute the angle between them (still returns 0 to π)
-        let unsigned_angle = forward_2d.angle_to(move_2d);
-
-        // To get the sign, use the perpendicular dot product (perp_dot)
-        let perp_dot = forward_2d.perp_dot(move_2d);
-        let sign = perp_dot.signum();
-
-        let (rotation_axis, rotation_angle) = rotation_to_target.to_axis_angle();
-        let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
-        // let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
-        ext_impulse.torque_impulse += torque_impulse;
-
-        // Only move unit if it is facing the move direction
-        let angle_difference = unsigned_angle * sign;
-        if angle_difference > movement_threshold {
-            continue;
+            // Apply movement
+            let movement_impulse = move_direction * speed.0 * delta_time;
+            ext_impulse.impulse += movement_impulse;
         }
-
-        // Move Unit
-        let movement_impulse = move_direction * speed.0 * delta_time;
-        ext_impulse.impulse += movement_impulse;
     }
 }
 
-fn move_unit(// mut flowfield_q: Query<&mut pf_comps::FlowField>,
-    // mut unit_q: Query<(&mut ExternalImpulse, &Transform, &Speed), With<pf_comps::Destination>>,
-    // grid: Res<pf_res::Grid>,
-    // time: Res<Time>,
-    // mut cmds: Commands,
-) {
-    // if flowfield_q.is_empty() {
-    //     return;
-    // }
+// fn move_unit(
+//     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+//     q_grid: Query<&GridController>,
+//     time: Res<Time>,
+// ) {
+//     let Ok(grid) = q_grid.get_single() else {
+//         return;
+//     };
 
-    // let delta_time = time.delta_seconds();
-    // let rotation_speed = 5.0;
-    // let movement_threshold = 15.0_f32.to_radians();
+//     if grid.cur_flowfield == FlowField::default() {
+//         return;
+//     }
 
-    // for mut flowfield in flowfield_q.iter_mut() {
-    //     let mut units_to_remove = Vec::new();
+//     let delta_time = time.delta_secs();
 
-    //     for &unit_entity in flowfield.entities.iter() {
-    //         if let Ok((mut external_impulse, unit_transform, speed)) = unit_q.get_mut(unit_entity) {
-    //             let (row, column) = pf_utils::get_cell(&grid, &unit_transform.translation);
+//     for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+//         let cell_below = grid
+//             .cur_flowfield
+//             .get_cell_from_world_position(unit_transform.translation);
 
-    //             // Check if the unit has reached the destination cell
-    //             if (row as usize, column as usize) == flowfield.destination {
-    //                 units_to_remove.push(unit_entity);
-    //                 continue;
-    //             }
+//         let move_direction = Vec3::new(
+//             cell_below.best_direction.vector().x as f32,
+//             unit_transform.translation.y,
+//             cell_below.best_direction.vector().y as f32,
+//         )
+//         .normalize();
 
-    //             let flow_vector = flowfield.cells[row as usize][column as usize].flow_vector;
-    //             if flow_vector == Vec3::ZERO {
-    //                 continue;
-    //             }
+//         // If the direction is valid (not zero), face towards it.
+//         // if move_direction.length_squared() > 0.0 {
+//         let yaw = f32::atan2(-move_direction.x, -move_direction.z);
 
-    //             let desired_direction = flow_vector.normalize_or_zero();
+//         // Apply the rotation to face the direction of movement
+//         unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-    //             let forward = unit_transform.forward();
-    //             let angle_difference = forward.angle_between(desired_direction);
+//         // Move the unit along that direction
+//         let movement_impulse = move_direction * speed.0 * delta_time;
+//         ext_impulse.impulse += movement_impulse;
+//         // }
+//     }
+// }
 
-    //             // Create a quaternion representing the rotation from `forward` to `desired_direction`
-    //             let rotation_to_target = Quat::from_rotation_arc(*forward, desired_direction);
+// fn move_unit(
+//     mut q_unit: Query<(&Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+//     q_grid: Query<&GridController>,
+//     time: Res<Time>,
+// ) {
+//     let Ok(grid) = q_grid.get_single() else {
+//         return;
+//     };
 
-    //             // Convert the quaternion into an axis-angle representation
-    //             let (rotation_axis, _) = rotation_to_target.to_axis_angle();
+//     if grid.cur_flowfield == FlowField::default() {
+//         return;
+//     }
 
-    //             let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
-    //             external_impulse.torque_impulse += torque_impulse;
+//     let delta_time = time.delta_secs();
 
-    //             if angle_difference > movement_threshold {
-    //                 continue;
-    //             }
+//     for (unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+//         let cell_below = grid
+//             .cur_flowfield
+//             .get_cell_from_world_position(unit_transform.translation);
 
-    //             let movement_impulse = desired_direction * speed.0 * delta_time;
-    //             external_impulse.impulse += movement_impulse;
-    //         }
-    //     }
+//         let move_direction = Vec3::new(
+//             cell_below.best_direction.vector().x as f32,
+//             unit_transform.translation.y,
+//             cell_below.best_direction.vector().y as f32,
+//         )
+//         .normalize();
 
-    //     // Remove units that have reached the target or are invalid
-    //     flowfield.entities.retain(|e| !units_to_remove.contains(e));
-    // }
+//         // Move Unit
+//         let movement_impulse = move_direction * speed.0 * delta_time;
+//         ext_impulse.impulse += movement_impulse;
+//     }
+// }
 
-    // // TODO: Make this run every cell that is crossed, not every frame. This is expensive
-    // cmds.trigger(pf_events::DetectCollidersEv);
-}
+// fn move_unit_2(
+//     mut q_unit: Query<(&Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+//     q_grid: Query<&GridController>,
+//     time: Res<Time>,
+//     mut gizmos: Gizmos,
+// ) {
+//     let Ok(grid) = q_grid.get_single() else {
+//         return;
+//     };
+
+//     if grid.cur_flowfield == FlowField::default() {
+//         return;
+//     }
+
+//     let delta_time = time.delta_secs();
+//     let rotation_speed = 5.0;
+//     let movement_threshold = 15.0_f32.to_radians();
+
+//     for (unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+//         let cell_below = grid
+//             .cur_flowfield
+//             .get_cell_from_world_position(unit_transform.translation);
+
+//         let move_direction = Vec3::new(
+//             cell_below.best_direction.vector().x as f32,
+//             unit_transform.translation.y,
+//             cell_below.best_direction.vector().y as f32,
+//         )
+//         .normalize();
+
+//         let forward = unit_transform.forward();
+
+//         let rotation_to_target = Quat::from_rotation_arc(*forward, move_direction);
+
+//         // Project onto the XZ plane and normalize
+//         let forward_2d = Vec2::new(forward.x, forward.z).normalize();
+//         let move_2d = Vec2::new(move_direction.x, move_direction.z).normalize();
+
+//         // Compute the angle between them (still returns 0 to π)
+//         let unsigned_angle = forward_2d.angle_to(move_2d);
+
+//         // To get the sign, use the perpendicular dot product (perp_dot)
+//         let perp_dot = forward_2d.perp_dot(move_2d);
+//         let sign = perp_dot.signum();
+
+//         let (rotation_axis, rotation_angle) = rotation_to_target.to_axis_angle();
+//         let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
+//         // let torque_impulse = rotation_axis * rotation_speed * delta_time * 20.0;
+//         ext_impulse.torque_impulse += torque_impulse;
+
+//         // Only move unit if it is facing the move direction
+//         let angle_difference = unsigned_angle * sign;
+//         if angle_difference > movement_threshold {
+//             continue;
+//         }
+
+//         // Move Unit
+//         let movement_impulse = move_direction * speed.0 * delta_time;
+//         ext_impulse.impulse += movement_impulse;
+//     }
+// }

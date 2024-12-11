@@ -5,7 +5,8 @@ use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
-use bevy_rts_pathfinding::grid_controller::GridController;
+use bevy_rts_pathfinding::grid::Grid;
+// use bevy_rts_pathfinding::grid_controller::GridController;
 use events::SetUnitDestinationEv;
 
 pub struct TankPlugin;
@@ -110,44 +111,46 @@ pub fn set_unit_destination(
 }
 fn move_unit(
     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
-    q_grid: Query<&GridController>,
+    // q_grid: Query<&GridController>,
+    grid: Res<Grid>,
+    q_flowfield: Query<&FlowField>,
     time: Res<Time>,
 ) {
-    let Ok(grid) = q_grid.get_single() else {
-        return;
-    };
+    // let Ok(grid) = q_flowfield.get_single() else {
+    //     return;
+    // };
 
-    if grid.cur_flowfield == FlowField::default() {
-        return;
-    }
+    // if grid.cur_flowfield == FlowField::default() {
+    //     return;
+    // }
 
     let delta_time = time.delta_secs();
 
-    for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
-        let cell_below = grid
-            .cur_flowfield
-            .get_cell_from_world_position(unit_transform.translation);
+    for flowfield in q_flowfield.iter() {
+        for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+            let cell_below = grid.get_cell_from_world_position(unit_transform.translation);
 
-        let raw_direction = Vec3::new(
-            cell_below.best_direction.vector().x as f32,
-            0.0,
-            cell_below.best_direction.vector().y as f32,
-        )
-        .normalize();
+            let raw_direction = Vec3::new(
+                cell_below.best_direction.vector().x as f32,
+                0.0,
+                cell_below.best_direction.vector().y as f32,
+            )
+            .normalize();
 
-        // Only update rotation and movement if there is a meaningful direction.
-        if raw_direction.length_squared() > 0.000001 {
-            let move_direction = raw_direction.normalize();
+            // Only update rotation and movement if there is a meaningful direction.
+            if raw_direction.length_squared() > 0.000001 {
+                let move_direction = raw_direction.normalize();
 
-            // Compute yaw assuming forward is along +Z axis.
-            let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+                // Compute yaw assuming forward is along +Z axis.
+                let yaw = f32::atan2(-move_direction.x, -move_direction.z);
 
-            // Only update rotation if direction is non-zero
-            unit_transform.rotation = Quat::from_rotation_y(yaw);
+                // Only update rotation if direction is non-zero
+                unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-            // Apply movement
-            let movement_impulse = move_direction * speed.0 * delta_time;
-            ext_impulse.impulse += movement_impulse;
+                // Apply movement
+                let movement_impulse = move_direction * speed.0 * delta_time;
+                ext_impulse.impulse += movement_impulse;
+            }
         }
     }
 }

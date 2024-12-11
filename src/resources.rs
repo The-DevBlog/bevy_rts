@@ -9,6 +9,7 @@ impl Plugin for ResourcesPlugin {
         app.init_resource::<MouseCoords>()
             .init_resource::<SelectBox>()
             .init_resource::<GameCommands>()
+            .init_resource::<IsUnitSelected>()
             .init_resource::<MyAssets>()
             .init_resource::<CursorState>()
             .add_systems(PreStartup, add_assets);
@@ -108,8 +109,10 @@ impl Default for CursorState {
 #[derive(Resource, Default, Debug)]
 pub struct GameCommands {
     pub drag_select: bool,
-    pub selected: bool,
 }
+
+#[derive(Resource, Default)]
+pub struct IsUnitSelected(pub bool);
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.select_border = assets.load("imgs/select_border.png");

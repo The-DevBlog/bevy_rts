@@ -27,7 +27,7 @@ impl Plugin for MousePlugin {
                     handle_mouse_input,
                     draw_select_box,
                     set_drag_select,
-                    set_selected,
+                    set_selected.run_if(resource_changed::<IsUnitSelected>),
                 ),
             )
             .add_observer(deselect_all)
@@ -56,6 +56,7 @@ fn spawn_select_box(mut cmds: Commands) {
 fn handle_mouse_input(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
+    selected: Res<IsUnitSelected>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     cmds.trigger(SetDragSelectEv);
@@ -75,11 +76,11 @@ fn handle_mouse_input(
     if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
 
-        if !game_cmds.drag_select && !game_cmds.selected {
+        if !game_cmds.drag_select && !selected.0 {
             cmds.trigger(SelectSingleUnitEv);
         }
 
-        if !game_cmds.drag_select && game_cmds.selected {
+        if !game_cmds.drag_select && selected.0 {
             cmds.trigger(SetUnitDestinationEv);
         }
     }
@@ -215,6 +216,7 @@ fn draw_select_box(
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
+    mut selected: ResMut<IsUnitSelected>,
     mut unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<SelectBox>,
 ) {
@@ -255,6 +257,7 @@ pub fn handle_drag_select(
             || (cross_ab_ap < 0.0 && cross_bc_bp < 0.0 && cross_cd_cp < 0.0 && cross_da_dp < 0.0);
 
         // Set the selection status
+        selected.0 = in_box_bounds;
         if in_box_bounds {
             cmds.entity(friendly_ent).insert(pf_comps::Selected);
         } else {
@@ -265,6 +268,7 @@ pub fn handle_drag_select(
 
 pub fn update_cursor_img(
     game_cmds: Res<GameCommands>,
+    selected: Res<IsUnitSelected>,
     mut cursor_state: ResMut<CursorState>,
     my_assets: Res<MyAssets>,
     mouse_coords: Res<MouseCoords>,
@@ -292,7 +296,7 @@ pub fn update_cursor_img(
                 *cursor_state = CursorState::Select;
             }
         }
-    } else if game_cmds.selected && !game_cmds.drag_select {
+    } else if selected.0 && !game_cmds.drag_select {
         *cursor_state = CursorState::Relocate;
     } else {
         *cursor_state = CursorState::Standard;
@@ -324,6 +328,7 @@ pub fn update_cursor_img(
 pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
+    mut selected: ResMut<IsUnitSelected>,
     mouse_coords: Res<MouseCoords>,
     mut q_unit: Query<Entity, With<Unit>>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
@@ -340,6 +345,7 @@ pub fn single_select(
     if let Some((ent, _)) = hit {
         for selected_entity in q_unit.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
+            selected.0 = tmp;
 
             if !tmp {
                 cmds.entity(selected_entity).remove::<pf_comps::Selected>();
@@ -353,18 +359,18 @@ pub fn single_select(
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
+    mut selected: ResMut<IsUnitSelected>,
     mut select_q: Query<Entity, With<pf_comps::Selected>>,
 ) {
     for entity in select_q.iter_mut() {
         cmds.entity(entity).remove::<pf_comps::Selected>();
     }
+
+    selected.0 = false;
 }
 
-fn set_selected(mut game_cmds: ResMut<GameCommands>, select_q: Query<&pf_comps::Selected>) {
-    game_cmds.selected = false;
-    if !select_q.is_empty() {
-        game_cmds.selected = true;
-    }
+fn set_selected(selected: Res<IsUnitSelected>) {
+    println!("Selected: {}", selected.0);
 }
 
 fn border_select_visibility(

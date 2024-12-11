@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::flowfield::FlowField;
-use bevy_rts_pathfinding::grid_controller::GridController;
+use bevy_rts_pathfinding::grid::Grid;
 
 use super::*;
 
@@ -11,8 +11,12 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreStartup, spawn_grid)
-            .add_systems(Startup, (spawn_world, spawn_map, spawn_obstacle));
+        app
+            // .add_systems(PreStartup, spawn_grid)
+            .add_systems(
+                Startup,
+                (spawn_grid, spawn_world, spawn_map, spawn_obstacle),
+            );
     }
 }
 
@@ -20,17 +24,29 @@ fn spawn_world(mut cmds: Commands) {
     cmds.spawn(RapierContext::default());
 }
 
-fn spawn_grid(mut cmds: Commands) {
-    let grid_controller = (
-        GridController {
-            grid_size: IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
-            cell_radius: CELL_SIZE / 2.,
-            cur_flowfield: FlowField::default(),
-        },
-        Name::new("Grid Controller"),
+fn spawn_grid(mut cmds: Commands, q_rapier: Query<&RapierContext, With<DefaultRapierContext>>) {
+    // let grid_controller = (
+    //     GridController {
+    //         grid_size: IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
+    //         cell_radius: CELL_SIZE / 2.,
+    //         cur_flowfield: FlowField::default(),
+    //     },
+    //     Name::new("Grid Controller"),
+    // );
+
+    // cmds.spawn(grid_controller);
+
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let grid = Grid::new(
+        IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
+        CELL_SIZE,
+        &rapier_ctx,
     );
 
-    cmds.spawn(grid_controller);
+    cmds.insert_resource(grid);
 }
 
 fn spawn_map(

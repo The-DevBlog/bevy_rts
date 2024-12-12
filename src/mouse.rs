@@ -10,13 +10,13 @@ use crate::events::*;
 use crate::resources::*;
 use crate::utils;
 use crate::*;
-use bevy_rts_pathfinding::components as pf_comps;
+use bevy_rts_pathfinding::components::{self as pf_comps, Selected};
 
 pub struct MousePlugin;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_select_box)
+        app.add_systems(Startup, spawn_drag_select_box)
             .add_systems(PreUpdate, set_mouse_coords)
             .add_systems(
                 Update,
@@ -25,20 +25,20 @@ impl Plugin for MousePlugin {
                     border_select_visibility,
                     update_select_border_pos,
                     handle_mouse_input,
-                    draw_select_box,
+                    draw_drag_select_box,
                     set_drag_select,
                 ),
             )
             .add_observer(deselect_all)
             .add_observer(single_select)
             .add_observer(handle_drag_select)
-            .add_observer(set_start_select_box_coords)
-            .add_observer(set_select_box_coords)
+            .add_observer(set_start_drag_select_box_coords)
+            .add_observer(set_drag_select_box_coords)
             .add_observer(clear_drag_select_coords);
     }
 }
 
-fn spawn_select_box(mut cmds: Commands) {
+fn spawn_drag_select_box(mut cmds: Commands) {
     let select_box = (
         Node {
             position_type: PositionType::Absolute,
@@ -102,7 +102,7 @@ fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommand
     game_cmds.drag_select = widths.iter().any(|&width| width > drag_threshold);
 }
 
-fn set_start_select_box_coords(
+fn set_start_drag_select_box_coords(
     _trigger: Trigger<SetStartBoxCoordsEv>,
     mut box_coords: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
@@ -111,7 +111,7 @@ fn set_start_select_box_coords(
     box_coords.world.initialize_coords(mouse_coords.world);
 }
 
-fn set_select_box_coords(
+fn set_drag_select_box_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut select_box: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
@@ -172,7 +172,7 @@ fn set_mouse_coords(
     }
 }
 
-fn draw_select_box(
+fn draw_drag_select_box(
     mut _gizmos: Gizmos,
     mut q_select_box: Query<&mut Node, With<SelectionBox>>,
     box_coords: Res<SelectBox>,
@@ -214,8 +214,13 @@ fn draw_select_box(
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
+    mut game_cmds: ResMut<GameCommands>,
     mut unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<SelectBox>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    q_selected: Query<&Selected>,
+    my_assets: Res<MyAssets>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
         v1.x * v2.z - v1.z * v2.x
@@ -226,6 +231,18 @@ pub fn handle_drag_select(
     let b = box_coords.world.start_2;
     let c = box_coords.world.end_2;
     let d = box_coords.world.end_1;
+
+    let border = (
+        UnitSelectBorder,
+        Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color_texture: Some(my_assets.select_border.clone()),
+            depth_bias: f32::NEG_INFINITY, // TODO: Not working?
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            ..default()
+        })),
+    );
 
     // check to see if units are within selection rectangle
     for (friendly_ent, friendly_trans) in unit_q.iter_mut() {
@@ -255,7 +272,12 @@ pub fn handle_drag_select(
 
         // Set the selection status
         if in_box_bounds {
-            cmds.entity(friendly_ent).insert(pf_comps::Selected);
+            if q_selected.get(friendly_ent).is_err() {
+                cmds.entity(friendly_ent).insert(pf_comps::Selected);
+                cmds.entity(friendly_ent).with_child(border.clone());
+            } else {
+                game_cmds.is_any_selected = true;
+            }
         } else {
             cmds.entity(friendly_ent).remove::<pf_comps::Selected>();
         }
@@ -326,6 +348,9 @@ pub fn single_select(
     mut game_cmds: ResMut<GameCommands>,
     mouse_coords: Res<MouseCoords>,
     mut q_unit: Query<Entity, With<Unit>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    my_assets: Res<MyAssets>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
 ) {
@@ -336,16 +361,28 @@ pub fn single_select(
     let (cam, cam_trans) = q_cam.single();
     let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
-    // deselect all currently pf_comps::selected entities
+    let border = (
+        UnitSelectBorder,
+        Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color_texture: Some(my_assets.select_border.clone()),
+            depth_bias: f32::NEG_INFINITY, // TODO: Not working?
+            alpha_mode: AlphaMode::Blend,
+            unlit: true,
+            ..default()
+        })),
+    );
+
     if let Some((ent, _)) = hit {
         for selected_entity in q_unit.iter_mut() {
             let tmp = selected_entity.index() == ent.index();
-            game_cmds.is_any_selected = tmp;
 
             if !tmp {
                 cmds.entity(selected_entity).remove::<pf_comps::Selected>();
             } else {
                 cmds.entity(selected_entity).insert(pf_comps::Selected);
+                cmds.entity(selected_entity).with_child(border.clone());
+                game_cmds.is_any_selected = tmp;
             }
         }
     }
@@ -366,42 +403,10 @@ pub fn deselect_all(
 
 fn border_select_visibility(
     mut cmds: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    my_assets: Res<MyAssets>,
-    q_selected_units: Query<Entity, With<pf_comps::Selected>>,
     q_unselected_units: Query<Entity, Without<pf_comps::Selected>>,
     q_border: Query<&UnitSelectBorder>,
     q_children: Query<&Children>,
 ) {
-    let border = (
-        UnitSelectBorder,
-        Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color_texture: Some(my_assets.select_border.clone()),
-            depth_bias: f32::NEG_INFINITY, // TODO: Not working?
-            alpha_mode: AlphaMode::Blend,
-            unlit: true,
-            ..default()
-        })),
-    );
-
-    // spawn select borders for selected units
-    for unit in q_selected_units.iter() {
-        let mut has_border = false;
-        for child in q_children.iter_descendants(unit) {
-            // only spawn a border if one does not already exist
-            if q_border.get(child).is_ok() {
-                has_border = true;
-                break;
-            }
-        }
-
-        if !has_border {
-            cmds.entity(unit).with_child(border.clone());
-        }
-    }
-
     // despawn select borders for unselected units
     for unit in q_unselected_units.iter() {
         for child in q_children.iter_descendants(unit) {

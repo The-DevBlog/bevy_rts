@@ -1,22 +1,18 @@
+use super::*;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
-use bevy_rts_pathfinding::flowfield::FlowField;
 use bevy_rts_pathfinding::grid::Grid;
-
-use super::*;
 
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app
-            // .add_systems(PreStartup, spawn_grid)
-            .add_systems(
-                Startup,
-                (spawn_grid, spawn_world, spawn_map, spawn_obstacle),
-            );
+        app.init_resource::<IsGridSpawned>()
+            .init_resource::<MyTimer>()
+            .add_systems(Startup, (spawn_world, spawn_map, spawn_obstacle))
+            .add_systems(Update, spawn_grid.run_if(should_spawn_grid));
     }
 }
 
@@ -24,17 +20,34 @@ fn spawn_world(mut cmds: Commands) {
     cmds.spawn(RapierContext::default());
 }
 
-fn spawn_grid(mut cmds: Commands, q_rapier: Query<&RapierContext, With<DefaultRapierContext>>) {
-    // let grid_controller = (
-    //     GridController {
-    //         grid_size: IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
-    //         cell_radius: CELL_SIZE / 2.,
-    //         cur_flowfield: FlowField::default(),
-    //     },
-    //     Name::new("Grid Controller"),
-    // );
+// TODO: Clean this up. Can I make this logic happen on the crate side?
+#[derive(Resource, Default)]
+struct IsGridSpawned(bool);
 
-    // cmds.spawn(grid_controller);
+#[derive(Resource)]
+struct MyTimer(Timer);
+
+impl Default for MyTimer {
+    fn default() -> Self {
+        MyTimer(Timer::from_seconds(0.25, TimerMode::Once))
+    }
+}
+
+fn should_spawn_grid(is_grid_spawned: Res<IsGridSpawned>) -> bool {
+    !is_grid_spawned.0
+}
+
+fn spawn_grid(
+    mut cmds: Commands,
+    mut is_grid_spawned: ResMut<IsGridSpawned>,
+    mut my_timer: ResMut<MyTimer>,
+    time: Res<Time>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+) {
+    if !my_timer.0.finished() {
+        my_timer.0.tick(time.delta());
+        return;
+    }
 
     let Ok(rapier_ctx) = q_rapier.get_single() else {
         return;
@@ -46,7 +59,9 @@ fn spawn_grid(mut cmds: Commands, q_rapier: Query<&RapierContext, With<DefaultRa
         &rapier_ctx,
     );
 
+    println!("Spawn grid");
     cmds.insert_resource(grid);
+    is_grid_spawned.0 = true;
 }
 
 fn spawn_map(

@@ -109,50 +109,30 @@ fn move_unit(
     q_flowfield: Query<&FlowField>,
     time: Res<Time>,
 ) {
-    let rotation_speed = 5.0;
-    let rotation_threshold = 0.12;
     let delta_time = time.delta_secs();
 
     for flowfield in q_flowfield.iter() {
         for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
-            let cell = flowfield.get_cell_from_world_position(unit_transform.translation);
-            let dir = cell.best_direction.vector();
+            let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
 
-            // Flatten direction on the XZ plane
-            let raw_direction = Vec3::new(dir.x as f32, 0.0, dir.y as f32);
+            let raw_direction = Vec3::new(
+                cell_below.best_direction.vector().x as f32,
+                0.0,
+                cell_below.best_direction.vector().y as f32,
+            )
+            .normalize();
 
-            if raw_direction.length_squared() == 0.0 {
-                println!("No movement, skipping");
-                continue;
-            }
+            // Only update rotation and movement if there is a meaningful direction.
+            if raw_direction.length_squared() > 0.000001 {
+                let move_direction = raw_direction.normalize();
 
-            let move_direction = raw_direction.normalize();
+                // Compute yaw assuming forward is along +Z axis.
+                let yaw = f32::atan2(-move_direction.x, -move_direction.z);
 
-            // Current facing direction (flattened)
-            let mut current_facing = (unit_transform.rotation * Vec3::Z).normalize();
-            current_facing.y = 0.0;
-            current_facing = current_facing.normalize();
+                // Only update rotation if direction is non-zero
+                unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-            // Compute yaw angles using atan2(x, z) so that forward (0,0,1) = 0 radians
-            let current_yaw = current_facing.x.atan2(current_facing.z);
-            let target_yaw = move_direction.x.atan2(move_direction.z);
-
-            // Compute the shortest angle difference
-            let mut yaw_diff = target_yaw - current_yaw;
-            if yaw_diff > std::f32::consts::PI {
-                yaw_diff -= 2.0 * std::f32::consts::PI;
-            } else if yaw_diff < -std::f32::consts::PI {
-                yaw_diff += 2.0 * std::f32::consts::PI;
-            }
-
-            // Rotate or move depending on yaw difference
-            if yaw_diff.abs() > rotation_threshold {
-                let max_yaw_change = rotation_speed * delta_time;
-                let clamped_yaw = yaw_diff.clamp(-max_yaw_change, max_yaw_change);
-                let new_yaw = current_yaw + clamped_yaw;
-
-                unit_transform.rotation = Quat::from_rotation_y(new_yaw);
-            } else {
+                // Apply movement
                 let movement_impulse = move_direction * speed.0 * delta_time;
                 ext_impulse.impulse += movement_impulse;
             }

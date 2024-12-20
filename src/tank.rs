@@ -5,8 +5,6 @@ use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
-use bevy_rts_pathfinding::grid::Grid;
-// use bevy_rts_pathfinding::grid_controller::GridController;
 use events::SetUnitDestinationEv;
 
 pub struct TankPlugin;
@@ -129,7 +127,6 @@ fn move_unit(
                 // Compute yaw assuming forward is along +Z axis.
                 let yaw = f32::atan2(-move_direction.x, -move_direction.z);
 
-                // Only update rotation if direction is non-zero
                 unit_transform.rotation = Quat::from_rotation_y(yaw);
 
                 // Apply movement

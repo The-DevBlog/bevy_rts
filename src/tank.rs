@@ -33,10 +33,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             TANK_SPEED * SPEED_QUANTIFIER,
             Vec3::new(4., 2., 6.),
             assets.load("tank_tan.glb#Scene0"),
-            Transform {
-                translation: pos,
-                ..default()
-            },
+            Transform::from_translation(pos),
         ),)
     };
 
@@ -48,10 +45,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             TANK_SPEED * SPEED_QUANTIFIER,
             Vec3::new(4., 2., 6.),
             assets.load("tank_tan.glb#Scene0"),
-            Transform {
-                translation: pos,
-                ..default()
-            },
+            Transform::from_translation(pos),
         ),)
     };
 
@@ -109,45 +103,56 @@ pub fn set_unit_destination(
 
     cmds.trigger(pf_events::InitializeFlowFieldEv);
 }
+
 fn move_unit(
     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
-    // q_grid: Query<&GridController>,
-    grid: Res<Grid>,
     q_flowfield: Query<&FlowField>,
     time: Res<Time>,
 ) {
-    // let Ok(grid) = q_flowfield.get_single() else {
-    //     return;
-    // };
-
-    // if grid.cur_flowfield == FlowField::default() {
-    //     return;
-    // }
-
+    let rotation_speed = 5.0;
+    let rotation_threshold = 0.12;
     let delta_time = time.delta_secs();
 
     for flowfield in q_flowfield.iter() {
         for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
-            let cell_below = grid.get_cell_from_world_position(unit_transform.translation);
+            let cell = flowfield.get_cell_from_world_position(unit_transform.translation);
+            let dir = cell.best_direction.vector();
 
-            let raw_direction = Vec3::new(
-                cell_below.best_direction.vector().x as f32,
-                0.0,
-                cell_below.best_direction.vector().y as f32,
-            )
-            .normalize();
+            // Flatten direction on the XZ plane
+            let raw_direction = Vec3::new(dir.x as f32, 0.0, dir.y as f32);
 
-            // Only update rotation and movement if there is a meaningful direction.
-            if raw_direction.length_squared() > 0.000001 {
-                let move_direction = raw_direction.normalize();
+            if raw_direction.length_squared() == 0.0 {
+                println!("No movement, skipping");
+                continue;
+            }
 
-                // Compute yaw assuming forward is along +Z axis.
-                let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+            let move_direction = raw_direction.normalize();
 
-                // Only update rotation if direction is non-zero
-                unit_transform.rotation = Quat::from_rotation_y(yaw);
+            // Current facing direction (flattened)
+            let mut current_facing = (unit_transform.rotation * Vec3::Z).normalize();
+            current_facing.y = 0.0;
+            current_facing = current_facing.normalize();
 
-                // Apply movement
+            // Compute yaw angles using atan2(x, z) so that forward (0,0,1) = 0 radians
+            let current_yaw = current_facing.x.atan2(current_facing.z);
+            let target_yaw = move_direction.x.atan2(move_direction.z);
+
+            // Compute the shortest angle difference
+            let mut yaw_diff = target_yaw - current_yaw;
+            if yaw_diff > std::f32::consts::PI {
+                yaw_diff -= 2.0 * std::f32::consts::PI;
+            } else if yaw_diff < -std::f32::consts::PI {
+                yaw_diff += 2.0 * std::f32::consts::PI;
+            }
+
+            // Rotate or move depending on yaw difference
+            if yaw_diff.abs() > rotation_threshold {
+                let max_yaw_change = rotation_speed * delta_time;
+                let clamped_yaw = yaw_diff.clamp(-max_yaw_change, max_yaw_change);
+                let new_yaw = current_yaw + clamped_yaw;
+
+                unit_transform.rotation = Quat::from_rotation_y(new_yaw);
+            } else {
                 let movement_impulse = move_direction * speed.0 * delta_time;
                 ext_impulse.impulse += movement_impulse;
             }

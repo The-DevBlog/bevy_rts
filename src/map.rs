@@ -59,7 +59,6 @@ fn spawn_grid(
         &rapier_ctx,
     );
 
-    println!("Spawn grid");
     cmds.insert_resource(grid);
     is_grid_spawned.0 = true;
 }

@@ -10,7 +10,7 @@ use crate::events::*;
 use crate::resources::*;
 use crate::utils;
 use crate::*;
-use bevy_rts_pathfinding::components::{self as pf_comps, Selected};
+use bevy_rts_pathfinding::components::{self as pf_comps};
 
 pub struct MousePlugin;
 
@@ -273,13 +273,13 @@ pub fn handle_drag_select(
         // Set the selection status
         if in_box_bounds {
             if q_selected.get(friendly_ent).is_err() {
-                cmds.entity(friendly_ent).insert(pf_comps::Selected);
+                cmds.entity(friendly_ent).insert(Selected);
                 cmds.entity(friendly_ent).with_child(border.clone());
             } else {
                 game_cmds.is_any_selected = true;
             }
         } else {
-            cmds.entity(friendly_ent).remove::<pf_comps::Selected>();
+            cmds.entity(friendly_ent).remove::<Selected>();
         }
     }
 }
@@ -378,9 +378,9 @@ pub fn single_select(
             let tmp = selected_entity.index() == ent.index();
 
             if !tmp {
-                cmds.entity(selected_entity).remove::<pf_comps::Selected>();
+                cmds.entity(selected_entity).remove::<Selected>();
             } else {
-                cmds.entity(selected_entity).insert(pf_comps::Selected);
+                cmds.entity(selected_entity).insert(Selected);
                 cmds.entity(selected_entity).with_child(border.clone());
                 game_cmds.is_any_selected = tmp;
             }
@@ -392,10 +392,10 @@ pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
     mut game_cmds: ResMut<GameCommands>,
-    mut select_q: Query<Entity, With<pf_comps::Selected>>,
+    mut select_q: Query<Entity, With<Selected>>,
 ) {
     for entity in select_q.iter_mut() {
-        cmds.entity(entity).remove::<pf_comps::Selected>();
+        cmds.entity(entity).remove::<Selected>();
     }
 
     game_cmds.is_any_selected = false;
@@ -403,7 +403,7 @@ pub fn deselect_all(
 
 fn border_select_visibility(
     mut cmds: Commands,
-    q_unselected_units: Query<Entity, Without<pf_comps::Selected>>,
+    q_unselected_units: Query<Entity, Without<Selected>>,
     q_border: Query<&UnitSelectBorder>,
     q_children: Query<&Children>,
 ) {

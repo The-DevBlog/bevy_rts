@@ -75,7 +75,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
 pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
-    mut q_unit: Query<Entity, With<pf_comps::Selected>>,
+    mut q_unit: Query<Entity, With<Selected>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     mut cmds: Commands,
@@ -95,11 +95,13 @@ pub fn set_unit_destination(
         return;
     }
 
+    let mut units = Vec::new();
     for unit_entity in q_unit.iter_mut() {
         cmds.entity(unit_entity).insert(pf_comps::Destination);
+        units.push(unit_entity);
     }
 
-    cmds.trigger(pf_events::InitializeFlowFieldEv);
+    cmds.trigger(pf_events::InitializeFlowFieldEv(units));
 }
 
 fn move_unit(

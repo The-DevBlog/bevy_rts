@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use bevy_rts_pathfinding::components::UnitSize;
 
 use crate::CURSOR_SIZE;
 
@@ -40,11 +41,15 @@ impl Default for MyCursor {
 }
 
 #[derive(Component)]
+pub struct Selected;
+
+#[derive(Component)]
 pub struct SelectionBox;
 
 #[derive(Bundle)]
 pub struct UnitBundle {
     pub unit: Unit,
+    pub size: UnitSize,
     pub collider: Collider,
     pub damping: Damping,
     pub external_impulse: ExternalImpulse,
@@ -72,6 +77,7 @@ impl UnitBundle {
                 ..default()
             }),
             unit: Unit,
+            size: UnitSize(Vec2::new(size.x, size.z)),
             collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,

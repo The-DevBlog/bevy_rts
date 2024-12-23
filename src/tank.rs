@@ -1,4 +1,5 @@
 use crate::{components::*, resources::*, *};
+
 use bevy::math::f32;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
@@ -112,7 +113,11 @@ fn move_unit(
     let delta_time = time.delta_secs();
 
     for flowfield in q_flowfield.iter() {
-        for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
+        for unit in flowfield.units.iter() {
+            let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(*unit) else {
+                return;
+            };
+
             let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
 
             let raw_direction = Vec3::new(

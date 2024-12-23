@@ -2,8 +2,6 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components::UnitSize;
 
-use crate::CURSOR_SIZE;
-
 #[derive(Component)]
 pub struct Unit;
 
@@ -24,21 +22,6 @@ pub struct UnitSelectBorder;
 
 #[derive(Component)]
 pub struct Speed(pub f32);
-
-#[derive(Component)]
-pub struct MyCursor {
-    pub img: Handle<Image>,
-    pub size: f32,
-}
-
-impl Default for MyCursor {
-    fn default() -> Self {
-        MyCursor {
-            img: Handle::default(),
-            size: CURSOR_SIZE,
-        }
-    }
-}
 
 #[derive(Component)]
 pub struct Selected;
@@ -72,7 +55,7 @@ impl UnitBundle {
     ) -> Self {
         Self {
             mass_properties: ColliderMassProperties::MassProperties(MassProperties {
-                principal_inertia: Vec3::new(1.0, 1.0, 1.0),
+                principal_inertia: Vec3::ONE,
                 mass: 1.0,
                 ..default()
             }),

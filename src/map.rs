@@ -1,6 +1,5 @@
 use super::*;
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;

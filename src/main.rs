@@ -20,7 +20,6 @@ use tank::TankPlugin;
 
 const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
-const CURSOR_SIZE: f32 = 25.0;
 const CELL_SIZE: f32 = 20.0;
 const MAP_WIDTH: f32 = CELL_SIZE * MAP_GRID_COLUMNS as f32;
 const MAP_DEPTH: f32 = CELL_SIZE * MAP_GRID_ROWS as f32;

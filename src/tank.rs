@@ -105,41 +105,94 @@ pub fn set_unit_destination(
     cmds.trigger(pf_events::InitializeFlowFieldEv(units));
 }
 
+// fn move_unit(
+//     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+//     mut q_flowfield: Query<&mut FlowField>, // Query mutable FlowField
+//     time: Res<Time>,
+//     mut cmds: Commands,
+// ) {
+//     let delta_time = time.delta_secs();
+
+//     for mut flowfield in q_flowfield.iter_mut() {
+//         let mut units_to_remove = Vec::new();
+
+//         for unit in flowfield.units.iter() {
+//             if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(*unit) {
+//                 let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
+
+//                 let raw_direction = Vec3::new(
+//                     cell_below.best_direction.vector().x as f32,
+//                     0.0,
+//                     cell_below.best_direction.vector().y as f32,
+//                 )
+//                 .normalize();
+
+//                 // Only update rotation and movement if there is a meaningful direction.
+//                 if raw_direction.length_squared() > 0.000001 {
+//                     let move_direction = raw_direction.normalize();
+
+//                     // Compute yaw assuming forward is along +Z axis.
+//                     let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+
+//                     unit_transform.rotation = Quat::from_rotation_y(yaw);
+
+//                     // Apply movement
+//                     let movement_impulse = move_direction * speed.0 * delta_time;
+//                     ext_impulse.impulse += movement_impulse;
+//                 } else {
+//                     // Once the unit arrives at its destination, remove the Destination component
+//                     // and flowfield (if there are no more units associated with the flowfield)
+//                     units_to_remove.push(unit);
+//                     // flowfield.remove_unit(*unit, &mut cmds);
+//                 }
+//             }
+//         }
+
+//         for unit in units_to_remove {
+//             flowfield.remove_unit(*unit, &mut cmds);
+//         }
+//     }
+// }
+
 fn move_unit(
     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
-    q_flowfield: Query<&FlowField>,
+    mut q_flowfield: Query<&mut FlowField>,
     time: Res<Time>,
+    mut cmds: Commands,
 ) {
     let delta_time = time.delta_secs();
 
-    for flowfield in q_flowfield.iter() {
-        for unit in flowfield.units.iter() {
-            let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(*unit) else {
-                return;
-            };
+    for mut flowfield in q_flowfield.iter_mut() {
+        let mut units_to_remove = Vec::new();
 
-            let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
+        for &unit in &flowfield.units {
+            if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(unit) {
+                let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
 
-            let raw_direction = Vec3::new(
-                cell_below.best_direction.vector().x as f32,
-                0.0,
-                cell_below.best_direction.vector().y as f32,
-            )
-            .normalize();
+                let raw_direction = Vec3::new(
+                    cell_below.best_direction.vector().x as f32,
+                    0.0,
+                    cell_below.best_direction.vector().y as f32,
+                )
+                .normalize();
 
-            // Only update rotation and movement if there is a meaningful direction.
-            if raw_direction.length_squared() > 0.000001 {
-                let move_direction = raw_direction.normalize();
+                if raw_direction.length_squared() > 0.000001 {
+                    // Handle movement
+                    let move_direction = raw_direction.normalize();
+                    let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+                    unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-                // Compute yaw assuming forward is along +Z axis.
-                let yaw = f32::atan2(-move_direction.x, -move_direction.z);
-
-                unit_transform.rotation = Quat::from_rotation_y(yaw);
-
-                // Apply movement
-                let movement_impulse = move_direction * speed.0 * delta_time;
-                ext_impulse.impulse += movement_impulse;
+                    let movement_impulse = move_direction * speed.0 * delta_time;
+                    ext_impulse.impulse += movement_impulse;
+                } else {
+                    // Mark unit for removal
+                    units_to_remove.push(unit);
+                }
             }
+        }
+
+        for unit in units_to_remove {
+            flowfield.remove_unit(unit, &mut cmds);
         }
     }
 }

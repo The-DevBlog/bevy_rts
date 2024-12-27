@@ -7,7 +7,6 @@ use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
 use events::SetUnitDestinationEv;
-
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
@@ -18,7 +17,7 @@ impl Plugin for TankPlugin {
     }
 }
 
-fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
+pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
     let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
     let initial_pos_right = Vec3::new(150.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);

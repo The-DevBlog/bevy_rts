@@ -8,20 +8,11 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<IsGridSpawned>()
-            .init_resource::<MyTimer>()
-            .add_systems(Startup, (spawn_world, spawn_map, spawn_obstacle))
-            .add_systems(Update, spawn_grid.run_if(should_spawn_grid));
+        app.init_resource::<MyTimer>()
+            .add_systems(Startup, (spawn_map, spawn_obstacle))
+            .add_systems(Update, spawn_grid);
     }
 }
-
-fn spawn_world(mut cmds: Commands) {
-    cmds.spawn(RapierContext::default());
-}
-
-// TODO: Clean this up. Can I make this logic happen on the crate side?
-#[derive(Resource, Default)]
-struct IsGridSpawned(bool);
 
 #[derive(Resource)]
 struct MyTimer(Timer);
@@ -32,34 +23,30 @@ impl Default for MyTimer {
     }
 }
 
-fn should_spawn_grid(is_grid_spawned: Res<IsGridSpawned>) -> bool {
-    !is_grid_spawned.0
-}
-
 fn spawn_grid(
     mut cmds: Commands,
-    mut is_grid_spawned: ResMut<IsGridSpawned>,
-    mut my_timer: ResMut<MyTimer>,
+    mut timer: ResMut<MyTimer>,
     time: Res<Time>,
-    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    q_rapier: Query<&RapierContext>,
 ) {
-    if !my_timer.0.finished() {
-        my_timer.0.tick(time.delta());
+    timer.0.tick(time.delta());
+    if !timer.0.just_finished() {
         return;
     }
 
     let Ok(rapier_ctx) = q_rapier.get_single() else {
+        println!("No rapier ctx found");
         return;
     };
 
     let grid = Grid::new(
         IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
         CELL_SIZE,
-        &rapier_ctx,
+        rapier_ctx,
     );
 
+    println!("Creating grid resource");
     cmds.insert_resource(grid);
-    is_grid_spawned.0 = true;
 }
 
 fn spawn_map(

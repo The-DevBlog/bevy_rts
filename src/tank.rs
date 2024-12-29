@@ -1,13 +1,12 @@
 use crate::{components::*, resources::*, *};
+
 use bevy::math::f32;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
-use bevy_rts_pathfinding::grid_controller::GridController;
 use events::SetUnitDestinationEv;
-
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
@@ -18,7 +17,7 @@ impl Plugin for TankPlugin {
     }
 }
 
-fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
+pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
     let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
     let initial_pos_right = Vec3::new(150.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
@@ -32,10 +31,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             TANK_SPEED * SPEED_QUANTIFIER,
             Vec3::new(4., 2., 6.),
             assets.load("tank_tan.glb#Scene0"),
-            Transform {
-                translation: pos,
-                ..default()
-            },
+            Transform::from_translation(pos),
         ),)
     };
 
@@ -47,10 +43,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             TANK_SPEED * SPEED_QUANTIFIER,
             Vec3::new(4., 2., 6.),
             assets.load("tank_tan.glb#Scene0"),
-            Transform {
-                translation: pos,
-                ..default()
-            },
+            Transform::from_translation(pos),
         ),)
     };
 
@@ -82,7 +75,7 @@ fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
 pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
-    mut q_unit: Query<Entity, With<pf_comps::Selected>>,
+    mut q_unit: Query<Entity, With<Selected>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     mut cmds: Commands,
@@ -102,52 +95,49 @@ pub fn set_unit_destination(
         return;
     }
 
+    let mut units = Vec::new();
     for unit_entity in q_unit.iter_mut() {
         cmds.entity(unit_entity).insert(pf_comps::Destination);
+        units.push(unit_entity);
     }
 
-    cmds.trigger(pf_events::InitializeFlowFieldEv);
+    cmds.trigger(pf_events::InitializeFlowFieldEv(units));
 }
+
 fn move_unit(
     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
-    q_grid: Query<&GridController>,
+    q_flowfield: Query<&FlowField>,
     time: Res<Time>,
 ) {
-    let Ok(grid) = q_grid.get_single() else {
-        return;
-    };
-
-    if grid.cur_flowfield == FlowField::default() {
-        return;
-    }
-
     let delta_time = time.delta_secs();
 
-    for (mut unit_transform, mut ext_impulse, speed) in q_unit.iter_mut() {
-        let cell_below = grid
-            .cur_flowfield
-            .get_cell_from_world_position(unit_transform.translation);
+    for flowfield in q_flowfield.iter() {
+        let mut units_to_remove = Vec::new();
 
-        let raw_direction = Vec3::new(
-            cell_below.best_direction.vector().x as f32,
-            0.0,
-            cell_below.best_direction.vector().y as f32,
-        )
-        .normalize();
+        for &unit in &flowfield.units {
+            if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(unit) {
+                let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
 
-        // Only update rotation and movement if there is a meaningful direction.
-        if raw_direction.length_squared() > 0.000001 {
-            let move_direction = raw_direction.normalize();
+                let raw_direction = Vec3::new(
+                    cell_below.best_direction.vector().x as f32,
+                    0.0,
+                    cell_below.best_direction.vector().y as f32,
+                )
+                .normalize();
 
-            // Compute yaw assuming forward is along +Z axis.
-            let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+                if raw_direction.length_squared() > 0.000001 {
+                    // Handle movement
+                    let move_direction = raw_direction.normalize();
+                    let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+                    unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-            // Only update rotation if direction is non-zero
-            unit_transform.rotation = Quat::from_rotation_y(yaw);
-
-            // Apply movement
-            let movement_impulse = move_direction * speed.0 * delta_time;
-            ext_impulse.impulse += movement_impulse;
+                    let movement_impulse = move_direction * speed.0 * delta_time;
+                    ext_impulse.impulse += movement_impulse;
+                } else {
+                    // Mark unit for removal
+                    units_to_remove.push(unit);
+                }
+            }
         }
     }
 }

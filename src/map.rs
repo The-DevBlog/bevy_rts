@@ -1,36 +1,52 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+use super::*;
+
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
-use bevy_rts_pathfinding::flowfield::FlowField;
-use bevy_rts_pathfinding::grid_controller::GridController;
-
-use super::*;
+use bevy_rts_pathfinding::grid::Grid;
 
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreStartup, spawn_grid)
-            .add_systems(Startup, (spawn_world, spawn_map, spawn_obstacle));
+        app.init_resource::<MyTimer>()
+            .add_systems(Startup, (spawn_map, spawn_obstacle))
+            .add_systems(Update, spawn_grid);
     }
 }
 
-fn spawn_world(mut cmds: Commands) {
-    cmds.spawn(RapierContext::default());
+#[derive(Resource)]
+struct MyTimer(Timer);
+
+impl Default for MyTimer {
+    fn default() -> Self {
+        MyTimer(Timer::from_seconds(0.25, TimerMode::Once))
+    }
 }
 
-fn spawn_grid(mut cmds: Commands) {
-    let grid_controller = (
-        GridController {
-            grid_size: IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
-            cell_radius: CELL_SIZE / 2.,
-            cur_flowfield: FlowField::default(),
-        },
-        Name::new("Grid Controller"),
+fn spawn_grid(
+    mut cmds: Commands,
+    mut timer: ResMut<MyTimer>,
+    time: Res<Time>,
+    q_rapier: Query<&RapierContext>,
+) {
+    timer.0.tick(time.delta());
+    if !timer.0.just_finished() {
+        return;
+    }
+
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        println!("No rapier ctx found");
+        return;
+    };
+
+    let grid = Grid::new(
+        IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
+        CELL_SIZE,
+        rapier_ctx,
     );
 
-    cmds.spawn(grid_controller);
+    println!("Creating grid resource");
+    cmds.insert_resource(grid);
 }
 
 fn spawn_map(

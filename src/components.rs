@@ -1,22 +1,9 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-
-use crate::CURSOR_SIZE;
+use bevy_rts_pathfinding::components::UnitSize;
 
 #[derive(Component)]
 pub struct Unit;
-
-#[derive(Component)]
-pub struct UnitBorderBoxImg {
-    pub width: f32,
-    pub height: f32,
-}
-
-impl UnitBorderBoxImg {
-    pub fn new(width: f32, height: f32) -> Self {
-        Self { width, height }
-    }
-}
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder;
@@ -25,19 +12,7 @@ pub struct UnitSelectBorder;
 pub struct Speed(pub f32);
 
 #[derive(Component)]
-pub struct MyCursor {
-    pub img: Handle<Image>,
-    pub size: f32,
-}
-
-impl Default for MyCursor {
-    fn default() -> Self {
-        MyCursor {
-            img: Handle::default(),
-            size: CURSOR_SIZE,
-        }
-    }
-}
+pub struct Selected;
 
 #[derive(Component)]
 pub struct SelectionBox;
@@ -45,6 +20,7 @@ pub struct SelectionBox;
 #[derive(Bundle)]
 pub struct UnitBundle {
     pub unit: Unit,
+    pub size: UnitSize,
     pub collider: Collider,
     pub damping: Damping,
     pub external_impulse: ExternalImpulse,
@@ -67,11 +43,12 @@ impl UnitBundle {
     ) -> Self {
         Self {
             mass_properties: ColliderMassProperties::MassProperties(MassProperties {
-                principal_inertia: Vec3::new(1.0, 1.0, 1.0),
+                principal_inertia: Vec3::ONE,
                 mass: 1.0,
                 ..default()
             }),
             unit: Unit,
+            size: UnitSize(Vec2::new(size.x, size.z)),
             collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,

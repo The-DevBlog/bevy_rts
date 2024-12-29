@@ -108,7 +108,7 @@ impl Default for CursorState {
 #[derive(Resource, Default, Debug)]
 pub struct GameCommands {
     pub drag_select: bool,
-    pub selected: bool,
+    pub is_any_selected: bool,
 }
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {

@@ -39,10 +39,22 @@ fn spawn_grid(
         return;
     };
 
+    let collision_checker = |world_pos| {
+        let cell_radius = CELL_SIZE / 2.0;
+        rapier_ctx
+            .intersection_with_shape(
+                world_pos,
+                Quat::IDENTITY,
+                &Collider::cuboid(cell_radius, cell_radius, cell_radius),
+                QueryFilter::default().exclude_sensors(),
+            )
+            .is_some()
+    };
+
     let grid = Grid::new(
         IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
         CELL_SIZE,
-        rapier_ctx,
+        collision_checker,
     );
 
     println!("Creating grid resource");

@@ -1,6 +1,9 @@
+use std::time::Duration;
+
 use crate::{components::*, resources::*, *};
 
 use bevy::math::f32;
+use bevy::time::common_conditions::once_after_delay;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
@@ -11,9 +14,12 @@ pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_tanks)
-            .add_systems(Update, move_unit)
-            .add_observer(set_unit_destination);
+        app.add_systems(
+            Update,
+            spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
+        )
+        .add_systems(Update, move_unit)
+        .add_observer(set_unit_destination);
     }
 }
 
@@ -54,7 +60,7 @@ pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             if count >= TANK_COUNT {
                 break;
             }
-            cmds.spawn(create_left_tank(row, col));
+            // cmds.spawn(create_left_tank(row, col));
             count += 1;
         }
     }
@@ -66,10 +72,18 @@ pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             if count >= TANK_COUNT {
                 break;
             }
-            cmds.spawn(create_right_tank(row, col));
+            // cmds.spawn(create_right_tank(row, col));
             count += 1;
         }
     }
+
+    cmds.spawn((UnitBundle::new(
+        "Tank".to_string(),
+        TANK_SPEED * SPEED_QUANTIFIER,
+        Vec3::new(4., 2., 6.),
+        assets.load("tank_tan.glb#Scene0"),
+        Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
+    ),));
 }
 
 pub fn set_unit_destination(

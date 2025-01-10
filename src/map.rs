@@ -1,5 +1,8 @@
+use std::time::Duration;
+
 use super::*;
 
+use bevy::time::common_conditions::once_after_delay;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;
@@ -9,8 +12,14 @@ pub struct MapPlugin;
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MyTimer>()
-            .add_systems(Startup, (spawn_map, spawn_obstacle))
-            .add_systems(Update, spawn_grid);
+            .add_systems(Startup, (spawn_map))
+            .add_systems(
+                Update,
+                (
+                    spawn_grid,
+                    spawn_obstacle.run_if(once_after_delay(Duration::from_secs(1))),
+                ),
+            );
     }
 }
 
@@ -100,12 +109,12 @@ fn spawn_obstacle(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let size = 12.0;
-    cmds.spawn((
-        Mesh3d(meshes.add(Cuboid::new(size, size, size))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
-        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-    ));
+    // cmds.spawn((
+    //     Mesh3d(meshes.add(Cuboid::new(size, size, size))),
+    //     MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+    //     Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
+    //     Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+    // ));
 
     let obst = (
         Mesh3d(meshes.add(Cylinder::new(size, size / 2.0))),
@@ -114,5 +123,5 @@ fn spawn_obstacle(
         Collider::cuboid(size, size / 2.0, size),
     );
 
-    cmds.spawn(obst);
+    // cmds.spawn(obst);
 }

@@ -156,7 +156,7 @@ fn clear_drag_select_coords(
 fn set_mouse_coords(
     mut mouse_coords: ResMut<MouseCoords>,
     window_q: Query<&Window, With<PrimaryWindow>>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
     map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
 ) {
     let (cam, cam_trans) = cam_q.single();

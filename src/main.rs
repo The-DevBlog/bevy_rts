@@ -20,11 +20,11 @@ use tank::TankPlugin;
 
 const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
-const CELL_SIZE: f32 = 20.0;
+const CELL_SIZE: f32 = 16.0;
 const MAP_WIDTH: f32 = CELL_SIZE * MAP_GRID_COLUMNS as f32;
 const MAP_DEPTH: f32 = CELL_SIZE * MAP_GRID_ROWS as f32;
-const MAP_GRID_COLUMNS: i32 = 20;
-const MAP_GRID_ROWS: i32 = 20;
+const MAP_GRID_COLUMNS: i32 = 50;
+const MAP_GRID_ROWS: i32 = 50;
 const SPEED_QUANTIFIER: f32 = 10.0;
 const TANK_COUNT: usize = 12;
 const TANK_SPEED: f32 = 50.0;

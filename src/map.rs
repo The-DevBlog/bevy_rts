@@ -66,7 +66,6 @@ fn spawn_grid(
         collision_checker,
     );
 
-    println!("Creating grid resource");
     cmds.insert_resource(grid);
 }
 

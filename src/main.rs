@@ -23,8 +23,8 @@ const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
 const CELL_SIZE: f32 = 16.0;
 const MAP_WIDTH: f32 = CELL_SIZE * MAP_GRID_COLUMNS as f32;
 const MAP_DEPTH: f32 = CELL_SIZE * MAP_GRID_ROWS as f32;
-const MAP_GRID_COLUMNS: i32 = 100;
-const MAP_GRID_ROWS: i32 = 100;
+const MAP_GRID_COLUMNS: i32 = 20;
+const MAP_GRID_ROWS: i32 = 20;
 const SPEED_QUANTIFIER: f32 = 10.0;
 const TANK_COUNT: usize = 12;
 const TANK_SPEED: f32 = 50.0;
@@ -36,7 +36,6 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             WorldInspectorPlugin::new(),
             bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
-            bevy_rts_pathfinding::debug::BevyRtsPathFindingDebugPlugin,
             ResourcesPlugin,
             CameraPlugin,
             MapPlugin,

@@ -74,18 +74,18 @@ pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
             if count >= TANK_COUNT {
                 break;
             }
-            // cmds.spawn(create_right_tank(row, col));
+            cmds.spawn(create_right_tank(row, col));
             count += 1;
         }
     }
 
-    cmds.spawn((UnitBundle::new(
-        "Tank".to_string(),
-        TANK_SPEED * SPEED_QUANTIFIER,
-        Vec3::new(4., 2., 6.),
-        assets.load("tank_tan.glb#Scene0"),
-        Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
-    ),));
+    // cmds.spawn((UnitBundle::new(
+    //     "Tank".to_string(),
+    //     TANK_SPEED * SPEED_QUANTIFIER,
+    //     Vec3::new(4., 2., 6.),
+    //     assets.load("tank_tan.glb#Scene0"),
+    //     Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
+    // ),));
 }
 
 pub fn set_unit_destination(

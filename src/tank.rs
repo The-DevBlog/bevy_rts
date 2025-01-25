@@ -16,9 +16,11 @@ impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
+            (
+                move_unit.run_if(any_with_component::<pf_comps::Destination>),
+                spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
+            ),
         )
-        .add_systems(Update, move_unit)
         .add_observer(set_unit_destination);
     }
 }
@@ -126,12 +128,9 @@ fn move_unit(
     let delta_time = time.delta_secs();
 
     for flowfield in q_flowfield.iter() {
-        let mut units_to_remove = Vec::new();
-
         for &unit in &flowfield.units {
             if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(unit) {
                 let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
-
                 let raw_direction = Vec3::new(
                     cell_below.best_direction.vector().x as f32,
                     0.0,
@@ -140,16 +139,18 @@ fn move_unit(
                 .normalize();
 
                 if raw_direction.length_squared() > 0.000001 {
-                    // Handle movement
-                    let move_direction = raw_direction.normalize();
-                    let yaw = f32::atan2(-move_direction.x, -move_direction.z);
-                    unit_transform.rotation = Quat::from_rotation_y(yaw);
+                    if cell_below.best_direction
+                        == bevy_rts_pathfinding::grid_direction::GridDirection::None
+                    {
+                    } else {
+                        // Handle movement
+                        let move_direction = raw_direction.normalize();
+                        let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+                        unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-                    let movement_impulse = move_direction * speed.0 * delta_time;
-                    ext_impulse.impulse += movement_impulse;
-                } else {
-                    // Mark unit for removal
-                    units_to_remove.push(unit);
+                        let movement_impulse = move_direction * speed.0 * delta_time;
+                        ext_impulse.impulse += movement_impulse;
+                    }
                 }
             }
         }

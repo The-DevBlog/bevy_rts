@@ -1,49 +1,24 @@
-use std::time::Duration;
-
-use super::*;
-
 use bevy::time::common_conditions::once_after_delay;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;
+use std::time::Duration;
+
+use super::*;
 
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<MyTimer>()
-            .add_systems(Startup, spawn_map)
-            .add_systems(Startup, spawn_obstacle)
+        app.add_systems(Startup, (spawn_map, spawn_obstacle))
             .add_systems(
                 Update,
-                (
-                    spawn_grid,
-                    // spawn_obstacle.run_if(once_after_delay(Duration::from_secs(1))),
-                ),
+                spawn_grid.run_if(once_after_delay(Duration::from_secs_f32(0.25))),
             );
     }
 }
 
-#[derive(Resource)]
-struct MyTimer(Timer);
-
-impl Default for MyTimer {
-    fn default() -> Self {
-        MyTimer(Timer::from_seconds(0.25, TimerMode::Once))
-    }
-}
-
-fn spawn_grid(
-    mut cmds: Commands,
-    mut timer: ResMut<MyTimer>,
-    time: Res<Time>,
-    q_rapier: Query<&RapierContext>,
-) {
-    timer.0.tick(time.delta());
-    if !timer.0.just_finished() {
-        return;
-    }
-
+fn spawn_grid(mut cmds: Commands, q_rapier: Query<&RapierContext>) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
         println!("No rapier ctx found");
         return;

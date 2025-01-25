@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use bevy_rts_pathfinding::components::UnitSize;
+use bevy_rts_pathfinding::components as pf_comps;
 
-#[derive(Component)]
-pub struct Unit;
+// #[derive(Component)]
+// pub struct Unit;
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder;
@@ -19,8 +19,8 @@ pub struct SelectionBox;
 
 #[derive(Bundle)]
 pub struct UnitBundle {
-    pub unit: Unit,
-    pub size: UnitSize,
+    pub unit: pf_comps::Unit,
+    pub size: pf_comps::UnitSize,
     pub collider: Collider,
     pub damping: Damping,
     pub external_impulse: ExternalImpulse,
@@ -47,8 +47,8 @@ impl UnitBundle {
                 mass: 1.0,
                 ..default()
             }),
-            unit: Unit,
-            size: UnitSize(Vec2::new(size.x, size.z)),
+            unit: pf_comps::Unit,
+            size: pf_comps::UnitSize(Vec2::new(size.x, size.z)),
             collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,

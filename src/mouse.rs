@@ -1,16 +1,15 @@
-use core::f32;
-
 use bevy::winit::cursor::{CursorIcon, CustomCursor};
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
+use core::f32;
 
 use crate::components::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;
 use crate::*;
-use bevy_rts_pathfinding::components::{self as pf_comps};
+use bevy_rts_pathfinding::components as pf_comps;
 
 pub struct MousePlugin;
 
@@ -215,7 +214,7 @@ pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
     mut game_cmds: ResMut<GameCommands>,
-    mut unit_q: Query<(Entity, &Transform), With<Unit>>,
+    mut unit_q: Query<(Entity, &Transform), With<pf_comps::Unit>>,
     box_coords: Res<SelectBox>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -291,7 +290,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut q_select: Query<Entity, With<Unit>>,
+    mut q_select: Query<Entity, With<pf_comps::Unit>>,
     mut q_cursor: Query<&mut CursorIcon>,
 ) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
@@ -347,7 +346,7 @@ pub fn single_select(
     mut cmds: Commands,
     mut game_cmds: ResMut<GameCommands>,
     mouse_coords: Res<MouseCoords>,
-    mut q_unit: Query<Entity, With<Unit>>,
+    mut q_unit: Query<Entity, With<pf_comps::Unit>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     my_assets: Res<MyAssets>,

@@ -18,11 +18,22 @@ impl Plugin for TankPlugin {
             Update,
             (
                 move_unit.run_if(any_with_component::<pf_comps::Destination>),
-                spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
+                spawn_tanks.run_if(once_after_delay(Duration::from_secs(5))),
+                spawn_tank.run_if(once_after_delay(Duration::from_secs(1))),
             ),
         )
         .add_observer(set_unit_destination);
     }
+}
+
+pub fn spawn_tank(mut cmds: Commands, assets: Res<AssetServer>) {
+    cmds.spawn((UnitBundle::new(
+        "Tank".to_string(),
+        TANK_SPEED * SPEED_QUANTIFIER,
+        Vec3::new(4., 2., 6.),
+        assets.load("tank_tan.glb#Scene0"),
+        Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
+    ),));
 }
 
 pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {

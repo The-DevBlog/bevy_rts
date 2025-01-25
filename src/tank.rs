@@ -139,18 +139,13 @@ fn move_unit(
                 .normalize();
 
                 if raw_direction.length_squared() > 0.000001 {
-                    if cell_below.best_direction
-                        == bevy_rts_pathfinding::grid_direction::GridDirection::None
-                    {
-                    } else {
-                        // Handle movement
-                        let move_direction = raw_direction.normalize();
-                        let yaw = f32::atan2(-move_direction.x, -move_direction.z);
-                        unit_transform.rotation = Quat::from_rotation_y(yaw);
+                    // Handle movement
+                    let move_direction = raw_direction.normalize();
+                    let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+                    unit_transform.rotation = Quat::from_rotation_y(yaw);
 
-                        let movement_impulse = move_direction * speed.0 * delta_time;
-                        ext_impulse.impulse += movement_impulse;
-                    }
+                    let movement_impulse = move_direction * speed.0 * delta_time;
+                    ext_impulse.impulse += movement_impulse;
                 }
             }
         }

@@ -41,6 +41,8 @@ impl UnitBundle {
         scene: Handle<Scene>,
         transform: Transform,
     ) -> Self {
+        let scale_x = 1.2;
+        let scale_z = 1.4;
         Self {
             mass_properties: ColliderMassProperties::MassProperties(MassProperties {
                 principal_inertia: Vec3::ONE,
@@ -48,8 +50,8 @@ impl UnitBundle {
                 ..default()
             }),
             unit: pf_comps::Unit,
-            size: pf_comps::UnitSize(Vec2::new(size.x, size.z)),
-            collider: Collider::cuboid(size.x, size.y, size.z),
+            size: pf_comps::UnitSize(Vec2::new(size.x * scale_x, size.z * scale_z)),
+            collider: Collider::cuboid(size.x * scale_x, size.y, size.z * scale_z),
             damping: Damping {
                 linear_damping: 10.0,
                 angular_damping: 20.0,

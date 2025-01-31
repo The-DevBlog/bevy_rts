@@ -8,9 +8,9 @@ use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
-use bevy_rts_pathfinding::flowfield::Boid;
 use bevy_rts_pathfinding::flowfield::FlowField;
 use events::SetUnitDestinationEv;
+use std::collections::HashMap;
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
@@ -160,56 +160,58 @@ fn move_unit(
 
 pub fn move_units_boids_flowfield(
     time: Res<Time>,
-    mut q_boids: Query<(Entity, &mut Transform, &Speed), With<pf_comps::Destination>>,
+    mut q_boids: Query<
+        (Entity, &mut Transform, &pf_comps::Boid, &Speed),
+        With<pf_comps::Destination>,
+    >,
     mut q_impulse: Query<&mut ExternalImpulse>,
-    q_flowfields: Query<(&FlowField, &Boid)>,
+    q_flowfields: Query<&FlowField>,
 ) {
     let dt = time.delta_secs();
 
-    // 1) Gather a snapshot of boid positions/velocities for neighbor searches
-    //    We'll store them in a Vec for O(n^2) iteration. For large numbers, use a spatial hash or quadtree.
     let mut boids_data = Vec::new();
-    for (ent, pos, speed) in q_boids.iter() {
-        boids_data.push((ent, pos.translation, speed.0));
+    for (ent, position, boid, speed) in q_boids.iter() {
+        boids_data.push((ent, position, boid, speed.0));
     }
 
-    // 2) For each flowfield, find its units and compute boids forces + flowfield direction
-    for (flowfield, boid) in q_flowfields.iter() {
-        // We'll filter the boids that actually belong to this flowfield.
-        // That is, boid.entity is in flowfield.units.
+    // We will also need a place to store the final "steering" for each entity:
+    // Key is Entity, value is the final steering vector we compute.
+    let mut steering_map: HashMap<Entity, Vec3> = HashMap::new();
+
+    // === 2) For each flowfield, find relevant boids and compute boids forces + flowfield dir
+    for flowfield in q_flowfields.iter() {
+        // Filter down which boids are in this flowfield
         let relevant_boids: Vec<_> = boids_data
             .iter()
-            .filter(|(e, _, _)| flowfield.units.contains(e))
-            .cloned()
+            .filter(|(ent, _, _, _)| flowfield.units.contains(ent))
             .collect();
 
-        // For each boid in this flowfield:
-        for (entity, my_pos, speed) in relevant_boids.iter() {
-            // 2a) Build neighbor list
-            let mut neighbor_positions = Vec::new();
-            // If you want alignment with actual velocity, you'd store your own BoidVelocity or fetch from Rapier
-            // For simplicity, we'll skip alignment or approximate it with "no alignment velocity" or last frame.
-            // If you want alignment, gather neighbor velocities here, too.
+        // For each boid, build neighbor list and compute boid vectors
+        for (ent, pos, boid, _speed) in &relevant_boids {
+            let my_pos = pos;
+            // let boid = &boid_data.boid;
 
-            for (other_entity, other_pos, _) in &relevant_boids {
-                if other_entity == entity {
+            // 2a) Gather neighbor positions
+            let mut neighbor_positions = Vec::new();
+            for (other_ent, other_pos, _, _) in &relevant_boids {
+                if *other_ent == *ent {
                     continue;
                 }
-                let dist = my_pos.distance(*other_pos);
+                let dist = my_pos.translation.distance(other_pos.translation);
                 if dist < boid.neighbor_radius {
-                    neighbor_positions.push(*other_pos);
+                    neighbor_positions.push(other_pos.translation);
                 }
             }
 
-            // 2b) Compute classical boids vectors: separation, alignment, cohesion
+            // 2b) Classical boids: separation, alignment, cohesion
             let mut separation = Vec3::ZERO;
-            let mut alignment = Vec3::ZERO; // if skipping alignment, keep zero
+            let mut alignment = Vec3::ZERO; // if you store velocity, do alignment properly
             let mut cohesion = Vec3::ZERO;
 
             if !neighbor_positions.is_empty() {
                 // Separation
                 for n_pos in &neighbor_positions {
-                    let offset = *my_pos - *n_pos;
+                    let offset = my_pos.translation - *n_pos;
                     let dist = offset.length();
                     if dist > 0.0 {
                         separation += offset.normalize() / dist;
@@ -220,45 +222,49 @@ pub fn move_units_boids_flowfield(
 
                 // Cohesion
                 let center =
-                    neighbor_positions.iter().sum::<Vec3>() / (neighbor_positions.len() as f32);
-                let to_center = center - *my_pos;
+                    neighbor_positions.iter().sum::<Vec3>() / neighbor_positions.len() as f32;
+                let to_center = center - my_pos.translation;
                 cohesion = to_center.normalize_or_zero() * boid.cohesion_weight;
 
-                // Alignment (requires velocities if you want it fully correct)
-                // We'll skip or approximate. For demonstration:
-                // alignment = (average_neighbor_velocity - my_velocity) * boid.alignment_weight;
-                // If you want it properly, you'll need each neighbor's velocity.
-                alignment *= boid.alignment_weight; // If you had stored it.
+                // Alignment – you’d need neighbor velocities to do it right
+                alignment *= boid.alignment_weight;
             }
 
             // 2c) Flowfield direction
-            let cell = flowfield.get_cell_from_world_position(*my_pos);
-            let ff_dir = cell.best_direction.vector();
-            // let ff_dir = flowfield.direction_at_position(*my_pos);
-
-            // You can scale how strongly they follow the flowfield:
-            let flowfield_weight = 1.0; // Try 0.2 if you want stronger boids, weaker path //TODO: remove?
-            let flowfield_force = Vec3::new(ff_dir.x as f32, 0.0, ff_dir.y as f32);
+            let cell = flowfield.get_cell_from_world_position(my_pos.translation);
+            let ff_dir_2d = cell.best_direction.vector();
+            // Convert to 3D
+            let ff_dir_3d = Vec3::new(ff_dir_2d.x as f32, 0.0, ff_dir_2d.y as f32);
+            let flow_weight = 1.0; // if you want to tweak how strong flowfield is
+            let flowfield_force = ff_dir_3d * flow_weight;
 
             // 2d) Sum up final steering
             let mut steering = separation + cohesion + alignment + flowfield_force;
 
-            // 2e) Optionally clamp steering magnitude or final speed
+            // Optionally clamp
             if steering.length() > boid.max_speed {
                 steering = steering.normalize() * boid.max_speed;
             }
 
-            // 3) Apply the impulse to Rapier
-            if let Ok(mut ext_impulse) = q_impulse.get_mut(*entity) {
-                let impulse_vec = steering * speed * dt;
+            // Store in the map so we can apply it later
+            steering_map.insert(*ent, steering);
+        }
+    }
+
+    // === 3) Now we do a second pass over the real transforms & impulses to apply changes
+    for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
+        // If we computed some steering for this entity, apply it
+        if let Some(steering) = steering_map.get(&ent) {
+            // Apply to impulse
+            if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+                let impulse_vec = *steering * speed.0 * dt;
                 ext_impulse.impulse += impulse_vec;
             }
 
-            if let Ok((_, mut transform, _)) = q_boids.get_mut(*entity) {
-                if steering.length_squared() > 0.00001 {
-                    let yaw = f32::atan2(-steering.x, -steering.z);
-                    transform.rotation = Quat::from_rotation_y(yaw);
-                }
+            // Apply to rotation
+            if steering.length_squared() > 0.00001 {
+                let yaw = f32::atan2(-steering.x, -steering.z);
+                pos.rotation = Quat::from_rotation_y(yaw);
             }
         }
     }

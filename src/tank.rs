@@ -1,7 +1,3 @@
-use std::time::Duration;
-
-use crate::{components::*, resources::*, *};
-
 use bevy::math::f32;
 use bevy::time::common_conditions::once_after_delay;
 use bevy_rapier3d::plugin::RapierContext;
@@ -9,8 +5,11 @@ use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
+use std::time::Duration;
+
+use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
-use std::collections::HashMap;
+
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
@@ -20,10 +19,11 @@ impl Plugin for TankPlugin {
             Update,
             (
                 // move_unit.run_if(any_with_component::<pf_comps::Destination>),
-                move_units_boids_flowfield.run_if(any_with_component::<pf_comps::Destination>),
                 spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
                 spawn_tank.run_if(once_after_delay(Duration::from_secs(1))),
-            ),
+                move_unit.run_if(any_with_component::<pf_comps::Destination>),
+            )
+                .chain(),
         )
         .add_observer(set_unit_destination);
     }
@@ -126,145 +126,62 @@ pub fn set_unit_destination(
     cmds.trigger(pf_events::InitializeFlowFieldEv(units));
 }
 
+// fn move_unit(
+//     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+//     q_flowfield: Query<&FlowField>,
+//     time: Res<Time>,
+// ) {
+//     let delta_time = time.delta_secs();
+
+//     for flowfield in q_flowfield.iter() {
+//         for &unit in &flowfield.units {
+//             if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(unit) {
+//                 let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
+//                 let raw_direction = Vec3::new(
+//                     cell_below.best_direction.vector().x as f32,
+//                     0.0,
+//                     cell_below.best_direction.vector().y as f32,
+//                 )
+//                 .normalize();
+
+//                 if raw_direction.length_squared() > 0.000001 {
+//                     // Handle movement
+//                     let move_direction = raw_direction.normalize();
+//                     let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+//                     unit_transform.rotation = Quat::from_rotation_y(yaw);
+
+//                     let movement_impulse = move_direction * speed.0 * delta_time;
+//                     ext_impulse.impulse += movement_impulse;
+//                 }
+//             }
+//         }
+//     }
+// }
+
 fn move_unit(
-    mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
-    q_flowfield: Query<&FlowField>,
-    time: Res<Time>,
-) {
-    let delta_time = time.delta_secs();
-
-    for flowfield in q_flowfield.iter() {
-        for &unit in &flowfield.units {
-            if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(unit) {
-                let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
-                let raw_direction = Vec3::new(
-                    cell_below.best_direction.vector().x as f32,
-                    0.0,
-                    cell_below.best_direction.vector().y as f32,
-                )
-                .normalize();
-
-                if raw_direction.length_squared() > 0.000001 {
-                    // Handle movement
-                    let move_direction = raw_direction.normalize();
-                    let yaw = f32::atan2(-move_direction.x, -move_direction.z);
-                    unit_transform.rotation = Quat::from_rotation_y(yaw);
-
-                    let movement_impulse = move_direction * speed.0 * delta_time;
-                    ext_impulse.impulse += movement_impulse;
-                }
-            }
-        }
-    }
-}
-
-pub fn move_units_boids_flowfield(
-    time: Res<Time>,
+    q_flowfields: Query<&FlowField>,
     mut q_boids: Query<
         (Entity, &mut Transform, &pf_comps::Boid, &Speed),
         With<pf_comps::Destination>,
     >,
     mut q_impulse: Query<&mut ExternalImpulse>,
-    q_flowfields: Query<&FlowField>,
+    time: Res<Time>,
 ) {
     let dt = time.delta_secs();
-
-    let mut boids_data = Vec::new();
-    for (ent, position, boid, speed) in q_boids.iter() {
-        boids_data.push((ent, position, boid, speed.0));
-    }
-
-    // We will also need a place to store the final "steering" for each entity:
-    // Key is Entity, value is the final steering vector we compute.
-    let mut steering_map: HashMap<Entity, Vec3> = HashMap::new();
-
-    // === 2) For each flowfield, find relevant boids and compute boids forces + flowfield dir
     for flowfield in q_flowfields.iter() {
-        // Filter down which boids are in this flowfield
-        let relevant_boids: Vec<_> = boids_data
-            .iter()
-            .filter(|(ent, _, _, _)| flowfield.units.contains(ent))
-            .collect();
-
-        // For each boid, build neighbor list and compute boid vectors
-        for (ent, pos, boid, _speed) in &relevant_boids {
-            let my_pos = pos;
-            // let boid = &boid_data.boid;
-
-            // 2a) Gather neighbor positions
-            let mut neighbor_positions = Vec::new();
-            for (other_ent, other_pos, _, _) in &relevant_boids {
-                if *other_ent == *ent {
-                    continue;
+        for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
+            if let Some(steering) = flowfield.steering_map.get(&ent) {
+                // Apply to impulse
+                if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+                    let impulse_vec = *steering * speed.0 * dt;
+                    ext_impulse.impulse += impulse_vec;
                 }
-                let dist = my_pos.translation.distance(other_pos.translation);
-                if dist < boid.neighbor_radius {
-                    neighbor_positions.push(other_pos.translation);
+
+                // Apply to rotation
+                if steering.length_squared() > 0.00001 {
+                    let yaw = f32::atan2(-steering.x, -steering.z);
+                    pos.rotation = Quat::from_rotation_y(yaw);
                 }
-            }
-
-            // 2b) Classical boids: separation, alignment, cohesion
-            let mut separation = Vec3::ZERO;
-            let mut alignment = Vec3::ZERO; // if you store velocity, do alignment properly
-            let mut cohesion = Vec3::ZERO;
-
-            if !neighbor_positions.is_empty() {
-                // Separation
-                for n_pos in &neighbor_positions {
-                    let offset = my_pos.translation - *n_pos;
-                    let dist = offset.length();
-                    if dist > 0.0 {
-                        separation += offset.normalize() / dist;
-                    }
-                }
-                separation /= neighbor_positions.len() as f32;
-                separation *= boid.separation_weight;
-
-                // Cohesion
-                let center =
-                    neighbor_positions.iter().sum::<Vec3>() / neighbor_positions.len() as f32;
-                let to_center = center - my_pos.translation;
-                cohesion = to_center.normalize_or_zero() * boid.cohesion_weight;
-
-                // Alignment – you’d need neighbor velocities to do it right
-                alignment *= boid.alignment_weight;
-            }
-
-            // 2c) Flowfield direction
-            let cell = flowfield.get_cell_from_world_position(my_pos.translation);
-            let ff_dir_2d = cell.best_direction.vector();
-            // Convert to 3D
-            let ff_dir_3d = Vec3::new(ff_dir_2d.x as f32, 0.0, ff_dir_2d.y as f32);
-            let flow_weight = 1.0; // if you want to tweak how strong flowfield is
-            let flowfield_force = ff_dir_3d * flow_weight;
-
-            // 2d) Sum up final steering
-            let mut steering = separation + cohesion + alignment + flowfield_force;
-
-            // Optionally clamp
-            if steering.length() > boid.max_speed {
-                steering = steering.normalize() * boid.max_speed;
-            }
-
-            // Store in the map so we can apply it later
-            steering_map.insert(*ent, steering);
-        }
-    }
-
-    // === 3) Now we do a second pass over the real transforms & impulses to apply changes
-    for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
-        // If we computed some steering for this entity, apply it
-        if let Some(steering) = steering_map.get(&ent) {
-            // Apply to impulse
-            if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
-                let impulse_vec = *steering * speed.0 * dt;
-                ext_impulse.impulse += impulse_vec;
-            }
-
-            // Apply to rotation
-            if steering.length_squared() > 0.00001 {
-                let yaw = f32::atan2(-steering.x, -steering.z);
-                pos.rotation = Quat::from_rotation_y(yaw);
             }
         }
     }

@@ -1,7 +1,8 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::mesh};
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 
+// TODO: Remove?
 // #[derive(Component)]
 // pub struct Unit;
 
@@ -29,8 +30,10 @@ pub struct UnitBundle {
     pub speed: Speed,
     pub locked_axis: LockedAxes,
     pub transform: Transform,
-    pub scene_root: SceneRoot,
-    pub mass_properties: ColliderMassProperties,
+    // pub scene_root: SceneRoot, // TODO: uncomment
+    pub mesh: Mesh3d,
+    pub material: MeshMaterial3d<StandardMaterial>, // TODO: remove
+    pub mass_properties: ColliderMassProperties, // TODO: remove
 }
 
 impl UnitBundle {
@@ -39,6 +42,8 @@ impl UnitBundle {
         speed: f32,
         size: Vec3,
         scene: Handle<Scene>,
+        mesh: Mesh3d, // TODO: remove
+        material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         transform: Transform,
     ) -> Self {
         let scale_x = 1.2;
@@ -50,8 +55,10 @@ impl UnitBundle {
                 ..default()
             }),
             unit: pf_comps::Unit,
-            size: pf_comps::UnitSize(Vec2::new(size.x * scale_x, size.z * scale_z)),
-            collider: Collider::cuboid(size.x * scale_x, size.y, size.z * scale_z),
+            // size: pf_comps::UnitSize(Vec2::new(size.x * scale_x, size.z * scale_z)), // TODO: uncomment
+            // collider: Collider::cuboid(size.x * scale_x, size.y, size.z * scale_z), // TODO: uncomment
+            size: pf_comps::UnitSize(Vec2::new(size.x, size.z)), // TODO: remove
+            collider: Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0), // TODO: remove
             damping: Damping {
                 linear_damping: 10.0,
                 angular_damping: 20.0,
@@ -64,7 +71,9 @@ impl UnitBundle {
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::TRANSLATION_LOCKED_Y),
-            scene_root: SceneRoot(scene),
+            // scene_root: SceneRoot(scene), // TODO: uncomment
+            mesh, // TODO: remove
+            material, // TODO: remove
             transform,
         }
     }

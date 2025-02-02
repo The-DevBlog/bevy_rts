@@ -10,6 +10,9 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
+// const TANK_SIZE: Vec3 = Vec3::new(4.0, 2.0, 6.0);
+const TANK_SIZE: Vec3 = Vec3::new(8.0, 4.0, 8.0);
+
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
@@ -29,21 +32,36 @@ impl Plugin for TankPlugin {
     }
 }
 
-pub fn spawn_tank(mut cmds: Commands, assets: Res<AssetServer>) {
+pub fn spawn_tank(
+    mut cmds: Commands,
+    assets: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     cmds.spawn((UnitBundle::new(
         "Tank".to_string(),
         TANK_SPEED * SPEED_QUANTIFIER,
-        Vec3::new(4., 2., 6.),
+        TANK_SIZE,
         assets.load("tank_tan.glb#Scene0"),
+        Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
     ),));
 }
 
-pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
+pub fn spawn_tanks(
+    mut cmds: Commands,
+    assets: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
     let initial_pos_right = Vec3::new(500.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
+
+    let mesh = Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z)));
+    let material = MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3)));
 
     // Create tank on the left side facing right
     let create_left_tank = |row: usize, col: usize| {
@@ -51,8 +69,10 @@ pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
         (UnitBundle::new(
             "Tank".to_string(),
             TANK_SPEED * SPEED_QUANTIFIER,
-            Vec3::new(4., 2., 6.),
+            TANK_SIZE,
             assets.load("tank_tan.glb#Scene0"),
+            mesh.clone(),     // TODO: remove
+            material.clone(), // TODO: remove
             Transform::from_translation(pos),
         ),)
     };
@@ -63,8 +83,10 @@ pub fn spawn_tanks(mut cmds: Commands, assets: Res<AssetServer>) {
         (UnitBundle::new(
             "Tank".to_string(),
             TANK_SPEED * SPEED_QUANTIFIER,
-            Vec3::new(4., 2., 6.),
+            TANK_SIZE,
             assets.load("tank_tan.glb#Scene0"),
+            mesh.clone(),     // TODO: remove
+            material.clone(), // TODO: remove
             Transform::from_translation(pos),
         ),)
     };
@@ -158,6 +180,7 @@ pub fn set_unit_destination(
 //     }
 // }
 
+// TODO: Move this logic to crate side?
 fn move_unit(
     q_flowfields: Query<&FlowField>,
     mut q_boids: Query<
@@ -178,10 +201,11 @@ fn move_unit(
                 }
 
                 // Apply to rotation
-                if steering.length_squared() > 0.00001 {
-                    let yaw = f32::atan2(-steering.x, -steering.z);
-                    pos.rotation = Quat::from_rotation_y(yaw);
-                }
+                // TODO: Uncomment and fix
+                // if steering.length_squared() > 0.00001 {
+                //     let yaw = f32::atan2(-steering.x, -steering.z);
+                //     pos.rotation = Quat::from_rotation_y(yaw);
+                // }
             }
         }
     }

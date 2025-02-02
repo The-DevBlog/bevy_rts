@@ -11,8 +11,8 @@ pub struct UnitSelectBorder;
 #[derive(Component)]
 pub struct Speed(pub f32);
 
-#[derive(Component)]
-pub struct Selected;
+// #[derive(Component)]
+// pub struct Selected;
 
 #[derive(Component)]
 pub struct SelectionBox;

@@ -10,6 +10,7 @@ use crate::resources::*;
 use crate::utils;
 use crate::*;
 use bevy_rts_pathfinding::components as pf_comps;
+use bevy_rts_pathfinding::components::Selected;
 
 pub struct MousePlugin;
 

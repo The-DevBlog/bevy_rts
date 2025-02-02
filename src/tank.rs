@@ -10,6 +10,8 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
+use bevy_rts_pathfinding::components::Selected;
+
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
@@ -119,7 +121,8 @@ pub fn set_unit_destination(
 
     let mut units = Vec::new();
     for unit_entity in q_unit.iter_mut() {
-        cmds.entity(unit_entity).insert(pf_comps::Destination);
+        cmds.entity(unit_entity)
+            .insert(pf_comps::Destination::default());
         units.push(unit_entity);
     }
 

@@ -146,6 +146,7 @@ pub fn set_unit_destination(
     }
 
     cmds.trigger(pf_events::InitializeFlowFieldEv(units));
+    d
 }
 
 // fn move_unit(

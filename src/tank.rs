@@ -148,65 +148,68 @@ pub fn set_unit_destination(
     cmds.trigger(pf_events::InitializeFlowFieldEv(units));
 }
 
-// fn move_unit(
-//     mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
-//     q_flowfield: Query<&FlowField>,
-//     time: Res<Time>,
-// ) {
-//     let delta_time = time.delta_secs();
-
-//     for flowfield in q_flowfield.iter() {
-//         for &unit in &flowfield.units {
-//             if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(unit) {
-//                 let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
-//                 let raw_direction = Vec3::new(
-//                     cell_below.best_direction.vector().x as f32,
-//                     0.0,
-//                     cell_below.best_direction.vector().y as f32,
-//                 )
-//                 .normalize();
-
-//                 if raw_direction.length_squared() > 0.000001 {
-//                     // Handle movement
-//                     let move_direction = raw_direction.normalize();
-//                     let yaw = f32::atan2(-move_direction.x, -move_direction.z);
-//                     unit_transform.rotation = Quat::from_rotation_y(yaw);
-
-//                     let movement_impulse = move_direction * speed.0 * delta_time;
-//                     ext_impulse.impulse += movement_impulse;
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// TODO: Move this logic to crate side?
 fn move_unit(
-    q_flowfields: Query<&FlowField>,
-    mut q_boids: Query<
-        (Entity, &mut Transform, &pf_comps::Boid, &Speed),
-        With<pf_comps::Destination>,
-    >,
-    mut q_impulse: Query<&mut ExternalImpulse>,
+    mut q_unit: Query<(&mut Transform, &mut ExternalImpulse, &Speed), With<pf_comps::Destination>>,
+    q_flowfield: Query<&FlowField>,
     time: Res<Time>,
 ) {
-    let dt = time.delta_secs();
-    for flowfield in q_flowfields.iter() {
-        for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
-            if let Some(steering) = flowfield.steering_map.get(&ent) {
-                // Apply to impulse
-                if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
-                    let impulse_vec = *steering * speed.0 * dt;
-                    ext_impulse.impulse += impulse_vec;
-                }
+    let delta_time = time.delta_secs();
 
-                // Apply to rotation
-                // TODO: Uncomment and fix
-                // if steering.length_squared() > 0.00001 {
-                //     let yaw = f32::atan2(-steering.x, -steering.z);
-                //     pos.rotation = Quat::from_rotation_y(yaw);
-                // }
+    for flowfield in q_flowfield.iter() {
+        for &unit in &flowfield.units {
+            if let Ok((mut unit_transform, mut ext_impulse, speed)) = q_unit.get_mut(unit) {
+                let cell_below = flowfield.get_cell_from_world_position(unit_transform.translation);
+                let raw_direction = Vec3::new(
+                    cell_below.best_direction.vector().x as f32,
+                    0.0,
+                    cell_below.best_direction.vector().y as f32,
+                )
+                .normalize();
+
+                // println!("cell: {:?}", cell_below);
+                // println!("best direction: {:?}", cell_below.best_direction.vector());
+                if raw_direction.length_squared() > 0.000001 {
+                    // Handle movement
+                    let move_direction = raw_direction.normalize();
+                    let yaw = f32::atan2(-move_direction.x, -move_direction.z);
+                    unit_transform.rotation = Quat::from_rotation_y(yaw);
+
+                    let movement_impulse = move_direction * speed.0 * delta_time;
+                    ext_impulse.impulse += movement_impulse;
+                }
             }
         }
     }
 }
+
+// TODO: Move this logic to crate side?
+// fn move_unit(
+//     q_flowfields: Query<&FlowField>,
+//     mut q_boids: Query<
+//         (Entity, &mut Transform, &pf_comps::Boid, &Speed),
+//         With<pf_comps::Destination>,
+//     >,
+//     mut q_impulse: Query<&mut ExternalImpulse>,
+//     time: Res<Time>,
+// ) {
+//     let dt = time.delta_secs();
+//     for flowfield in q_flowfields.iter() {
+//         for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
+//             if let Some(steering) = flowfield.steering_map.get(&ent) {
+//                 // println!("Steering: {:?}", steering);
+//                 // Apply to impulse
+//                 if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+//                     let impulse_vec = *steering * speed.0 * dt;
+//                     ext_impulse.impulse += impulse_vec;
+//                 }
+
+//                 // Apply to rotation
+//                 // TODO: Uncomment and fix
+//                 // if steering.length_squared() > 0.00001 {
+//                 //     let yaw = f32::atan2(-steering.x, -steering.z);
+//                 //     pos.rotation = Quat::from_rotation_y(yaw);
+//                 // }
+//             }
+//         }
+//     }
+// }

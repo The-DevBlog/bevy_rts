@@ -10,8 +10,8 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
-// const TANK_SIZE: Vec3 = Vec3::new(4.0, 2.0, 6.0);
-const TANK_SIZE: Vec3 = Vec3::new(8.0, 4.0, 8.0);
+const TANK_SIZE: Vec3 = Vec3::new(4.0, 2.0, 6.0);
+// const TANK_SIZE: Vec3 = Vec3::new(8.0, 4.0, 8.0);
 
 pub struct TankPlugin;
 
@@ -43,8 +43,8 @@ pub fn spawn_tank(
         TANK_SPEED * SPEED_QUANTIFIER,
         TANK_SIZE,
         assets.load("tank_tan.glb#Scene0"),
-        Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
+        // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+        // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
     ),));
 }
@@ -71,8 +71,8 @@ pub fn spawn_tanks(
             TANK_SPEED * SPEED_QUANTIFIER,
             TANK_SIZE,
             assets.load("tank_tan.glb#Scene0"),
-            mesh.clone(),     // TODO: remove
-            material.clone(), // TODO: remove
+            // mesh.clone(),     // TODO: remove
+            // material.clone(), // TODO: remove
             Transform::from_translation(pos),
         ),)
     };
@@ -85,8 +85,8 @@ pub fn spawn_tanks(
             TANK_SPEED * SPEED_QUANTIFIER,
             TANK_SIZE,
             assets.load("tank_tan.glb#Scene0"),
-            mesh.clone(),     // TODO: remove
-            material.clone(), // TODO: remove
+            // mesh.clone(),     // TODO: remove
+            // material.clone(), // TODO: remove
             Transform::from_translation(pos),
         ),)
     };
@@ -228,11 +228,10 @@ fn move_unit(
                 }
 
                 // Apply to rotation
-                // TODO: Uncomment and fix
-                // if steering.length_squared() > 0.00001 {
-                //     let yaw = f32::atan2(-steering.x, -steering.z);
-                //     pos.rotation = Quat::from_rotation_y(yaw);
-                // }
+                if steering.length_squared() > 0.00001 {
+                    let yaw = f32::atan2(-steering.x, -steering.z);
+                    pos.rotation = Quat::from_rotation_y(yaw);
+                }
             }
 
             for dest_ff in ff.destination_flowfields.iter() {
@@ -245,6 +244,10 @@ fn move_unit(
                     }
 
                     // Apply to rotation
+                    if steering.length_squared() > 0.00001 {
+                        let yaw = f32::atan2(-steering.x, -steering.z);
+                        pos.rotation = Quat::from_rotation_y(yaw);
+                    }
                 }
             }
         }

@@ -1,10 +1,6 @@
-use bevy::{prelude::*, render::mesh};
+use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
-
-// TODO: Remove?
-// #[derive(Component)]
-// pub struct Unit;
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder;
@@ -17,6 +13,10 @@ pub struct Selected;
 
 #[derive(Component)]
 pub struct SelectionBox;
+
+#[derive(Component)]
+#[require(pf_comps::Boid)]
+pub struct Unit;
 
 #[derive(Bundle)]
 pub struct UnitBundle {
@@ -31,7 +31,7 @@ pub struct UnitBundle {
     pub size: pf_comps::UnitSize,
     pub speed: Speed,
     pub transform: Transform,
-    pub unit: pf_comps::Unit,
+    pub unit: Unit,
     // pub mesh: Mesh3d,
     // pub material: MeshMaterial3d<StandardMaterial>, // TODO: remove
 }
@@ -72,7 +72,7 @@ impl UnitBundle {
             // size: pf_comps::UnitSize(Vec2::new(size.x, size.z)), // TODO: remove
             speed: Speed(speed),
             transform,
-            unit: pf_comps::Unit,
+            unit: Unit,
             // mesh, // TODO: remove
             // material, // TODO: remove
         }

@@ -214,7 +214,7 @@ pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
     mut game_cmds: ResMut<GameCommands>,
-    mut unit_q: Query<(Entity, &Transform), With<pf_comps::Unit>>,
+    mut unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<SelectBox>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -290,7 +290,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut q_select: Query<Entity, With<pf_comps::Unit>>,
+    mut q_select: Query<Entity, With<Unit>>,
     mut q_cursor: Query<&mut CursorIcon>,
 ) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
@@ -346,7 +346,7 @@ pub fn single_select(
     mut cmds: Commands,
     mut game_cmds: ResMut<GameCommands>,
     mouse_coords: Res<MouseCoords>,
-    mut q_unit: Query<Entity, With<pf_comps::Unit>>,
+    mut q_unit: Query<Entity, With<Unit>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     my_assets: Res<MyAssets>,

@@ -207,7 +207,132 @@ pub fn set_unit_destination(
 //     }
 // }
 
-// TODO: Move this logic to crate side?
+// // TODO: Move this logic to crate side?
+// fn move_unit(
+//     q_ff: Query<&FlowField>,
+//     mut q_boids: Query<
+//         (Entity, &mut Transform, &pf_comps::Boid, &Speed),
+//         With<pf_comps::Destination>,
+//     >,
+//     mut q_impulse: Query<&mut ExternalImpulse>,
+//     time: Res<Time>,
+// ) {
+//     let delta_secs = time.delta_secs();
+//     for ff in q_ff.iter() {
+//         for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
+//             if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
+//                 // This code works, but it just snaps to the target rotation instantly.
+//                 {
+//                     // Apply to impulse
+//                     // if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+//                     //     let impulse_vec = *steering * speed.0 * delta_secs;
+//                     //     ext_impulse.impulse += impulse_vec;
+//                     // }
+
+//                     // Apply to rotation
+//                     // if steering.length_squared() > 0.00001 {
+//                     //     let yaw = f32::atan2(-steering.x, -steering.z);
+//                     //     pos.rotation = Quat::from_rotation_y(yaw);
+//                     // }
+//                 }
+
+//                 // this code works, but the boid separation is not working. Maybe need to adjust boid fields?
+//                 {
+//                     // Apply to rotation
+//                     if steering.length_squared() > 0.00001 {
+//                         // Compute the desired yaw from your steering vector.
+//                         let target_yaw = f32::atan2(-steering.x, -steering.z);
+//                         // Create a quaternion representing the target rotation.
+//                         let target_rotation = Quat::from_rotation_y(target_yaw);
+//                         let rotation_speed = 5.0; // in radians per second
+
+//                         // Compute the angle between the current and target rotations.
+//                         let angle_diff = pos.rotation.angle_between(target_rotation);
+//                         if angle_diff > 0.0001 {
+//                             // Determine the maximum angle you can rotate this frame.
+//                             let max_angle = rotation_speed * delta_secs;
+//                             // Figure out how far along the interpolation we can move.
+//                             // If max_angle is greater than angle_diff, we can snap directly.
+//                             let t = (max_angle).min(angle_diff) / angle_diff;
+//                             // Slerp towards the target rotation.
+//                             pos.rotation = pos.rotation.slerp(target_rotation, t);
+//                         } else {
+//                             // If we're extremely close, just set it directly.
+//                             pos.rotation = target_rotation;
+//                         }
+
+//                         // Only apply impulse if the rotation is nearly aligned with the target.
+//                         let rotation_threshold = 0.1; // in radians; adjust as needed
+//                         if angle_diff < rotation_threshold {
+//                             if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+//                                 let impulse_vec = *steering * speed.0 * delta_secs;
+//                                 ext_impulse.impulse += impulse_vec;
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+
+//             for dest_ff in ff.destination_flowfields.iter() {
+//                 if let Some(steering) = dest_ff.flowfield_props.steering_map.get(&ent) {
+//                     // println!("Steering: {:?}", steering);
+
+//                     // This code works, but it just snaps to the target rotation instantly.
+//                     {
+//                         // Apply to impulse
+//                         // if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+//                         //     let impulse_vec = *steering * speed.0 * delta_secs;
+//                         //     ext_impulse.impulse += impulse_vec;
+//                         // }
+
+//                         // Apply to rotation
+//                         // if steering.length_squared() > 0.00001 {
+//                         //     let yaw = f32::atan2(-steering.x, -steering.z);
+//                         //     pos.rotation = Quat::from_rotation_y(yaw);
+//                         // }
+//                     }
+
+//                     // this code works, but the boid separation is not working. Maybe need to adjust boid fields?
+//                     {
+//                         // Apply to rotation
+//                         if steering.length_squared() > 0.00001 {
+//                             // Compute the desired yaw from your steering vector.
+//                             let target_yaw = f32::atan2(-steering.x, -steering.z);
+//                             // Create a quaternion representing the target rotation.
+//                             let target_rotation = Quat::from_rotation_y(target_yaw);
+//                             let rotation_speed = 5.0; // in radians per second
+
+//                             // Compute the angle between the current and target rotations.
+//                             let angle_diff = pos.rotation.angle_between(target_rotation);
+//                             if angle_diff > 0.0001 {
+//                                 // Determine the maximum angle you can rotate this frame.
+//                                 let max_angle = rotation_speed * delta_secs;
+//                                 // Figure out how far along the interpolation we can move.
+//                                 // If max_angle is greater than angle_diff, we can snap directly.
+//                                 let t = (max_angle).min(angle_diff) / angle_diff;
+//                                 // Slerp towards the target rotation.
+//                                 pos.rotation = pos.rotation.slerp(target_rotation, t);
+//                             } else {
+//                                 // If we're extremely close, just set it directly.
+//                                 pos.rotation = target_rotation;
+//                             }
+
+//                             // Only apply impulse if the rotation is nearly aligned with the target.
+//                             let rotation_threshold = 0.1; // in radians; adjust as needed
+//                             if angle_diff < rotation_threshold {
+//                                 if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+//                                     let impulse_vec = *steering * speed.0 * delta_secs;
+//                                     ext_impulse.impulse += impulse_vec;
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+
 fn move_unit(
     q_ff: Query<&FlowField>,
     mut q_boids: Query<
@@ -217,38 +342,58 @@ fn move_unit(
     mut q_impulse: Query<&mut ExternalImpulse>,
     time: Res<Time>,
 ) {
-    let dt = time.delta_secs();
+    let delta_secs = time.delta_secs();
     for ff in q_ff.iter() {
         for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
+            // Process the primary flow field steering
             if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
-                // Apply to impulse
-                if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
-                    let impulse_vec = *steering * speed.0 * dt;
-                    ext_impulse.impulse += impulse_vec;
-                }
-
-                // Apply to rotation
-                if steering.length_squared() > 0.00001 {
-                    let yaw = f32::atan2(-steering.x, -steering.z);
-                    pos.rotation = Quat::from_rotation_y(yaw);
-                }
+                apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
             }
 
+            // Process the destination flow fields
             for dest_ff in ff.destination_flowfields.iter() {
                 if let Some(steering) = dest_ff.flowfield_props.steering_map.get(&ent) {
-                    // println!("Steering: {:?}", steering);
-                    // Apply to impulse
-                    if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
-                        let impulse_vec = *steering * speed.0 * dt;
-                        ext_impulse.impulse += impulse_vec;
-                    }
-
-                    // Apply to rotation
-                    if steering.length_squared() > 0.00001 {
-                        let yaw = f32::atan2(-steering.x, -steering.z);
-                        pos.rotation = Quat::from_rotation_y(yaw);
-                    }
+                    apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
                 }
+            }
+        }
+    }
+}
+
+fn apply_steering(
+    steering: Vec3,
+    pos: &mut Transform,
+    speed: &Speed,
+    delta_secs: f32,
+    ent: Entity,
+    q_impulse: &mut Query<&mut ExternalImpulse>,
+) {
+    if steering.length_squared() > 0.00001 {
+        // Compute the desired yaw from your steering vector.
+        let target_yaw = f32::atan2(-steering.x, -steering.z);
+        // Create a quaternion representing the target rotation.
+        let target_rotation = Quat::from_rotation_y(target_yaw);
+        let rotation_speed = 5.0; // radians per second
+
+        // Compute the angle between the current and target rotations.
+        let angle_diff = pos.rotation.angle_between(target_rotation);
+        if angle_diff > 0.0001 {
+            // Determine the maximum angle you can rotate this frame.
+            let max_angle = rotation_speed * delta_secs;
+            // Figure out how far along the interpolation we can move.
+            let t = (max_angle).min(angle_diff) / angle_diff;
+            // Slerp towards the target rotation.
+            pos.rotation = pos.rotation.slerp(target_rotation, t);
+        } else {
+            pos.rotation = target_rotation;
+        }
+
+        // Only apply impulse if the rotation is nearly aligned with the target.
+        let rotation_threshold = 0.1; // radians; adjust as needed
+        if angle_diff < rotation_threshold {
+            if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+                let impulse_vec = steering * speed.0 * delta_secs;
+                ext_impulse.impulse += impulse_vec;
             }
         }
     }

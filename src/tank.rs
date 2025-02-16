@@ -39,10 +39,10 @@ pub fn spawn_tank(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     cmds.spawn((UnitBundle::new(
-        "Tank".to_string(),
         TANK_SPEED * SPEED_QUANTIFIER,
-        TANK_SIZE,
+        "Tank".to_string(),
         assets.load("tank_tan.glb#Scene0"),
+        TANK_SIZE,
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
@@ -67,10 +67,10 @@ pub fn spawn_tanks(
     let create_left_tank = |row: usize, col: usize| {
         let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         (UnitBundle::new(
-            "Tank".to_string(),
             TANK_SPEED * SPEED_QUANTIFIER,
-            TANK_SIZE,
+            "Tank".to_string(),
             assets.load("tank_tan.glb#Scene0"),
+            TANK_SIZE,
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),
@@ -81,10 +81,10 @@ pub fn spawn_tanks(
     let create_right_tank = |row: usize, col: usize| {
         let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
         (UnitBundle::new(
-            "Tank".to_string(),
             TANK_SPEED * SPEED_QUANTIFIER,
-            TANK_SIZE,
+            "Tank".to_string(),
             assets.load("tank_tan.glb#Scene0"),
+            TANK_SIZE,
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),

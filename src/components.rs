@@ -14,8 +14,11 @@ pub struct Selected;
 #[derive(Component)]
 pub struct SelectionBox;
 
+#[derive(Component, Default)]
+pub struct IsMoving(pub bool);
+
 #[derive(Component)]
-#[require(pf_comps::Boid)]
+#[require(pf_comps::Boid, IsMoving, Velocity)]
 pub struct Unit;
 
 #[derive(Bundle)]

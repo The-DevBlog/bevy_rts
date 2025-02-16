@@ -22,6 +22,7 @@ impl Plugin for TankPlugin {
             Update,
             (
                 // move_unit.run_if(any_with_component::<pf_comps::Destination>),
+                set_is_moving,
                 spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
                 spawn_tank.run_if(once_after_delay(Duration::from_secs(1))),
                 move_unit.run_if(any_with_component::<pf_comps::Destination>),
@@ -333,13 +334,19 @@ pub fn set_unit_destination(
 //     }
 // }
 
+fn set_is_moving(mut q_is_moving: Query<(&mut IsMoving, &Velocity), With<Unit>>) {
+    for (mut is_moving, velocity) in q_is_moving.iter_mut() {
+        is_moving.0 = velocity.linvel.length_squared() > 0.0001;
+    }
+}
+
 fn move_unit(
     q_ff: Query<&FlowField>,
     mut q_boids: Query<
         (Entity, &mut Transform, &pf_comps::Boid, &Speed),
         With<pf_comps::Destination>,
     >,
-    mut q_impulse: Query<&mut ExternalImpulse>,
+    mut q_impulse: Query<(&mut ExternalImpulse, &IsMoving), With<Unit>>,
     time: Res<Time>,
 ) {
     let delta_secs = time.delta_secs();
@@ -366,7 +373,7 @@ fn apply_steering(
     speed: &Speed,
     delta_secs: f32,
     ent: Entity,
-    q_impulse: &mut Query<&mut ExternalImpulse>,
+    q_impulse: &mut Query<(&mut ExternalImpulse, &IsMoving), With<Unit>>,
 ) {
     if steering.length_squared() > 0.00001 {
         // Compute the desired yaw from your steering vector.
@@ -389,9 +396,9 @@ fn apply_steering(
         }
 
         // Only apply impulse if the rotation is nearly aligned with the target.
-        let rotation_threshold = 0.1; // radians; adjust as needed
-        if angle_diff < rotation_threshold {
-            if let Ok(mut ext_impulse) = q_impulse.get_mut(ent) {
+        if let Ok((mut ext_impulse, is_moving)) = q_impulse.get_mut(ent) {
+            let rotation_threshold = 0.1; // radians; adjust as needed
+            if (is_moving.0 && angle_diff < 0.85) || (angle_diff < rotation_threshold) {
                 let impulse_vec = steering * speed.0 * delta_secs;
                 ext_impulse.impulse += impulse_vec;
             }

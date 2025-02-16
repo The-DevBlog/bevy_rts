@@ -26,7 +26,7 @@ const MAP_DEPTH: f32 = CELL_SIZE * MAP_GRID_ROWS as f32;
 const MAP_GRID_COLUMNS: i32 = 120;
 const MAP_GRID_ROWS: i32 = 120;
 const SPEED_QUANTIFIER: f32 = 10.0;
-const TANK_COUNT: usize = 100;
+const TANK_COUNT: usize = 50;
 const TANK_SPEED: f32 = 50.0;
 
 fn main() {

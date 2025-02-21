@@ -18,7 +18,7 @@ pub struct SelectionBox;
 pub struct IsMoving(pub bool);
 
 #[derive(Component)]
-#[require(pf_comps::Boid, IsMoving, Velocity)]
+#[require(pf_comps::RtsDynamicObj, IsMoving, Velocity)]
 pub struct Unit;
 
 #[derive(Bundle)]
@@ -31,7 +31,7 @@ pub struct UnitBundle {
     pub name: Name,
     pub rigid_body: RigidBody,
     pub scene_root: SceneRoot, // TODO: uncomment
-    pub size: pf_comps::UnitSize,
+    pub size: pf_comps::RtsObjSize,
     pub speed: Speed,
     pub transform: Transform,
     pub unit: Unit,
@@ -71,7 +71,7 @@ impl UnitBundle {
             }),
             rigid_body: RigidBody::Dynamic,
             scene_root: SceneRoot(scene), // TODO: uncomment
-            size: pf_comps::UnitSize(Vec2::new(size.x * scale_x, size.z * scale_z)), // TODO: uncomment
+            size: pf_comps::RtsObjSize(Vec2::new(size.x * scale_x, size.z * scale_z)), // TODO: uncomment
             // size: pf_comps::UnitSize(Vec2::new(size.x, size.z)), // TODO: remove
             speed: Speed(speed),
             transform,

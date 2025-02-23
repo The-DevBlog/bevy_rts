@@ -18,7 +18,7 @@ pub struct SelectionBox;
 pub struct IsMoving(pub bool);
 
 #[derive(Component)]
-#[require(pf_comps::RtsDynamicObj, IsMoving, Velocity)]
+#[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub struct Unit;
 
 #[derive(Bundle)]
@@ -30,30 +30,30 @@ pub struct UnitBundle {
     pub mass_properties: ColliderMassProperties, // TODO: remove
     pub name: Name,
     pub rigid_body: RigidBody,
-    pub scene_root: SceneRoot, // TODO: uncomment
+    // pub scene_root: SceneRoot, // TODO: uncomment
     pub size: pf_comps::RtsObjSize,
     pub speed: Speed,
     pub transform: Transform,
     pub unit: Unit,
-    // pub mesh: Mesh3d,
-    // pub material: MeshMaterial3d<StandardMaterial>, // TODO: remove
+    pub mesh: Mesh3d,
+    pub material: MeshMaterial3d<StandardMaterial>, // TODO: remove
 }
 
 impl UnitBundle {
     pub fn new(
         speed: f32,
-        // mesh: Mesh3d, // TODO: remove
-        // material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         name: String,
         scene: Handle<Scene>,
         size: Vec3,
+        mesh: Mesh3d,                               // TODO: remove
+        material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         transform: Transform,
     ) -> Self {
-        let scale_x = 1.2;
-        let scale_z = 1.4;
+        // let scale_x = 1.2;
+        // let scale_z = 1.4;
         Self {
-            collider: Collider::cuboid(size.x * scale_x, size.y, size.z * scale_z), // TODO: uncomment
-            // collider: Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0), // TODO: remove
+            collider: Collider::cuboid(size.x / 2.0, size.y, size.z / 2.0), // TODO: remove
+            // collider: Collider::cuboid(size.x * scale_x, size.y, size.z * scale_z), // TODO: uncomment
             damping: Damping {
                 linear_damping: 10.0,
                 angular_damping: 20.0,
@@ -70,14 +70,15 @@ impl UnitBundle {
                 ..default()
             }),
             rigid_body: RigidBody::Dynamic,
-            scene_root: SceneRoot(scene), // TODO: uncomment
-            size: pf_comps::RtsObjSize(Vec2::new(size.x * scale_x, size.z * scale_z)), // TODO: uncomment
+            // scene_root: SceneRoot(scene), // TODO: uncomment
+            size: pf_comps::RtsObjSize(Vec2::new(size.x, size.z)), // TODO: Remove
+            // size: pf_comps::RtsObjSize(Vec2::new(size.x * scale_x, size.z * scale_z)), // TODO: uncomment
             // size: pf_comps::UnitSize(Vec2::new(size.x, size.z)), // TODO: remove
             speed: Speed(speed),
             transform,
             unit: Unit,
-            // mesh, // TODO: remove
-            // material, // TODO: remove
+            mesh,     // TODO: remove
+            material, // TODO: remove
         }
     }
 }

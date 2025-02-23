@@ -10,20 +10,21 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
-const TANK_SIZE: Vec3 = Vec3::new(4.0, 2.0, 6.0);
+const TANK_SIZE: Vec3 = Vec3::new(10.0, 2.0, 10.0);
+// const TANK_SIZE: Vec3 = Vec3::new(4.0, 2.0, 6.0);
 // const TANK_SIZE: Vec3 = Vec3::new(8.0, 4.0, 8.0);
 
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_tank));
+        app.add_systems(Startup, spawn_tank);
         app.add_systems(
             Update,
             (
                 // move_unit.run_if(any_with_component::<pf_comps::Destination>),
                 set_is_moving,
-                spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
+                // spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
                 // spawn_tank.run_if(once_after_delay(Duration::from_secs(1))),
                 move_unit.run_if(any_with_component::<pf_comps::Destination>),
             )
@@ -44,8 +45,8 @@ pub fn spawn_tank(
         "Tank".to_string(),
         assets.load("tank_tan.glb#Scene0"),
         TANK_SIZE,
-        // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
-        // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
+        Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
     ),));
 }
@@ -56,65 +57,65 @@ pub fn spawn_tanks(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
-    let initial_pos_right = Vec3::new(500.0, 0.0, 0.0);
-    let offset = Vec3::new(30.0, 0.0, 30.0);
-    let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
+    // let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
+    // let initial_pos_right = Vec3::new(500.0, 0.0, 0.0);
+    // let offset = Vec3::new(30.0, 0.0, 30.0);
+    // let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
-    let mesh = Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z)));
-    let material = MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3)));
+    // // let mesh = Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z)));
+    // // let material = MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3)));
 
-    // Create tank on the left side facing right
-    let create_left_tank = |row: usize, col: usize| {
-        let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
-        (UnitBundle::new(
-            TANK_SPEED * SPEED_QUANTIFIER,
-            "Tank".to_string(),
-            assets.load("tank_tan.glb#Scene0"),
-            TANK_SIZE,
-            // mesh.clone(),     // TODO: remove
-            // material.clone(), // TODO: remove
-            Transform::from_translation(pos),
-        ),)
-    };
+    // // Create tank on the left side facing right
+    // let create_left_tank = |row: usize, col: usize| {
+    //     let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
+    //     (UnitBundle::new(
+    //         TANK_SPEED * SPEED_QUANTIFIER,
+    //         "Tank".to_string(),
+    //         assets.load("tank_tan.glb#Scene0"),
+    //         TANK_SIZE,
+    //         // mesh.clone(),     // TODO: remove
+    //         // material.clone(), // TODO: remove
+    //         Transform::from_translation(pos),
+    //     ),)
+    // };
 
-    // Create tank on the right side facing left
-    let create_right_tank = |row: usize, col: usize| {
-        let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
-        (UnitBundle::new(
-            TANK_SPEED * SPEED_QUANTIFIER,
-            "Tank".to_string(),
-            assets.load("tank_tan.glb#Scene0"),
-            TANK_SIZE,
-            // mesh.clone(),     // TODO: remove
-            // material.clone(), // TODO: remove
-            Transform::from_translation(pos),
-        ),)
-    };
+    // // Create tank on the right side facing left
+    // let create_right_tank = |row: usize, col: usize| {
+    //     let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
+    //     (UnitBundle::new(
+    //         TANK_SPEED * SPEED_QUANTIFIER,
+    //         "Tank".to_string(),
+    //         assets.load("tank_tan.glb#Scene0"),
+    //         TANK_SIZE,
+    //         // mesh.clone(),     // TODO: remove
+    //         // material.clone(), // TODO: remove
+    //         Transform::from_translation(pos),
+    //     ),)
+    // };
 
-    // Spawn Left Group (facing right)
-    let mut count = 0;
-    for row in 0..grid_size {
-        for col in 0..grid_size {
-            if count >= TANK_COUNT {
-                break;
-            }
-            // cmds.spawn(create_left_tank(row, col));
-            count += 1;
-        }
-    }
+    // // Spawn Left Group (facing right)
+    // let mut count = 0;
+    // for row in 0..grid_size {
+    //     for col in 0..grid_size {
+    //         if count >= TANK_COUNT {
+    //             break;
+    //         }
+    //         // cmds.spawn(create_left_tank(row, col));
+    //         count += 1;
+    //     }
+    // }
 
-    // Spawn Right Group (facing left)
-    let mut count = 0;
-    for row in 0..grid_size {
-        for col in 0..grid_size {
-            if count >= TANK_COUNT {
-                break;
-            }
-            cmds.spawn(create_right_tank(row, col));
-            count += 1;
-        }
-    }
+    // // Spawn Right Group (facing left)
+    // let mut count = 0;
+    // for row in 0..grid_size {
+    //     for col in 0..grid_size {
+    //         if count >= TANK_COUNT {
+    //             break;
+    //         }
+    //         cmds.spawn(create_right_tank(row, col));
+    //         count += 1;
+    //     }
+    // }
 }
 
 pub fn set_unit_destination(
@@ -351,9 +352,12 @@ fn move_unit(
 ) {
     let delta_secs = time.delta_secs();
     for ff in q_ff.iter() {
+        // println!("ff found");
         for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
+            // println!("unit in ff found");
             // Process the primary flow field steering
             if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
+                // println!("Apply steering");
                 apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
             }
 

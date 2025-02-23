@@ -11,13 +11,13 @@ pub struct MapPlugin;
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, (spawn_map, spawn_obstacle, spawn_grid).chain());
-        app.add_systems(
-            Update,
-            (
-                spawn_obstacle_2.run_if(once_after_delay(Duration::from_secs_f32(4.0))),
-                // despawn_obstacles.run_if(once_after_delay(Duration::from_secs(6))),
-            ),
-        );
+        // app.add_systems(
+        // Update,
+        // (
+        // spawn_obstacle_2.run_if(once_after_delay(Duration::from_secs_f32(4.0))),
+        // despawn_obstacles.run_if(once_after_delay(Duration::from_secs(6))),
+        // ),
+        // );
         // TODO: Comment this back
         // .add_systems(
         //     Update,
@@ -69,26 +69,26 @@ fn spawn_obstacle(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let size = 12.0;
-    cmds.spawn((
-        Mesh3d(meshes.add(Cuboid::new(size, size, size))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
-        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-        pf_comps::RtsStaticObj,
-        pf_comps::RtsObjSize(Vec2::new(size, size)),
-    ));
+    // let size = 12.0;
+    // cmds.spawn((
+    //     Mesh3d(meshes.add(Cuboid::new(size, size, size))),
+    //     MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+    //     Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
+    //     Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+    //     pf_comps::RtsObj,
+    //     pf_comps::RtsObjSize(Vec2::new(size, size)),
+    // ));
 
-    let obst = (
-        Mesh3d(meshes.add(Cylinder::new(size, size / 2.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(-100.0, 6.0, 150.0)),
-        Collider::cuboid(size, size / 2.0, size),
-        pf_comps::RtsStaticObj,
-        pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
-    );
+    // let obst = (
+    //     Mesh3d(meshes.add(Cylinder::new(size, size / 2.0))),
+    //     MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+    //     Transform::from_translation(Vec3::new(-100.0, 6.0, 150.0)),
+    //     Collider::cuboid(size, size / 2.0, size),
+    //     pf_comps::RtsObj,
+    //     pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
+    // );
 
-    cmds.spawn(obst);
+    // cmds.spawn(obst);
 }
 
 fn spawn_obstacle_2(
@@ -102,7 +102,7 @@ fn spawn_obstacle_2(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(-100.0, 6.0, -150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-        pf_comps::RtsStaticObj,
+        pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec2::new(size, size)),
     ));
 
@@ -111,14 +111,14 @@ fn spawn_obstacle_2(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(100.0, 6.0, -150.0)),
         Collider::cuboid(size, size / 2.0, size),
-        pf_comps::RtsStaticObj,
+        pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
     );
 
     cmds.spawn(obst);
 }
 
-fn despawn_obstacles(mut cmds: Commands, query: Query<Entity, With<pf_comps::RtsStaticObj>>) {
+fn despawn_obstacles(mut cmds: Commands, query: Query<Entity, With<pf_comps::RtsObj>>) {
     for entity in query.iter() {
         cmds.entity(entity).despawn_recursive();
     }

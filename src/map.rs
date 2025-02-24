@@ -2,6 +2,7 @@ use bevy::time::common_conditions::once_after_delay;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;
+use std::f32::{INFINITY, NEG_INFINITY};
 use std::time::Duration;
 
 use super::*;
@@ -39,7 +40,11 @@ fn spawn_map(
     // Ground
     cmds.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_DEPTH))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.3, 0.5, 0.3),
+            depth_bias: INFINITY,
+            ..Default::default()
+        })),
         Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_DEPTH / 2.0),
         Sensor,
         Ground,

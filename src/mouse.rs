@@ -3,6 +3,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 use core::f32;
+use std::f32::{INFINITY, NEG_INFINITY};
 
 use crate::components::*;
 use crate::events::*;
@@ -236,7 +237,7 @@ pub fn handle_drag_select(
         Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
         MeshMaterial3d(materials.add(StandardMaterial {
             base_color_texture: Some(my_assets.select_border.clone()),
-            depth_bias: f32::NEG_INFINITY, // TODO: Not working?
+            depth_bias: NEG_INFINITY, // TODO: Not working?
             alpha_mode: AlphaMode::Blend,
             unlit: true,
             ..default()
@@ -365,7 +366,7 @@ pub fn single_select(
         Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
         MeshMaterial3d(materials.add(StandardMaterial {
             base_color_texture: Some(my_assets.select_border.clone()),
-            depth_bias: f32::NEG_INFINITY, // TODO: Not working?
+            depth_bias: NEG_INFINITY, // TODO: Not working?
             alpha_mode: AlphaMode::Blend,
             unlit: true,
             ..default()

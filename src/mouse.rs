@@ -418,14 +418,19 @@ fn border_select_visibility(
 
 // update the unit border select to always be facing in the direction of the camera
 fn update_select_border_pos(
-    mut q_border: Query<&mut Transform, With<UnitSelectBorder>>,
-    q_cam: Query<&Transform, (With<Camera>, Without<UnitSelectBorder>)>,
+    mut q_border: Query<(&mut Transform, &Parent), With<UnitSelectBorder>>,
+    q_cam: Query<&GlobalTransform, (With<Camera>, Without<UnitSelectBorder>)>,
+    q_global: Query<&GlobalTransform>,
 ) {
-    let Ok(cam_transform) = q_cam.get_single() else {
-        return;
+    let cam_global = match q_cam.get_single() {
+        Ok(transform) => transform,
+        Err(_) => return,
     };
 
-    for mut border_transform in q_border.iter_mut() {
-        border_transform.rotation = cam_transform.rotation;
+    for (mut border_transform, parent) in q_border.iter_mut() {
+        if let Ok(parent_global) = q_global.get(parent.get()) {
+            // Set the border's rotation to face the camera.
+            border_transform.rotation = parent_global.rotation().inverse() * cam_global.rotation();
+        }
     }
 }

@@ -10,14 +10,14 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
-const TANK_SIZE: Vec3 = Vec3::new(4.0, 2.0, 6.0);
-// const TANK_SIZE: Vec3 = Vec3::new(8.0, 4.0, 8.0);
+// const TANK_SIZE: Vec3 = Vec3::new(10.0, 2.0, 10.0);
+const TANK_SIZE: Vec3 = Vec3::new(4.8, 2.0, 7.8);
 
 pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_tank));
+        app.add_systems(Startup, spawn_tank);
         app.add_systems(
             Update,
             (
@@ -36,8 +36,8 @@ impl Plugin for TankPlugin {
 pub fn spawn_tank(
     mut cmds: Commands,
     assets: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    // mut meshes: ResMut<Assets<Mesh>>,
+    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     cmds.spawn((UnitBundle::new(
         TANK_SPEED * SPEED_QUANTIFIER,
@@ -53,16 +53,16 @@ pub fn spawn_tank(
 pub fn spawn_tanks(
     mut cmds: Commands,
     assets: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    // mut meshes: ResMut<Assets<Mesh>>,
+    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
     let initial_pos_right = Vec3::new(500.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
-    let mesh = Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z)));
-    let material = MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3)));
+    // let mesh = Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z)));
+    // let material = MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3)));
 
     // Create tank on the left side facing right
     let create_left_tank = |row: usize, col: usize| {

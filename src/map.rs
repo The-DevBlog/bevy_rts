@@ -75,7 +75,7 @@ fn spawn_obstacle(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-        pf_comps::RtsStaticObj,
+        pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec2::new(size, size)),
     ));
 
@@ -84,7 +84,7 @@ fn spawn_obstacle(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(-100.0, 6.0, 150.0)),
         Collider::cuboid(size, size / 2.0, size),
-        pf_comps::RtsStaticObj,
+        pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
     );
 
@@ -102,7 +102,7 @@ fn spawn_obstacle_2(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(-100.0, 6.0, -150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-        pf_comps::RtsStaticObj,
+        pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec2::new(size, size)),
     ));
 
@@ -111,14 +111,14 @@ fn spawn_obstacle_2(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(100.0, 6.0, -150.0)),
         Collider::cuboid(size, size / 2.0, size),
-        pf_comps::RtsStaticObj,
+        pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
     );
 
     cmds.spawn(obst);
 }
 
-fn despawn_obstacles(mut cmds: Commands, query: Query<Entity, With<pf_comps::RtsStaticObj>>) {
+fn despawn_obstacles(mut cmds: Commands, query: Query<Entity, With<pf_comps::RtsObj>>) {
     for entity in query.iter() {
         cmds.entity(entity).despawn_recursive();
     }

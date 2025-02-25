@@ -22,8 +22,6 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     update_cursor_img,
-                    border_select_visibility,
-                    update_select_border_pos,
                     handle_mouse_input,
                     draw_drag_select_box,
                     set_drag_select,
@@ -264,6 +262,7 @@ pub fn handle_drag_select(
     box_coords: Res<SelectBox>,
     q_selected: Query<&Selected>,
     my_assets: Res<MyAssets>,
+    q_border: Query<(Entity, &UnitSelectBorder)>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
         v1.x * v2.z - v1.z * v2.x
@@ -321,6 +320,23 @@ pub fn handle_drag_select(
                 game_cmds.is_any_selected = true;
             }
         } else {
+            // Collect all border entities for this selected unit.
+            let borders_to_despawn: Vec<Entity> = q_border
+                .iter()
+                .filter_map(|(border_entity, border_comp)| {
+                    if border_comp.0 == friendly_ent {
+                        Some(border_entity)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            // Despawn the collected border entities.
+            for border_entity in borders_to_despawn {
+                cmds.entity(border_entity).despawn_recursive();
+            }
+
             cmds.entity(friendly_ent).remove::<Selected>();
         }
     }
@@ -393,6 +409,7 @@ pub fn single_select(
     my_assets: Res<MyAssets>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    q_border: Query<(Entity, &UnitSelectBorder)>,
 ) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
         return;
@@ -401,6 +418,7 @@ pub fn single_select(
     let (cam, cam_trans) = q_cam.single();
     let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
+    // Closure that creates a new border for a given unit.
     let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
         (
             UnitSelectBorder(ent),
@@ -411,17 +429,32 @@ pub fn single_select(
         )
     };
 
-    if let Some((ent, _)) = hit {
+    if let Some((hit_ent, _)) = hit {
         for selected_ent in q_unit.iter_mut() {
-            let tmp = selected_ent.index() == ent.index();
+            let is_selected = selected_ent.index() == hit_ent.index();
 
-            if !tmp {
+            if !is_selected {
+                // Collect all border entities for this selected unit.
+                let borders_to_despawn: Vec<Entity> = q_border
+                    .iter()
+                    .filter_map(|(border_entity, border_comp)| {
+                        if border_comp.0 == selected_ent {
+                            Some(border_entity)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                // Despawn the collected border entities.
+                for border_entity in borders_to_despawn {
+                    cmds.entity(border_entity).despawn_recursive();
+                }
                 cmds.entity(selected_ent).remove::<Selected>();
             } else {
                 cmds.entity(selected_ent).insert(Selected);
                 cmds.spawn(border(selected_ent));
-                // cmds.entity(selected_entity).with_child(border.clone());
-                game_cmds.is_any_selected = tmp;
+                game_cmds.is_any_selected = is_selected;
             }
         }
     }
@@ -432,45 +465,15 @@ pub fn deselect_all(
     mut cmds: Commands,
     mut game_cmds: ResMut<GameCommands>,
     mut select_q: Query<Entity, With<Selected>>,
+    mut q_border: Query<Entity, With<UnitSelectBorder>>,
 ) {
     for entity in select_q.iter_mut() {
         cmds.entity(entity).remove::<Selected>();
     }
 
+    for border_ent in q_border.iter_mut() {
+        cmds.entity(border_ent).despawn_recursive();
+    }
+
     game_cmds.is_any_selected = false;
-}
-
-fn border_select_visibility(
-    mut cmds: Commands,
-    q_unselected_units: Query<Entity, Without<Selected>>,
-    q_border: Query<&UnitSelectBorder>,
-    q_children: Query<&Children>,
-) {
-    // despawn select borders for unselected units
-    for unit in q_unselected_units.iter() {
-        for child in q_children.iter_descendants(unit) {
-            if q_border.get(child).is_ok() {
-                cmds.entity(child).despawn();
-            }
-        }
-    }
-}
-
-// update the unit border select to always be facing in the direction of the camera
-fn update_select_border_pos(
-    mut q_border: Query<(&mut Transform, &Parent), With<UnitSelectBorder>>,
-    q_cam: Query<&GlobalTransform, (With<Camera>, Without<UnitSelectBorder>)>,
-    q_global: Query<&GlobalTransform>,
-) {
-    let cam_global = match q_cam.get_single() {
-        Ok(transform) => transform,
-        Err(_) => return,
-    };
-
-    for (mut border_transform, parent) in q_border.iter_mut() {
-        if let Ok(parent_global) = q_global.get(parent.get()) {
-            // Set the border's rotation to face the camera.
-            border_transform.rotation = parent_global.rotation().inverse() * cam_global.rotation();
-        }
-    }
 }

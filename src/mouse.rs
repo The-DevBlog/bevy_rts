@@ -27,6 +27,7 @@ impl Plugin for MousePlugin {
                     handle_mouse_input,
                     draw_drag_select_box,
                     set_drag_select,
+                    sync_select_border_with_unit,
                 ),
             )
             .add_observer(deselect_all)
@@ -35,13 +36,10 @@ impl Plugin for MousePlugin {
             .add_observer(set_start_drag_select_box_coords)
             .add_observer(set_drag_select_box_coords)
             .add_observer(clear_drag_select_coords);
-
-        // app.add_systems(PostStartup, spawn_img_2d);
-        app.add_systems(Update, sync_border_with_unit);
     }
 }
 
-fn sync_border_with_unit(
+fn sync_select_border_with_unit(
     mut q_border: Query<(&mut Node, &UnitSelectBorder)>,
     q_unit_transform: Query<(&Transform, &BorderSize), With<Unit>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,

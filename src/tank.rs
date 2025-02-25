@@ -10,8 +10,8 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
-// const TANK_SIZE: Vec3 = Vec3::new(10.0, 2.0, 10.0);
 const TANK_SIZE: Vec3 = Vec3::new(4.8, 2.0, 7.8);
+const BORDER_SIZE: Vec2 = Vec2::new(35.0, 35.0);
 
 pub struct TankPlugin;
 
@@ -40,6 +40,7 @@ pub fn spawn_tank(
     // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     cmds.spawn((UnitBundle::new(
+        BORDER_SIZE,
         TANK_SPEED * SPEED_QUANTIFIER,
         "Tank".to_string(),
         assets.load("tank_tan.glb#Scene0"),
@@ -68,6 +69,7 @@ pub fn spawn_tanks(
     let create_left_tank = |row: usize, col: usize| {
         let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         (UnitBundle::new(
+            BORDER_SIZE,
             TANK_SPEED * SPEED_QUANTIFIER,
             "Tank".to_string(),
             assets.load("tank_tan.glb#Scene0"),
@@ -82,6 +84,7 @@ pub fn spawn_tanks(
     let create_right_tank = |row: usize, col: usize| {
         let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
         (UnitBundle::new(
+            BORDER_SIZE,
             TANK_SPEED * SPEED_QUANTIFIER,
             "Tank".to_string(),
             assets.load("tank_tan.glb#Scene0"),

@@ -3,14 +3,14 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 use core::f32;
-use std::f32::{INFINITY, NEG_INFINITY};
+use std::f32::consts::FRAC_PI_2;
 
 use crate::components::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;
 use crate::*;
-use bevy_rts_pathfinding::components as pf_comps;
+use bevy_rts_pathfinding::components::{self as pf_comps};
 
 pub struct MousePlugin;
 
@@ -35,6 +35,53 @@ impl Plugin for MousePlugin {
             .add_observer(set_start_drag_select_box_coords)
             .add_observer(set_drag_select_box_coords)
             .add_observer(clear_drag_select_coords);
+
+        // app.add_systems(PostStartup, spawn_img_2d);
+        app.add_systems(Update, sync_border_with_unit);
+    }
+}
+
+fn sync_border_with_unit(
+    mut q_border: Query<(&mut Node, &UnitSelectBorder)>,
+    q_unit_transform: Query<(&Transform, &BorderSize), With<Unit>>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
+    window_q: Query<&Window, With<PrimaryWindow>>,
+) {
+    let (cam, cam_trans) = cam_q.single();
+    let window = window_q.single();
+
+    // For this example we assume a perspective camera with a 90° vertical FOV.
+    // In a real app, you’d query for your camera's actual fov.
+    let fov_y = FRAC_PI_2;
+
+    for (mut style, border) in q_border.iter_mut() {
+        let Ok((unit_transform, border_size)) = q_unit_transform.get(border.0) else {
+            continue;
+        };
+
+        // Get the unit's center in screen space.
+        let center_screen = match cam.world_to_viewport(cam_trans, unit_transform.translation) {
+            Ok(pos) => pos,
+            Err(_) => continue,
+        };
+
+        // Compute the distance from the camera to the unit.
+        let distance = cam_trans.translation().distance(unit_transform.translation);
+
+        // Use the formula:
+        // scale = (window_height/2) / (distance * tan(fov_y/2))
+        let window_height = window.physical_height() as f32;
+        let scale = (window_height / 2.0) / (distance * (fov_y / 2.0).tan());
+
+        // Compute the screen-space width and height of the unit.
+        let screen_width = border_size.0.x * scale;
+        let screen_height = border_size.0.y * scale;
+
+        // Position the border so that its center aligns with the unit's screen center.
+        style.left = Val::Px(center_screen.x - screen_width / 2.0);
+        style.top = Val::Px(center_screen.y - screen_height / 2.0);
+        style.width = Val::Px(screen_width);
+        style.height = Val::Px(screen_height);
     }
 }
 
@@ -217,8 +264,6 @@ pub fn handle_drag_select(
     mut game_cmds: ResMut<GameCommands>,
     mut unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<SelectBox>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut meshes: ResMut<Assets<Mesh>>,
     q_selected: Query<&Selected>,
     my_assets: Res<MyAssets>,
 ) {
@@ -232,17 +277,15 @@ pub fn handle_drag_select(
     let c = box_coords.world.end_2;
     let d = box_coords.world.end_1;
 
-    let border = (
-        UnitSelectBorder,
-        Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color_texture: Some(my_assets.select_border.clone()),
-            depth_bias: NEG_INFINITY, // TODO: Not working?
-            alpha_mode: AlphaMode::Blend,
-            unlit: true,
-            ..default()
-        })),
-    );
+    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
+        (
+            UnitSelectBorder(ent),
+            ImageNode {
+                image: my_assets.select_border.clone(),
+                ..default()
+            },
+        )
+    };
 
     // check to see if units are within selection rectangle
     for (friendly_ent, friendly_trans) in unit_q.iter_mut() {
@@ -274,7 +317,8 @@ pub fn handle_drag_select(
         if in_box_bounds {
             if q_selected.get(friendly_ent).is_err() {
                 cmds.entity(friendly_ent).insert(Selected);
-                cmds.entity(friendly_ent).with_child(border.clone());
+                cmds.spawn(border(friendly_ent));
+                // cmds.entity(friendly_ent).with_child(border.clone());
             } else {
                 game_cmds.is_any_selected = true;
             }
@@ -348,8 +392,6 @@ pub fn single_select(
     mut game_cmds: ResMut<GameCommands>,
     mouse_coords: Res<MouseCoords>,
     mut q_unit: Query<Entity, With<Unit>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut meshes: ResMut<Assets<Mesh>>,
     my_assets: Res<MyAssets>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
@@ -361,27 +403,26 @@ pub fn single_select(
     let (cam, cam_trans) = q_cam.single();
     let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
-    let border = (
-        UnitSelectBorder,
-        Mesh3d(meshes.add(Rectangle::new(17.0, 17.0))), // TODO: the size needs to be dynamic for various units
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color_texture: Some(my_assets.select_border.clone()),
-            depth_bias: NEG_INFINITY, // TODO: Not working?
-            alpha_mode: AlphaMode::Blend,
-            unlit: true,
-            ..default()
-        })),
-    );
+    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
+        (
+            UnitSelectBorder(ent),
+            ImageNode {
+                image: my_assets.select_border.clone(),
+                ..default()
+            },
+        )
+    };
 
     if let Some((ent, _)) = hit {
-        for selected_entity in q_unit.iter_mut() {
-            let tmp = selected_entity.index() == ent.index();
+        for selected_ent in q_unit.iter_mut() {
+            let tmp = selected_ent.index() == ent.index();
 
             if !tmp {
-                cmds.entity(selected_entity).remove::<Selected>();
+                cmds.entity(selected_ent).remove::<Selected>();
             } else {
-                cmds.entity(selected_entity).insert(Selected);
-                cmds.entity(selected_entity).with_child(border.clone());
+                cmds.entity(selected_ent).insert(Selected);
+                cmds.spawn(border(selected_ent));
+                // cmds.entity(selected_entity).with_child(border.clone());
                 game_cmds.is_any_selected = tmp;
             }
         }

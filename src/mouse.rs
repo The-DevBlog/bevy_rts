@@ -21,6 +21,7 @@ impl Plugin for MousePlugin {
             .add_systems(
                 Update,
                 (
+                    set_is_any_selected,
                     update_cursor_img,
                     handle_mouse_input,
                     draw_drag_select_box,
@@ -100,6 +101,7 @@ fn handle_mouse_input(
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
+    // println!("Drag seelct: {}", game_cmds.drag_select);
     cmds.trigger(SetDragSelectEv);
 
     if input.just_pressed(MouseButton::Left) {
@@ -123,6 +125,7 @@ fn handle_mouse_input(
         }
 
         if !game_cmds.drag_select && game_cmds.is_any_selected {
+            println!("set unit destintation");
             cmds.trigger(SetUnitDestinationEv);
         }
     }
@@ -258,7 +261,6 @@ fn draw_drag_select_box(
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
-    mut game_cmds: ResMut<GameCommands>,
     mut unit_q: Query<(Entity, &Transform), With<Unit>>,
     box_coords: Res<SelectBox>,
     q_selected: Query<&Selected>,
@@ -316,12 +318,8 @@ pub fn handle_drag_select(
             if q_selected.get(friendly_ent).is_err() {
                 cmds.entity(friendly_ent).insert(Selected);
                 cmds.spawn(border(friendly_ent));
-            } else {
-                game_cmds.is_any_selected = true;
             }
         } else {
-            game_cmds.is_any_selected = false;
-
             // Collect all border entities for this selected unit.
             let borders_to_despawn: Vec<Entity> = q_border
                 .iter()
@@ -405,7 +403,6 @@ pub fn update_cursor_img(
 pub fn single_select(
     _trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
-    mut game_cmds: ResMut<GameCommands>,
     mouse_coords: Res<MouseCoords>,
     q_unit: Query<Entity, With<Unit>>,
     my_assets: Res<MyAssets>,
@@ -432,10 +429,8 @@ pub fn single_select(
 
     if let Some((hit_ent, _)) = hit {
         if let Ok(_) = q_unit.get(hit_ent) {
-            println!("HIT");
             cmds.entity(hit_ent).insert(Selected);
             cmds.spawn(border(hit_ent));
-            game_cmds.is_any_selected = true;
         }
     }
 }
@@ -443,7 +438,6 @@ pub fn single_select(
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
-    mut game_cmds: ResMut<GameCommands>,
     mut select_q: Query<Entity, With<Selected>>,
     mut q_border: Query<Entity, With<UnitSelectBorder>>,
 ) {
@@ -454,6 +448,8 @@ pub fn deselect_all(
     for border_ent in q_border.iter_mut() {
         cmds.entity(border_ent).despawn_recursive();
     }
+}
 
-    game_cmds.is_any_selected = false;
+fn set_is_any_selected(q_selected: Query<&Selected>, mut game_cmds: ResMut<GameCommands>) {
+    game_cmds.is_any_selected = q_selected.iter().next().is_some();
 }

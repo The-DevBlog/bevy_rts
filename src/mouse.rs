@@ -118,6 +118,7 @@ fn handle_mouse_input(
         cmds.trigger(ClearBoxCoordsEv);
 
         if !game_cmds.drag_select && !game_cmds.is_any_selected {
+            cmds.trigger(DeselectAllEv);
             cmds.trigger(SelectSingleUnitEv);
         }
 
@@ -315,11 +316,12 @@ pub fn handle_drag_select(
             if q_selected.get(friendly_ent).is_err() {
                 cmds.entity(friendly_ent).insert(Selected);
                 cmds.spawn(border(friendly_ent));
-                // cmds.entity(friendly_ent).with_child(border.clone());
             } else {
                 game_cmds.is_any_selected = true;
             }
         } else {
+            game_cmds.is_any_selected = false;
+
             // Collect all border entities for this selected unit.
             let borders_to_despawn: Vec<Entity> = q_border
                 .iter()
@@ -405,11 +407,10 @@ pub fn single_select(
     mut cmds: Commands,
     mut game_cmds: ResMut<GameCommands>,
     mouse_coords: Res<MouseCoords>,
-    mut q_unit: Query<Entity, With<Unit>>,
+    q_unit: Query<Entity, With<Unit>>,
     my_assets: Res<MyAssets>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    q_border: Query<(Entity, &UnitSelectBorder)>,
 ) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
         return;
@@ -430,32 +431,11 @@ pub fn single_select(
     };
 
     if let Some((hit_ent, _)) = hit {
-        for selected_ent in q_unit.iter_mut() {
-            let is_selected = selected_ent.index() == hit_ent.index();
-
-            if !is_selected {
-                // Collect all border entities for this selected unit.
-                let borders_to_despawn: Vec<Entity> = q_border
-                    .iter()
-                    .filter_map(|(border_entity, border_comp)| {
-                        if border_comp.0 == selected_ent {
-                            Some(border_entity)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
-
-                // Despawn the collected border entities.
-                for border_entity in borders_to_despawn {
-                    cmds.entity(border_entity).despawn_recursive();
-                }
-                cmds.entity(selected_ent).remove::<Selected>();
-            } else {
-                cmds.entity(selected_ent).insert(Selected);
-                cmds.spawn(border(selected_ent));
-                game_cmds.is_any_selected = is_selected;
-            }
+        if let Ok(_) = q_unit.get(hit_ent) {
+            println!("HIT");
+            cmds.entity(hit_ent).insert(Selected);
+            cmds.spawn(border(hit_ent));
+            game_cmds.is_any_selected = true;
         }
     }
 }

@@ -100,12 +100,17 @@ fn handle_mouse_input(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    mouse_coords: Res<MouseCoords>,
+    q_unit: Query<Entity, With<Unit>>,
 ) {
     // println!("Drag seelct: {}", game_cmds.drag_select);
     cmds.trigger(SetDragSelectEv);
 
     if input.just_pressed(MouseButton::Left) {
         cmds.trigger(SetStartBoxCoordsEv);
+        return;
     }
 
     if input.pressed(MouseButton::Left) {
@@ -114,20 +119,40 @@ fn handle_mouse_input(
         if game_cmds.drag_select {
             cmds.trigger(HandleDragSelectEv);
         }
+
+        return;
     }
 
     if input.just_released(MouseButton::Left) {
         cmds.trigger(ClearBoxCoordsEv);
 
-        if !game_cmds.drag_select && !game_cmds.is_any_selected {
-            cmds.trigger(DeselectAllEv);
-            cmds.trigger(SelectSingleUnitEv);
+        if !game_cmds.drag_select {
+            let Ok(rapier_ctx) = q_rapier.get_single() else {
+                return;
+            };
+
+            let (cam, cam_trans) = q_cam.single();
+            let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+
+            let mut hit_ent_option = None;
+            if let Some((hit_ent, _)) = hit {
+                if let Ok(_) = q_unit.get(hit_ent) {
+                    hit_ent_option = Some(hit_ent);
+                }
+            }
+
+            if !game_cmds.is_any_selected || hit_ent_option.is_some() {
+                cmds.trigger(DeselectAllEv);
+
+                if let Some(hit_ent) = hit_ent_option {
+                    cmds.trigger(SelectSingleUnitEv(hit_ent));
+                }
+            } else if hit_ent_option.is_none() {
+                cmds.trigger(SetUnitDestinationEv);
+            }
         }
 
-        if !game_cmds.drag_select && game_cmds.is_any_selected {
-            println!("set unit destintation");
-            cmds.trigger(SetUnitDestinationEv);
-        }
+        return;
     }
 
     if input.just_released(MouseButton::Right) {
@@ -401,20 +426,11 @@ pub fn update_cursor_img(
 }
 
 pub fn single_select(
-    _trigger: Trigger<SelectSingleUnitEv>,
+    trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
-    mouse_coords: Res<MouseCoords>,
-    q_unit: Query<Entity, With<Unit>>,
     my_assets: Res<MyAssets>,
-    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
-    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
 ) {
-    let Ok(rapier_ctx) = q_rapier.get_single() else {
-        return;
-    };
-
-    let (cam, cam_trans) = q_cam.single();
-    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+    let ent = trigger.0;
 
     // Closure that creates a new border for a given unit.
     let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
@@ -427,12 +443,8 @@ pub fn single_select(
         )
     };
 
-    if let Some((hit_ent, _)) = hit {
-        if let Ok(_) = q_unit.get(hit_ent) {
-            cmds.entity(hit_ent).insert(Selected);
-            cmds.spawn(border(hit_ent));
-        }
-    }
+    cmds.entity(ent).insert(Selected);
+    cmds.spawn(border(ent));
 }
 
 pub fn deselect_all(

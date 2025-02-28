@@ -3,6 +3,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding;
 
+mod base_building;
 mod camera;
 mod components;
 mod events;
@@ -12,6 +13,7 @@ mod resources;
 mod tank;
 mod utils;
 
+use base_building::BaseBuildingPlugin;
 use camera::CameraPlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
@@ -33,6 +35,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
+            BaseBuildingPlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
             WorldInspectorPlugin::new(),

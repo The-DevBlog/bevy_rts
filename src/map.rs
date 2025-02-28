@@ -2,7 +2,7 @@ use bevy::time::common_conditions::once_after_delay;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;
-use std::f32::{INFINITY, NEG_INFINITY};
+use std::f32::INFINITY;
 use std::time::Duration;
 
 use super::*;
@@ -93,7 +93,18 @@ fn spawn_obstacle(
         pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
     );
 
+    let size = 125.0;
+    let wall = (
+        Mesh3d(meshes.add(Cuboid::new(5.0, 5.0, size))),
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+        Transform::from_translation(Vec3::new(-175.0, 2.5, 0.0)),
+        Collider::cuboid(5.0 / 2.0, 5.0 / 2.0, size / 2.0),
+        pf_comps::RtsObj,
+        pf_comps::RtsObjSize(Vec2::new(5.0, size)),
+    );
+
     cmds.spawn(obst);
+    cmds.spawn(wall);
 }
 
 fn spawn_obstacle_2(

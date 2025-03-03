@@ -1,26 +1,15 @@
 use bevy::prelude::*;
 
-use crate::resources::MyAssets;
+use super::components::*;
+use crate::{cmd_interface::events::*, resources::MyAssets};
 
-pub struct CmdCenterUiPlugin;
+pub struct UiPlugin;
 
-impl Plugin for CmdCenterUiPlugin {
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, command_center_ui);
     }
 }
-
-#[derive(Component)]
-struct RootCtr;
-
-#[derive(Component)]
-struct MiniMapCtr;
-
-#[derive(Component)]
-struct IconsCtr;
-
-#[derive(Component)]
-struct BuildColumnsCtr;
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
     let root_ctr = (
@@ -99,9 +88,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         )
     };
 
-    let opt_ctr = || -> (BackgroundColor, BorderColor, Node, Name) {
+    let opt_ctr = || -> (Button, BorderColor, Node, Name) {
         (
-            BackgroundColor(Color::srgb(0.07, 0.07, 0.07)),
+            Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             Node {
                 height: Val::Percent(20.0),
@@ -129,33 +118,36 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         )
     };
 
-    cmds.spawn(root_ctr).with_children(|parent| {
-        parent.spawn(mini_map_ctr);
+    // Root Container
+    cmds.spawn(root_ctr).with_children(|p| {
+        //  Mini Map
+        p.spawn(mini_map_ctr);
 
-        parent.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_assets.cmd_cntr_structures.clone()));
-            parent.spawn(icon(my_assets.cmd_cntr_units.clone()));
+        // Buildings/Units Icons
+        p.spawn(icons_ctr).with_children(|parent| {
+            parent.spawn(icon(my_assets.cmd_intrfce_buildings.clone()));
+            parent.spawn(icon(my_assets.cmd_intrfce_units.clone()));
         });
 
-        parent.spawn(build_columns_ctr).with_children(|parent| {
-            parent
-                .spawn(build_column(5.0, 2.5))
-                .with_children(|parent| {
-                    parent.spawn(opt_ctr()).with_child(build_opt("Bldg 1"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Bldg 2"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Bldg 3"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Bldg 4"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Bldg 5"));
-                });
-            parent
-                .spawn(build_column(2.5, 5.0))
-                .with_children(|parent| {
-                    parent.spawn(opt_ctr()).with_child(build_opt("Unit 1"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Unit 2"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Unit 3"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Unit 4"));
-                    parent.spawn(opt_ctr()).with_child(build_opt("Unit 5"));
-                });
+        // Buildings/Units Columns
+        p.spawn(build_columns_ctr).with_children(|p| {
+            // Buildings Column
+            p.spawn(build_column(5.0, 2.5)).with_children(|p| {
+                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 1"));
+                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 2"));
+                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 3"));
+                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 4"));
+                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 5"));
+            });
+
+            // Units Column
+            p.spawn(build_column(2.5, 5.0)).with_children(|p| {
+                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 1"));
+                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 2"));
+                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 3"));
+                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 4"));
+                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 5"));
+            });
         });
     });
 }

@@ -4,7 +4,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding;
 
 mod camera;
-mod cmd_center_ui;
+mod cmd_interface;
 mod components;
 mod events;
 mod map;
@@ -14,7 +14,7 @@ mod tank;
 mod utils;
 
 use camera::CameraPlugin;
-use cmd_center_ui::CmdCenterUiPlugin;
+use cmd_interface::CmdInterfacePlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
@@ -35,7 +35,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            CmdCenterUiPlugin,
+            CmdInterfacePlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
             WorldInspectorPlugin::new(),

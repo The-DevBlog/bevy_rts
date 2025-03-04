@@ -3,6 +3,8 @@ use bevy::window::PrimaryWindow;
 
 use super::components::*;
 use super::events::*;
+use crate::events::DeselectAllEv;
+use crate::resources::CursorState;
 use crate::utils;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
@@ -37,7 +39,6 @@ fn handle_build_action_btn_interaction(
             Interaction::Pressed => {
                 border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER;
                 if input.just_pressed(MouseButton::Left) {
-                    println!("Building Structure!");
                     cmds.trigger(BuildStructureEv);
                 }
             }
@@ -51,7 +52,6 @@ fn handle_build_action_btn_interaction(
             Interaction::Pressed => {
                 border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER;
                 if input.just_pressed(MouseButton::Left) {
-                    println!("Building Unit!");
                     cmds.trigger(BuildUnitEv);
                 }
             }
@@ -63,6 +63,7 @@ fn handle_build_action_btn_interaction(
 fn cancel_build_structure(
     q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
     mut cmds: Commands,
+    mut cursor_state: ResMut<CursorState>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     if q_placeholder.is_empty() {
@@ -71,6 +72,7 @@ fn cancel_build_structure(
 
     if input.just_pressed(MouseButton::Right) {
         for placeholder_ent in q_placeholder.iter() {
+            *cursor_state = CursorState::Standard;
             cmds.entity(placeholder_ent).despawn_recursive();
         }
     }
@@ -79,6 +81,7 @@ fn cancel_build_structure(
 fn handle_build_structure(
     _trigger: Trigger<BuildStructureEv>,
     q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    mut cursor_state: ResMut<CursorState>,
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -94,6 +97,8 @@ fn handle_build_structure(
         MeshMaterial3d(materials.add(Color::srgb(0.27, 0.36, 0.46))),
     );
 
+    *cursor_state = CursorState::Build;
+    cmds.trigger(DeselectAllEv);
     cmds.spawn(bldg);
 }
 
@@ -101,7 +106,7 @@ fn sync_placeholder(
     mut q_placeholder: Query<&mut Transform, With<BuildStructurePlaceholder>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
     map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
-    window_q: Query<&Window, With<PrimaryWindow>>,
+    q_window: Query<&Window, With<PrimaryWindow>>,
 ) {
     let Ok(mut transform) = q_placeholder.get_single_mut() else {
         return;
@@ -109,7 +114,7 @@ fn sync_placeholder(
 
     let (cam, cam_trans) = cam_q.single();
 
-    let Some(viewport_cursor) = window_q.single().cursor_position() else {
+    let Some(viewport_cursor) = q_window.single().cursor_position() else {
         return;
     };
 

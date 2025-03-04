@@ -94,10 +94,11 @@ impl World {
     }
 }
 
-#[derive(Resource, Debug, PartialEq)]
+#[derive(Resource, Debug, PartialEq, Clone, Copy)]
 pub enum CursorState {
     Relocate,
     Select,
+    Build,
     Standard,
 }
 

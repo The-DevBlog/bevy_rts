@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::resources::CursorState;
+
 #[derive(Event)]
 pub struct SetBoxCoordsEv;
 
@@ -23,3 +25,6 @@ pub struct SelectSingleUnitEv(pub Entity);
 
 #[derive(Event)]
 pub struct DeselectAllEv;
+
+#[derive(Event)]
+pub struct UpdateCursorEv(pub CursorState);

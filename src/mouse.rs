@@ -22,12 +22,13 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     set_is_any_selected,
-                    update_cursor_img,
                     handle_mouse_input,
                     draw_drag_select_box,
                     set_drag_select,
                     sync_select_border_with_unit,
-                ),
+                    update_cursor_img,
+                )
+                    .chain(),
             )
             .add_observer(deselect_all)
             .add_observer(single_select)
@@ -374,8 +375,9 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut q_select: Query<Entity, With<Unit>>,
+    q_unit: Query<&Unit>,
     mut q_cursor: Query<&mut CursorIcon>,
+    mut q_window: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
         return;
@@ -385,20 +387,27 @@ pub fn update_cursor_img(
         return;
     };
 
+    let Ok(mut window) = q_window.get_single_mut() else {
+        return;
+    };
+
     let (cam, cam_trans) = q_cam.single();
+
     let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
-    if let Some((ent, _)) = hit {
-        for selected_entity in q_select.iter_mut() {
-            let tmp = selected_entity.index() == ent.index();
-
-            if tmp && !game_cmds.drag_select {
+    if hit.is_some()
+        // && !game_cmds.is_any_selected
+        && !game_cmds.drag_select
+        && *cursor_state != CursorState::Build
+    {
+        if let Some((hit_ent, _)) = hit {
+            if let Ok(_) = q_unit.get(hit_ent) {
                 *cursor_state = CursorState::Select;
             }
         }
     } else if game_cmds.is_any_selected && !game_cmds.drag_select {
         *cursor_state = CursorState::Relocate;
-    } else {
+    } else if !game_cmds.drag_select && *cursor_state != CursorState::Build {
         *cursor_state = CursorState::Standard;
     }
 
@@ -406,16 +415,24 @@ pub fn update_cursor_img(
     let hotspot: (u16, u16);
     match *cursor_state {
         CursorState::Relocate => {
+            window.cursor_options.visible = true;
             img = my_assets.cursor_relocate.clone();
             hotspot = (2, 2)
         }
         CursorState::Standard => {
+            window.cursor_options.visible = true;
             img = my_assets.cursor_standard.clone();
             hotspot = (0, 0)
         }
         CursorState::Select => {
+            window.cursor_options.visible = true;
             img = my_assets.cursor_select.clone();
             hotspot = (25, 25)
+        }
+        CursorState::Build => {
+            window.cursor_options.visible = false;
+            img = my_assets.cursor_relocate.clone();
+            hotspot = (0, 0)
         }
     }
 
@@ -460,6 +477,8 @@ pub fn deselect_all(
     for border_ent in q_border.iter_mut() {
         cmds.entity(border_ent).despawn_recursive();
     }
+
+    println!("Deselect all");
 }
 
 fn set_is_any_selected(q_selected: Query<&Selected>, mut game_cmds: ResMut<GameCommands>) {

@@ -13,7 +13,8 @@ impl Plugin for UiPlugin {
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
     let root_ctr = (
-        RootCtr,
+        CmdInterfaceCtr,
+        Button,
         Node {
             flex_direction: FlexDirection::Column,
             position_type: PositionType::Absolute,
@@ -25,7 +26,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
             ..default()
         },
         BackgroundColor(Color::srgb(0.29, 0.29, 0.3)),
-        Name::new("Command Center Ctr"),
+        Name::new("Command Interface Ctr"),
     );
 
     let mini_map_ctr = (

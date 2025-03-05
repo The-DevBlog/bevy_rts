@@ -22,7 +22,7 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     set_is_any_selected,
-                    handle_mouse_input,
+                    mouse_input,
                     draw_drag_select_box,
                     set_drag_select,
                     sync_select_border_with_unit,
@@ -97,7 +97,7 @@ fn spawn_drag_select_box(mut cmds: Commands) {
     cmds.spawn(select_box);
 }
 
-fn handle_mouse_input(
+fn mouse_input(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
@@ -106,7 +106,10 @@ fn handle_mouse_input(
     mouse_coords: Res<MouseCoords>,
     q_unit: Query<Entity, With<Unit>>,
 ) {
-    // println!("Drag seelct: {}", game_cmds.drag_select);
+    if game_cmds.hvr_cmd_interface {
+        return;
+    }
+
     cmds.trigger(SetDragSelectEv);
 
     if input.just_pressed(MouseButton::Left) {
@@ -162,6 +165,10 @@ fn handle_mouse_input(
 }
 
 fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
+    if game_cmds.hvr_cmd_interface {
+        return;
+    }
+
     let drag_threshold = 2.5;
     let viewport = box_coords.viewport.clone();
 
@@ -399,6 +406,7 @@ pub fn update_cursor_img(
         // && !game_cmds.is_any_selected
         && !game_cmds.drag_select
         && *cursor_state != CursorState::Build
+        && !game_cmds.hvr_cmd_interface
     {
         if let Some((hit_ent, _)) = hit {
             if let Ok(_) = q_unit.get(hit_ent) {
@@ -445,8 +453,13 @@ pub fn update_cursor_img(
 pub fn single_select(
     trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
+    game_cmds: Res<GameCommands>,
     my_assets: Res<MyAssets>,
 ) {
+    if game_cmds.hvr_cmd_interface {
+        return;
+    }
+
     let ent = trigger.0;
 
     // Closure that creates a new border for a given unit.

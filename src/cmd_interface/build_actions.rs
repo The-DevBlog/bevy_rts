@@ -7,6 +7,7 @@ use super::events::*;
 use crate::events::DeselectAllEv;
 use crate::resources::CursorState;
 use crate::resources::DbgOptions;
+use crate::resources::GameCommands;
 use crate::utils;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
@@ -20,7 +21,8 @@ impl Plugin for BuildActionsPlugin {
         app.add_systems(
             Update,
             (
-                handle_build_action_btn_interaction,
+                cmd_interface_interaction,
+                build_action_btn_interaction,
                 sync_placeholder,
                 build_structure,
                 cancel_build_structure,
@@ -30,7 +32,20 @@ impl Plugin for BuildActionsPlugin {
     }
 }
 
-fn handle_build_action_btn_interaction(
+fn cmd_interface_interaction(
+    mut game_cmds: ResMut<GameCommands>,
+    q_p: Query<&Interaction, With<CmdInterfaceCtr>>,
+    q_c: Query<&Interaction, Or<(With<Bldg>, With<Unit>)>>,
+) {
+    let hvr_parent = q_p.iter().any(|intrct| *intrct == Interaction::Hovered);
+    let hvr_child = q_c.iter().any(|intrct| *intrct == Interaction::Hovered);
+    let click_parent = q_p.iter().any(|intrct| *intrct == Interaction::Pressed);
+    let click_child = q_c.iter().any(|intrct| *intrct == Interaction::Pressed);
+
+    game_cmds.hvr_cmd_interface = hvr_parent || hvr_child || click_parent || click_child;
+}
+
+fn build_action_btn_interaction(
     mut cmds: Commands,
     input: Res<ButtonInput<MouseButton>>,
     mut q_btn_bldg: Query<(&Interaction, &mut BackgroundColor), With<Bldg>>,

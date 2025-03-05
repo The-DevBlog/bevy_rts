@@ -132,6 +132,7 @@ impl Default for CursorState {
 pub struct GameCommands {
     pub drag_select: bool,
     pub is_any_selected: bool,
+    pub hvr_cmd_interface: bool,
 }
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {

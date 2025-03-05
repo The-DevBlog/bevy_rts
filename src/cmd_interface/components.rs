@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 #[derive(Component)]
-pub struct RootCtr;
+pub struct CmdInterfaceCtr;
 
 #[derive(Component)]
 pub struct MiniMapCtr;

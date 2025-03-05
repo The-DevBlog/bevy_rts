@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use bevy_rapier3d::prelude::Collider;
 
 use super::components::*;
 use super::events::*;
@@ -122,7 +123,14 @@ fn build_structure(
             *cursor_state = CursorState::Standard;
             cmds.entity(placeholder_ent)
                 .remove::<BuildStructurePlaceholder>();
-            // cmds.entity(placeholder_ent).despawn_recursive();
+            cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
+            cmds.entity(placeholder_ent)
+                .insert(pf_comps::RtsObjSize(Vec2::new(25.0, 25.0))); // TODO: this needs to be dynamic
+            cmds.entity(placeholder_ent).insert(Collider::cuboid(
+                25.0 / 2.0,
+                25.0 / 2.0,
+                25.0 / 2.0,
+            )); // TODO: this needs to be dynamic
         }
 
         dbg.print("Build Structure");

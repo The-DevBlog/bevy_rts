@@ -6,12 +6,32 @@ pub struct ResourcesPlugin;
 
 impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
+        let args: Vec<String> = std::env::args().collect();
+        let debug_flag = args.contains(&String::from("-debug"));
+
         app.init_resource::<MouseCoords>()
             .init_resource::<SelectBox>()
             .init_resource::<GameCommands>()
             .init_resource::<MyAssets>()
             .init_resource::<CursorState>()
+            .insert_resource(DbgOptions {
+                print_statements: debug_flag,
+            })
             .add_systems(PreStartup, add_assets);
+    }
+}
+
+#[derive(Reflect, Resource, Clone, Copy)]
+#[reflect(Resource)]
+pub struct DbgOptions {
+    pub print_statements: bool,
+}
+
+impl DbgOptions {
+    pub fn print(&self, msg: &str) {
+        if self.print_statements {
+            println!("{}", msg);
+        }
     }
 }
 

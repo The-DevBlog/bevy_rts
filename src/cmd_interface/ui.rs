@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::components::*;
-use crate::{cmd_interface::events::*, resources::MyAssets};
+use crate::resources::MyAssets;
 
 pub struct UiPlugin;
 

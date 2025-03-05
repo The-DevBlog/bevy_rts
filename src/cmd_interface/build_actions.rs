@@ -5,6 +5,7 @@ use super::components::*;
 use super::events::*;
 use crate::events::DeselectAllEv;
 use crate::resources::CursorState;
+use crate::resources::DbgOptions;
 use crate::utils;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
@@ -20,10 +21,11 @@ impl Plugin for BuildActionsPlugin {
             (
                 handle_build_action_btn_interaction,
                 sync_placeholder,
+                build_structure,
                 cancel_build_structure,
             ),
         )
-        .add_observer(handle_build_structure);
+        .add_observer(select_structure);
     }
 }
 
@@ -39,7 +41,7 @@ fn handle_build_action_btn_interaction(
             Interaction::Pressed => {
                 border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER;
                 if input.just_pressed(MouseButton::Left) {
-                    cmds.trigger(BuildStructureEv);
+                    cmds.trigger(BuildStructureSelectEv);
                 }
             }
             _ => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
@@ -78,14 +80,16 @@ fn cancel_build_structure(
     }
 }
 
-fn handle_build_structure(
-    _trigger: Trigger<BuildStructureEv>,
+fn select_structure(
+    _trigger: Trigger<BuildStructureSelectEv>,
     q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    dbg: Res<DbgOptions>,
     mut cursor_state: ResMut<CursorState>,
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    dbg.print("Select Structure");
     for placeholder_ent in q_placeholder.iter() {
         cmds.entity(placeholder_ent).despawn_recursive();
     }
@@ -100,6 +104,27 @@ fn handle_build_structure(
     *cursor_state = CursorState::Build;
     cmds.trigger(DeselectAllEv);
     cmds.spawn(bldg);
+}
+
+fn build_structure(
+    mut cmds: Commands,
+    q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    dbg: Res<DbgOptions>,
+    input: Res<ButtonInput<MouseButton>>,
+    mut cursor_state: ResMut<CursorState>,
+) {
+    if *cursor_state != CursorState::Build {
+        return;
+    }
+
+    if input.just_pressed(MouseButton::Left) {
+        for placeholder_ent in q_placeholder.iter() {
+            *cursor_state = CursorState::Standard;
+            cmds.entity(placeholder_ent).despawn_recursive();
+        }
+
+        dbg.print("Build Structure");
+    }
 }
 
 fn sync_placeholder(

@@ -477,8 +477,6 @@ pub fn deselect_all(
     for border_ent in q_border.iter_mut() {
         cmds.entity(border_ent).despawn_recursive();
     }
-
-    println!("Deselect all");
 }
 
 fn set_is_any_selected(q_selected: Query<&Selected>, mut game_cmds: ResMut<GameCommands>) {

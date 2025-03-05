@@ -22,7 +22,8 @@ impl Plugin for BuildActionsPlugin {
             Update,
             (
                 cmd_interface_interaction,
-                build_action_btn_interaction,
+                build_structure_btn_interaction,
+                build_unit_btn_interaction,
                 sync_placeholder,
                 build_structure,
                 cancel_build_structure,
@@ -35,7 +36,7 @@ impl Plugin for BuildActionsPlugin {
 fn cmd_interface_interaction(
     mut game_cmds: ResMut<GameCommands>,
     q_p: Query<&Interaction, With<CmdInterfaceCtr>>,
-    q_c: Query<&Interaction, Or<(With<Bldg>, With<Unit>)>>,
+    q_c: Query<&Interaction, Or<(With<Structure>, With<Unit>)>>,
 ) {
     let hvr_parent = q_p.iter().any(|intrct| *intrct == Interaction::Hovered);
     let hvr_child = q_c.iter().any(|intrct| *intrct == Interaction::Hovered);
@@ -45,25 +46,30 @@ fn cmd_interface_interaction(
     game_cmds.hvr_cmd_interface = hvr_parent || hvr_child || click_parent || click_child;
 }
 
-fn build_action_btn_interaction(
+fn build_structure_btn_interaction(
     mut cmds: Commands,
     input: Res<ButtonInput<MouseButton>>,
-    mut q_btn_bldg: Query<(&Interaction, &mut BackgroundColor), With<Bldg>>,
-    mut q_btn_unit: Query<(&Interaction, &mut BackgroundColor), (With<Unit>, Without<Bldg>)>,
+    mut q_btn_bldg: Query<(&Interaction, &mut BackgroundColor, &Structure), With<Structure>>,
 ) {
-    for (interaction, mut border_clr) in q_btn_bldg.iter_mut() {
+    for (interaction, mut border_clr, structure) in q_btn_bldg.iter_mut() {
         match interaction {
             Interaction::None => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND,
             Interaction::Pressed => {
                 border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER;
                 if input.just_pressed(MouseButton::Left) {
-                    cmds.trigger(BuildStructureSelectEv);
+                    cmds.trigger(BuildStructureSelectEv(structure.clone()));
                 }
             }
             _ => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
         }
     }
+}
 
+fn build_unit_btn_interaction(
+    mut cmds: Commands,
+    input: Res<ButtonInput<MouseButton>>,
+    mut q_btn_unit: Query<(&Interaction, &mut BackgroundColor), With<Unit>>,
+) {
     for (interaction, mut border_clr) in q_btn_unit.iter_mut() {
         match interaction {
             Interaction::None => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND,
@@ -97,7 +103,7 @@ fn cancel_build_structure(
 }
 
 fn select_structure(
-    _trigger: Trigger<BuildStructureSelectEv>,
+    trigger: Trigger<BuildStructureSelectEv>,
     q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
     dbg: Res<DbgOptions>,
     mut cursor_state: ResMut<CursorState>,
@@ -106,15 +112,19 @@ fn select_structure(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     dbg.print("Select Structure");
+
+    let structure = trigger.event().0.clone();
+
     for placeholder_ent in q_placeholder.iter() {
         cmds.entity(placeholder_ent).despawn_recursive();
     }
 
+    let (shape, clr) = structure.build();
     let bldg = (
         BuildStructurePlaceholder,
         Transform::default(),
-        Mesh3d(meshes.add(Cuboid::new(25.0, 25.0, 25.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.27, 0.36, 0.46))),
+        Mesh3d(meshes.add(shape)),
+        MeshMaterial3d(materials.add(clr)),
     );
 
     *cursor_state = CursorState::Build;

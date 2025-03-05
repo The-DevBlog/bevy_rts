@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 
-#[derive(Event)]
-pub struct BuildStructureSelectEv;
+use super::components::Structure;
 
 #[derive(Event)]
-pub struct BuildStructureCommitEv;
+pub struct BuildStructureSelectEv(pub Structure);
 
 #[derive(Event)]
 pub struct BuildUnitEv;

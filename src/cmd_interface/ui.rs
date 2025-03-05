@@ -134,11 +134,16 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         p.spawn(build_columns_ctr).with_children(|p| {
             // Buildings Column
             p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 1"));
-                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 2"));
-                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 3"));
-                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 4"));
-                p.spawn((opt_ctr(), Bldg)).with_child(build_opt("Bldg 5"));
+                p.spawn((opt_ctr(), Structure(StructureType::Red)))
+                    .with_child(build_opt("Red Bldg"));
+                p.spawn((opt_ctr(), Structure(StructureType::Green)))
+                    .with_child(build_opt("Green Bldg"));
+                p.spawn((opt_ctr(), Structure(StructureType::Blue)))
+                    .with_child(build_opt("Blue Bldg"));
+                p.spawn((opt_ctr(), Structure(StructureType::Black)))
+                    .with_child(build_opt("Black Bldg"));
+                p.spawn((opt_ctr(), Structure(StructureType::White)))
+                    .with_child(build_opt("White bldg"));
             });
 
             // Units Column

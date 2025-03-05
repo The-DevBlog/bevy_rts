@@ -37,7 +37,7 @@ fn main() {
             DefaultPlugins,
             CmdInterfacePlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
-            RapierDebugRenderPlugin::default(),
+            // RapierDebugRenderPlugin::default(),
             WorldInspectorPlugin::new(),
             bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
             ResourcesPlugin,

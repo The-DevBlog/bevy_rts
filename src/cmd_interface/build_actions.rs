@@ -120,7 +120,9 @@ fn build_structure(
     if input.just_pressed(MouseButton::Left) {
         for placeholder_ent in q_placeholder.iter() {
             *cursor_state = CursorState::Standard;
-            cmds.entity(placeholder_ent).despawn_recursive();
+            cmds.entity(placeholder_ent)
+                .remove::<BuildStructurePlaceholder>();
+            // cmds.entity(placeholder_ent).despawn_recursive();
         }
 
         dbg.print("Build Structure");

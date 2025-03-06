@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rts_pathfinding::components::{self as pf_comps};
 
 #[derive(Component)]
 pub struct CmdInterfaceCtr;
@@ -29,13 +30,56 @@ pub enum StructureType {
 }
 
 impl Structure {
-    pub fn build(&self) -> (Cuboid, Color) {
+    pub fn build(
+        &self,
+        mut meshes: ResMut<Assets<Mesh>>,
+        mut materials: ResMut<Assets<StandardMaterial>>,
+    ) -> (
+        Mesh3d,
+        MeshMaterial3d<StandardMaterial>,
+        pf_comps::RtsObjSize,
+    ) {
         match self.0 {
-            StructureType::Red => (Cuboid::new(25.0, 25.0, 25.0), Color::srgb(1.0, 0.0, 0.0)),
-            StructureType::Green => (Cuboid::new(25.0, 25.0, 25.0), Color::srgb(0.0, 1.0, 0.0)),
-            StructureType::Blue => (Cuboid::new(25.0, 25.0, 25.0), Color::srgb(0.0, 0.0, 1.0)),
-            StructureType::Black => (Cuboid::new(25.0, 25.0, 25.0), Color::srgb(0.0, 0.0, 0.0)),
-            StructureType::White => (Cuboid::new(25.0, 25.0, 25.0), Color::srgb(1.0, 1.0, 1.0)),
+            StructureType::Red => {
+                let size = Vec3::new(25.0, 25.0, 25.0);
+                (
+                    Mesh3d(meshes.add(Cuboid::from_size(size))),
+                    MeshMaterial3d(materials.add(Color::srgb(1.0, 0.0, 0.0))),
+                    pf_comps::RtsObjSize(size.xz()),
+                )
+            }
+            StructureType::Green => {
+                let size = Vec3::new(25.0, 25.0, 25.0);
+                (
+                    Mesh3d(meshes.add(Cuboid::from_size(size))),
+                    MeshMaterial3d(materials.add(Color::srgb(0.0, 1.0, 0.0))),
+                    pf_comps::RtsObjSize(size.xz()),
+                )
+            }
+            StructureType::Blue => {
+                let size = Vec3::new(25.0, 25.0, 25.0);
+                (
+                    Mesh3d(meshes.add(Cuboid::from_size(size))),
+                    MeshMaterial3d(materials.add(Color::srgb(0.0, 0.0, 1.0))),
+                    pf_comps::RtsObjSize(size.xz()),
+                )
+            }
+            StructureType::Black => {
+                let size = Vec3::new(25.0, 25.0, 25.0);
+                (
+                    Mesh3d(meshes.add(Cuboid::from_size(size))),
+                    MeshMaterial3d(materials.add(Color::srgb(0.0, 0.0, 0.0))),
+                    pf_comps::RtsObjSize(size.xz()),
+                )
+            }
+            StructureType::White => {
+                let size = Vec3::new(25.0, 25.0, 25.0);
+                (
+                    Mesh3d(meshes.add(Cuboid::from_size(size))),
+                    MeshMaterial3d(materials.add(Color::srgb(1.0, 1.0, 1.0))),
+                    pf_comps::RtsObjSize(size.xz()),
+                )
+            }
         }
     }
 }

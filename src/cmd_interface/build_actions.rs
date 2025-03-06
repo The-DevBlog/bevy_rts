@@ -108,28 +108,22 @@ fn select_structure(
     dbg: Res<DbgOptions>,
     mut cursor_state: ResMut<CursorState>,
     mut cmds: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
 ) {
     dbg.print("Select Structure");
 
-    let structure = trigger.event().0.clone();
+    let placeholder = trigger.event().0.clone();
 
     for placeholder_ent in q_placeholder.iter() {
         cmds.entity(placeholder_ent).despawn_recursive();
     }
 
-    let (shape, clr) = structure.build();
-    let bldg = (
-        BuildStructurePlaceholder,
-        Transform::default(),
-        Mesh3d(meshes.add(shape)),
-        MeshMaterial3d(materials.add(clr)),
-    );
+    let placeholder_properties = placeholder.build(meshes, materials);
 
     *cursor_state = CursorState::Build;
     cmds.trigger(DeselectAllEv);
-    cmds.spawn(bldg);
+    cmds.spawn((placeholder_properties, BuildStructurePlaceholder));
 }
 
 fn build_structure(
@@ -149,8 +143,8 @@ fn build_structure(
             cmds.entity(placeholder_ent)
                 .remove::<BuildStructurePlaceholder>();
             cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
-            cmds.entity(placeholder_ent)
-                .insert(pf_comps::RtsObjSize(Vec2::new(25.0, 25.0))); // TODO: this needs to be dynamic
+            // cmds.entity(placeholder_ent)
+            //     .insert(pf_comps::RtsObjSize(Vec2::new(25.0, 25.0))); // TODO: this needs to be dynamic
             cmds.entity(placeholder_ent).insert(Collider::cuboid(
                 25.0 / 2.0,
                 25.0 / 2.0,

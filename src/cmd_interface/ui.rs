@@ -134,16 +134,16 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         p.spawn(build_columns_ctr).with_children(|p| {
             // Buildings Column
             p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                p.spawn((opt_ctr(), Structure(StructureType::Red)))
-                    .with_child(build_opt("Red Bldg"));
-                p.spawn((opt_ctr(), Structure(StructureType::Green)))
-                    .with_child(build_opt("Green Bldg"));
-                p.spawn((opt_ctr(), Structure(StructureType::Blue)))
-                    .with_child(build_opt("Blue Bldg"));
+                p.spawn((opt_ctr(), Structure(StructureType::Turret)))
+                    .with_child(build_opt(StructureType::Turret.to_string()));
+                p.spawn((opt_ctr(), Structure(StructureType::Barracks)))
+                    .with_child(build_opt(StructureType::Barracks.to_string()));
+                p.spawn((opt_ctr(), Structure(StructureType::VehicleDepot)))
+                    .with_child(build_opt(StructureType::VehicleDepot.to_string()));
                 p.spawn((opt_ctr(), Structure(StructureType::Black)))
-                    .with_child(build_opt("Black Bldg"));
+                    .with_child(build_opt(StructureType::Black.to_string()));
                 p.spawn((opt_ctr(), Structure(StructureType::White)))
-                    .with_child(build_opt("White bldg"));
+                    .with_child(build_opt(StructureType::White.to_string()));
             });
 
             // Units Column

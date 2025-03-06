@@ -22,11 +22,23 @@ pub struct Structure(pub StructureType);
 
 #[derive(Clone, Copy)]
 pub enum StructureType {
-    Red,
-    Green,
-    Blue,
+    Turret,
+    Barracks,
+    VehicleDepot,
     Black,
     White,
+}
+
+impl StructureType {
+    pub fn to_string(&self) -> &str {
+        match self {
+            StructureType::Turret => "Turret",
+            StructureType::Barracks => "Barracks",
+            StructureType::VehicleDepot => "Vehicle Depot",
+            StructureType::Black => "Black",
+            StructureType::White => "White",
+        }
+    }
 }
 
 impl Structure {
@@ -40,24 +52,24 @@ impl Structure {
         pf_comps::RtsObjSize,
     ) {
         match self.0 {
-            StructureType::Red => {
-                let size = Vec3::new(25.0, 25.0, 25.0);
+            StructureType::Turret => {
+                let size = Vec3::new(10.0, 7.5, 10.0);
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(1.0, 0.0, 0.0))),
                     pf_comps::RtsObjSize(size),
                 )
             }
-            StructureType::Green => {
-                let size = Vec3::new(25.0, 25.0, 25.0);
+            StructureType::Barracks => {
+                let size = Vec3::new(25.0, 17.5, 25.0);
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(0.0, 1.0, 0.0))),
                     pf_comps::RtsObjSize(size),
                 )
             }
-            StructureType::Blue => {
-                let size = Vec3::new(25.0, 25.0, 25.0);
+            StructureType::VehicleDepot => {
+                let size = Vec3::new(30.0, 25.0, 40.0);
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(0.0, 0.0, 1.0))),

@@ -128,7 +128,7 @@ fn select_structure(
 
 fn build_structure(
     mut cmds: Commands,
-    q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    q_placeholder: Query<(Entity, &pf_comps::RtsObjSize), With<BuildStructurePlaceholder>>,
     dbg: Res<DbgOptions>,
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_state: ResMut<CursorState>,
@@ -138,18 +138,16 @@ fn build_structure(
     }
 
     if input.just_pressed(MouseButton::Left) {
-        for placeholder_ent in q_placeholder.iter() {
+        for (placeholder_ent, size) in q_placeholder.iter() {
             *cursor_state = CursorState::Standard;
             cmds.entity(placeholder_ent)
                 .remove::<BuildStructurePlaceholder>();
             cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
-            // cmds.entity(placeholder_ent)
-            //     .insert(pf_comps::RtsObjSize(Vec2::new(25.0, 25.0))); // TODO: this needs to be dynamic
             cmds.entity(placeholder_ent).insert(Collider::cuboid(
-                25.0 / 2.0,
-                25.0 / 2.0,
-                25.0 / 2.0,
-            )); // TODO: this needs to be dynamic
+                size.0.x / 2.0,
+                size.0.y / 2.0,
+                size.0.z / 2.0,
+            ));
         }
 
         dbg.print("Build Structure");
@@ -157,12 +155,15 @@ fn build_structure(
 }
 
 fn sync_placeholder(
-    mut q_placeholder: Query<&mut Transform, With<BuildStructurePlaceholder>>,
+    mut q_placeholder: Query<
+        (&mut Transform, &pf_comps::RtsObjSize),
+        With<BuildStructurePlaceholder>,
+    >,
     cam_q: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
     map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
     q_window: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let Ok(mut transform) = q_placeholder.get_single_mut() else {
+    let Ok((mut transform, size)) = q_placeholder.get_single_mut() else {
         return;
     };
 
@@ -176,5 +177,6 @@ fn sync_placeholder(
 
     if let Some(coords) = coords {
         transform.translation = coords;
+        transform.translation.y = size.0.y / 2.0;
     }
 }

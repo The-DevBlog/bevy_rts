@@ -81,7 +81,7 @@ fn spawn_obstacle(
         Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
         pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec2::new(size, size)),
+        pf_comps::RtsObjSize(Vec3::new(size, size, size)),
     ));
 
     let obst = (
@@ -90,7 +90,7 @@ fn spawn_obstacle(
         Transform::from_translation(Vec3::new(-100.0, 6.0, 150.0)),
         Collider::cuboid(size, size / 2.0, size),
         pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
+        pf_comps::RtsObjSize(Vec3::new(size * 2.0, size, size * 2.0)),
     );
 
     let size = 125.0;
@@ -100,7 +100,7 @@ fn spawn_obstacle(
         Transform::from_translation(Vec3::new(-175.0, 2.5, 0.0)),
         Collider::cuboid(5.0 / 2.0, 5.0 / 2.0, size / 2.0),
         pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec2::new(5.0, size)),
+        pf_comps::RtsObjSize(Vec3::new(5.0, 5.0, size)),
     );
 
     cmds.spawn(obst);
@@ -119,7 +119,7 @@ fn spawn_obstacle_2(
         Transform::from_translation(Vec3::new(-100.0, 6.0, -150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
         pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec2::new(size, size)),
+        pf_comps::RtsObjSize(Vec3::new(size, size, size)),
     ));
 
     let obst = (
@@ -128,7 +128,7 @@ fn spawn_obstacle_2(
         Transform::from_translation(Vec3::new(100.0, 6.0, -150.0)),
         Collider::cuboid(size, size / 2.0, size),
         pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec2::new(size * 2.0, size * 2.0)),
+        pf_comps::RtsObjSize(Vec3::new(size * 2.0, size * 2.0, size * 2.0)),
     );
 
     cmds.spawn(obst);

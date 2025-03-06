@@ -45,7 +45,7 @@ impl Structure {
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(1.0, 0.0, 0.0))),
-                    pf_comps::RtsObjSize(size.xz()),
+                    pf_comps::RtsObjSize(size),
                 )
             }
             StructureType::Green => {
@@ -53,7 +53,7 @@ impl Structure {
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(0.0, 1.0, 0.0))),
-                    pf_comps::RtsObjSize(size.xz()),
+                    pf_comps::RtsObjSize(size),
                 )
             }
             StructureType::Blue => {
@@ -61,7 +61,7 @@ impl Structure {
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(0.0, 0.0, 1.0))),
-                    pf_comps::RtsObjSize(size.xz()),
+                    pf_comps::RtsObjSize(size),
                 )
             }
             StructureType::Black => {
@@ -69,7 +69,7 @@ impl Structure {
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(0.0, 0.0, 0.0))),
-                    pf_comps::RtsObjSize(size.xz()),
+                    pf_comps::RtsObjSize(size),
                 )
             }
             StructureType::White => {
@@ -77,7 +77,7 @@ impl Structure {
                 (
                     Mesh3d(meshes.add(Cuboid::from_size(size))),
                     MeshMaterial3d(materials.add(Color::srgb(1.0, 1.0, 1.0))),
-                    pf_comps::RtsObjSize(size.xz()),
+                    pf_comps::RtsObjSize(size),
                 )
             }
         }

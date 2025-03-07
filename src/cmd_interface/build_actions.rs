@@ -61,7 +61,7 @@ fn build_structure_btn_interaction(
                     cmds.trigger(BuildStructureSelectEv(structure.clone()));
                 }
             }
-            _ => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
+            Interaction::Hovered => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
         }
     }
 }
@@ -80,7 +80,7 @@ fn build_unit_btn_interaction(
                     cmds.trigger(BuildUnitEv);
                 }
             }
-            _ => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
+            Interaction::Hovered => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
         }
     }
 }

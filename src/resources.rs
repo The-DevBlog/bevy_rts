@@ -49,8 +49,8 @@ pub struct Images {
     pub cursor_standard: Handle<Image>,
     pub cmd_intrfce_structures: Handle<Image>,
     pub cmd_intrfce_units: Handle<Image>,
-    pub structure_barracks: Handle<Scene>,
-    pub structure_turret: Handle<Scene>,
+    pub structure_barracks: Handle<Image>,
+    pub structure_turret: Handle<Image>,
 }
 
 #[derive(Default)]
@@ -157,8 +157,8 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.cursor_standard = assets.load("imgs/cursor/standard.png");
     my_assets.images.cmd_intrfce_structures = assets.load("imgs/cmd_cntr_structures.png");
     my_assets.images.cmd_intrfce_units = assets.load("imgs/cmd_cntr_units.png");
-    my_assets.images.structure_barracks = assets.load("imgs/structures/barracks.glb#Scene0");
-    my_assets.images.structure_turret = assets.load("imgs/structures/turret.glb#Scene0");
+    my_assets.images.structure_barracks = assets.load("imgs/structures/barracks.png");
+    my_assets.images.structure_turret = assets.load("imgs/structures/turret.png");
 
     my_assets.models.barracks = assets.load("models/structures/barracks.glb#Scene0");
     my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");

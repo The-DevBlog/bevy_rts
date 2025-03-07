@@ -41,6 +41,16 @@ impl StructureType {
             StructureType::White => "White",
         }
     }
+
+    pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
+        match self {
+            StructureType::Turret => my_assets.images.structure_turret.clone(),
+            StructureType::Barracks => my_assets.images.structure_barracks.clone(),
+            StructureType::VehicleDepot => my_assets.images.structure_barracks.clone(),
+            StructureType::Black => my_assets.images.structure_turret.clone(),
+            StructureType::White => my_assets.images.structure_turret.clone(),
+        }
+    }
 }
 
 impl Structure {

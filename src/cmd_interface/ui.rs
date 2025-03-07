@@ -89,7 +89,28 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         )
     };
 
-    let opt_ctr = || -> (Button, BorderColor, Node, Name) {
+    let structure_opt_ctr = |structure: StructureType,
+                             assets: &Res<MyAssets>|
+     -> (Button, BorderColor, ImageNode, Node, Structure, Name) {
+        (
+            Button,
+            BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+            ImageNode {
+                image: structure.img(assets),
+                ..default()
+            },
+            Node {
+                height: Val::Percent(20.0),
+                margin: UiRect::bottom(Val::Px(5.0)),
+                border: UiRect::all(Val::Px(2.5)),
+                ..default()
+            },
+            Structure(structure),
+            Name::new("Build Option"),
+        )
+    };
+
+    let unit_opt_ctr = || -> (Button, BorderColor, Node, Name) {
         (
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
@@ -119,11 +140,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         )
     };
 
-    let spawn_btn = |parent: &mut ChildBuilder, structure: StructureType| {
-        parent
-            .spawn((opt_ctr(), Structure(structure)))
-            .with_child(build_opt(structure.to_string()));
-    };
+    let spawn_structure_btn =
+        |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyAssets>| {
+            parent
+                .spawn(structure_opt_ctr(structure, assets))
+                .with_child(build_opt(structure.to_string()));
+        };
 
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
@@ -141,20 +163,25 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
             .with_children(|p: &mut ChildBuilder<'_>| {
                 // Structures Column
                 p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                    spawn_btn(p, StructureType::Turret);
-                    spawn_btn(p, StructureType::Barracks);
-                    spawn_btn(p, StructureType::VehicleDepot);
-                    spawn_btn(p, StructureType::Black);
-                    spawn_btn(p, StructureType::White);
+                    spawn_structure_btn(p, StructureType::Turret, &my_assets);
+                    spawn_structure_btn(p, StructureType::Barracks, &my_assets);
+                    spawn_structure_btn(p, StructureType::VehicleDepot, &my_assets);
+                    spawn_structure_btn(p, StructureType::Black, &my_assets);
+                    spawn_structure_btn(p, StructureType::White, &my_assets);
                 });
 
                 // Units Column
                 p.spawn(build_column(2.5, 5.0)).with_children(|p| {
-                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 1"));
-                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 2"));
-                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 3"));
-                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 4"));
-                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 5"));
+                    p.spawn((unit_opt_ctr(), Unit))
+                        .with_child(build_opt("Unit 1"));
+                    p.spawn((unit_opt_ctr(), Unit))
+                        .with_child(build_opt("Unit 2"));
+                    p.spawn((unit_opt_ctr(), Unit))
+                        .with_child(build_opt("Unit 3"));
+                    p.spawn((unit_opt_ctr(), Unit))
+                        .with_child(build_opt("Unit 4"));
+                    p.spawn((unit_opt_ctr(), Unit))
+                        .with_child(build_opt("Unit 5"));
                 });
             });
     });

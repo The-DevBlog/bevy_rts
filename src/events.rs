@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use crate::resources::CursorState;
-
 #[derive(Event)]
 pub struct SetBoxCoordsEv;
 

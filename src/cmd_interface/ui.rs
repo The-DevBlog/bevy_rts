@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::components::*;
+use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::resources::MyAssets;
 
 pub struct UiPlugin;
@@ -97,6 +97,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             ImageNode {
                 image: structure.img(assets),
+                color: CLR_STRUCTURE_BUILD_ACTIONS,
                 ..default()
             },
             Node {

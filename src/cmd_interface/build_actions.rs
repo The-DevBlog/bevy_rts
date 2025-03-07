@@ -14,6 +14,8 @@ use bevy_rts_pathfinding::components::{self as pf_comps};
 
 const CLR_BUILD_ACTIONS_BACKGROUND: Color = Color::srgb(0.07, 0.07, 0.07);
 const CLR_BUILD_ACTIONS_BACKGROUND_HOVER: Color = Color::srgb(0.2, 0.2, 0.2);
+pub const CLR_STRUCTURE_BUILD_ACTIONS: Color = Color::srgb(0.87, 0.87, 1.0);
+const CLR_STRUCTURE_BUILD_ACTIONS_HVR: Color = Color::srgb(1.0, 1.0, 1.0);
 
 pub struct BuildActionsPlugin;
 
@@ -50,18 +52,18 @@ fn cmd_interface_interaction(
 fn build_structure_btn_interaction(
     mut cmds: Commands,
     input: Res<ButtonInput<MouseButton>>,
-    mut q_btn_bldg: Query<(&Interaction, &mut BackgroundColor, &Structure), With<Structure>>,
+    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure), With<Structure>>,
 ) {
-    for (interaction, mut border_clr, structure) in q_btn_bldg.iter_mut() {
+    for (interaction, mut img, structure) in q_btn_bldg.iter_mut() {
         match interaction {
-            Interaction::None => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND,
+            Interaction::None => img.color = CLR_STRUCTURE_BUILD_ACTIONS,
             Interaction::Pressed => {
-                border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER;
+                img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
                 if input.just_pressed(MouseButton::Left) {
                     cmds.trigger(BuildStructureSelectEv(structure.clone()));
                 }
             }
-            Interaction::Hovered => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
+            Interaction::Hovered => img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR,
         }
     }
 }
@@ -120,10 +122,11 @@ fn select_structure(
     }
 
     let placeholder_properties = placeholder.build(my_assets);
+    let transform = Transform::from_xyz(100000.0, 0.0, 0.0); // avoid bug flicker
 
     *cursor_state = CursorState::Build;
     cmds.trigger(DeselectAllEv);
-    cmds.spawn((placeholder_properties, BuildStructurePlaceholder));
+    cmds.spawn((placeholder_properties, transform, BuildStructurePlaceholder));
 }
 
 fn build_structure(

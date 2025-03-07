@@ -119,41 +119,43 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         )
     };
 
+    let spawn_btn = |parent: &mut ChildBuilder, structure: StructureType| {
+        parent
+            .spawn((opt_ctr(), Structure(structure)))
+            .with_child(build_opt(structure.to_string()));
+    };
+
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
         //  Mini Map
         p.spawn(mini_map_ctr);
 
-        // Buildings/Units Icons
+        // Structure/Units Icons
         p.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_assets.cmd_intrfce_buildings.clone()));
+            parent.spawn(icon(my_assets.cmd_intrfce_structures.clone()));
             parent.spawn(icon(my_assets.cmd_intrfce_units.clone()));
         });
 
-        // Buildings/Units Columns
-        p.spawn(build_columns_ctr).with_children(|p| {
-            // Buildings Column
-            p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                p.spawn((opt_ctr(), Structure(StructureType::Turret)))
-                    .with_child(build_opt(StructureType::Turret.to_string()));
-                p.spawn((opt_ctr(), Structure(StructureType::Barracks)))
-                    .with_child(build_opt(StructureType::Barracks.to_string()));
-                p.spawn((opt_ctr(), Structure(StructureType::VehicleDepot)))
-                    .with_child(build_opt(StructureType::VehicleDepot.to_string()));
-                p.spawn((opt_ctr(), Structure(StructureType::Black)))
-                    .with_child(build_opt(StructureType::Black.to_string()));
-                p.spawn((opt_ctr(), Structure(StructureType::White)))
-                    .with_child(build_opt(StructureType::White.to_string()));
-            });
+        // Structure/Units Columns
+        p.spawn(build_columns_ctr)
+            .with_children(|p: &mut ChildBuilder<'_>| {
+                // Structures Column
+                p.spawn(build_column(5.0, 2.5)).with_children(|p| {
+                    spawn_btn(p, StructureType::Turret);
+                    spawn_btn(p, StructureType::Barracks);
+                    spawn_btn(p, StructureType::VehicleDepot);
+                    spawn_btn(p, StructureType::Black);
+                    spawn_btn(p, StructureType::White);
+                });
 
-            // Units Column
-            p.spawn(build_column(2.5, 5.0)).with_children(|p| {
-                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 1"));
-                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 2"));
-                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 3"));
-                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 4"));
-                p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 5"));
+                // Units Column
+                p.spawn(build_column(2.5, 5.0)).with_children(|p| {
+                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 1"));
+                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 2"));
+                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 3"));
+                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 4"));
+                    p.spawn((opt_ctr(), Unit)).with_child(build_opt("Unit 5"));
+                });
             });
-        });
     });
 }

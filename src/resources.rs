@@ -41,7 +41,7 @@ pub struct MyAssets {
     pub cursor_relocate: Handle<Image>,
     pub cursor_select: Handle<Image>,
     pub cursor_standard: Handle<Image>,
-    pub cmd_intrfce_buildings: Handle<Image>,
+    pub cmd_intrfce_structures: Handle<Image>,
     pub cmd_intrfce_units: Handle<Image>,
 }
 
@@ -140,6 +140,6 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.cursor_relocate = assets.load("imgs/cursor/relocate.png");
     my_assets.cursor_select = assets.load("imgs/cursor/select.png");
     my_assets.cursor_standard = assets.load("imgs/cursor/standard.png");
-    my_assets.cmd_intrfce_buildings = assets.load("imgs/cmd_cntr_structures.png");
+    my_assets.cmd_intrfce_structures = assets.load("imgs/cmd_cntr_structures.png");
     my_assets.cmd_intrfce_units = assets.load("imgs/cmd_cntr_units.png");
 }

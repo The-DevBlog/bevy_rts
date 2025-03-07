@@ -73,6 +73,7 @@ fn spawn_obstacle(
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    assets: Res<AssetServer>,
 ) {
     let size = 12.0;
     cmds.spawn((
@@ -103,6 +104,12 @@ fn spawn_obstacle(
         pf_comps::RtsObjSize(Vec3::new(5.0, 5.0, size)),
     );
 
+    let test_cube = (
+        SceneRoot(assets.load("SizeTest.glb#Scene0")),
+        Transform::from_translation(Vec3::new(50.0, 0.0, 0.0)),
+    );
+
+    cmds.spawn(test_cube);
     cmds.spawn(obst);
     cmds.spawn(wall);
 }

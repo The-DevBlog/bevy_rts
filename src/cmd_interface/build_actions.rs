@@ -8,6 +8,7 @@ use crate::events::DeselectAllEv;
 use crate::resources::CursorState;
 use crate::resources::DbgOptions;
 use crate::resources::GameCommands;
+use crate::resources::MyAssets;
 use crate::utils;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
@@ -108,8 +109,7 @@ fn select_structure(
     dbg: Res<DbgOptions>,
     mut cursor_state: ResMut<CursorState>,
     mut cmds: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    my_assets: Res<MyAssets>,
 ) {
     dbg.print("Select Structure");
 
@@ -119,7 +119,7 @@ fn select_structure(
         cmds.entity(placeholder_ent).despawn_recursive();
     }
 
-    let placeholder_properties = placeholder.build(meshes, materials);
+    let placeholder_properties = placeholder.build(my_assets);
 
     *cursor_state = CursorState::Build;
     cmds.trigger(DeselectAllEv);

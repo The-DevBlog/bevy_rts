@@ -314,7 +314,7 @@ pub fn handle_drag_select(
         (
             UnitSelectBorder(ent),
             ImageNode {
-                image: my_assets.select_border.clone(),
+                image: my_assets.images.select_border.clone(),
                 ..default()
             },
         )
@@ -424,22 +424,22 @@ pub fn update_cursor_img(
     match *cursor_state {
         CursorState::Relocate => {
             window.cursor_options.visible = true;
-            img = my_assets.cursor_relocate.clone();
+            img = my_assets.images.cursor_relocate.clone();
             hotspot = (2, 2)
         }
         CursorState::Standard => {
             window.cursor_options.visible = true;
-            img = my_assets.cursor_standard.clone();
+            img = my_assets.images.cursor_standard.clone();
             hotspot = (0, 0)
         }
         CursorState::Select => {
             window.cursor_options.visible = true;
-            img = my_assets.cursor_select.clone();
+            img = my_assets.images.cursor_select.clone();
             hotspot = (25, 25)
         }
         CursorState::Build => {
             window.cursor_options.visible = false;
-            img = my_assets.cursor_relocate.clone();
+            img = my_assets.images.cursor_relocate.clone();
             hotspot = (0, 0)
         }
     }
@@ -467,7 +467,7 @@ pub fn single_select(
         (
             UnitSelectBorder(ent),
             ImageNode {
-                image: my_assets.select_border.clone(),
+                image: my_assets.images.select_border.clone(),
                 ..default()
             },
         )

@@ -132,8 +132,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
 
         // Structure/Units Icons
         p.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_assets.cmd_intrfce_structures.clone()));
-            parent.spawn(icon(my_assets.cmd_intrfce_units.clone()));
+            parent.spawn(icon(my_assets.images.cmd_intrfce_structures.clone()));
+            parent.spawn(icon(my_assets.images.cmd_intrfce_units.clone()));
         });
 
         // Structure/Units Columns

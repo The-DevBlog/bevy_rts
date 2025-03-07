@@ -37,12 +37,27 @@ impl DbgOptions {
 
 #[derive(Resource, Default)]
 pub struct MyAssets {
+    pub models: Models,
+    pub images: Images,
+}
+
+#[derive(Default)]
+pub struct Images {
     pub select_border: Handle<Image>,
     pub cursor_relocate: Handle<Image>,
     pub cursor_select: Handle<Image>,
     pub cursor_standard: Handle<Image>,
     pub cmd_intrfce_structures: Handle<Image>,
     pub cmd_intrfce_units: Handle<Image>,
+    pub structure_barracks: Handle<Scene>,
+    pub structure_turret: Handle<Scene>,
+}
+
+#[derive(Default)]
+pub struct Models {
+    pub barracks: Handle<Scene>,
+    pub tank: Handle<Scene>,
+    pub turret: Handle<Scene>,
 }
 
 #[derive(Resource, Default, Debug)]
@@ -136,10 +151,16 @@ pub struct GameCommands {
 }
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
-    my_assets.select_border = assets.load("imgs/select_border.png");
-    my_assets.cursor_relocate = assets.load("imgs/cursor/relocate.png");
-    my_assets.cursor_select = assets.load("imgs/cursor/select.png");
-    my_assets.cursor_standard = assets.load("imgs/cursor/standard.png");
-    my_assets.cmd_intrfce_structures = assets.load("imgs/cmd_cntr_structures.png");
-    my_assets.cmd_intrfce_units = assets.load("imgs/cmd_cntr_units.png");
+    my_assets.images.select_border = assets.load("imgs/select_border.png");
+    my_assets.images.cursor_relocate = assets.load("imgs/cursor/relocate.png");
+    my_assets.images.cursor_select = assets.load("imgs/cursor/select.png");
+    my_assets.images.cursor_standard = assets.load("imgs/cursor/standard.png");
+    my_assets.images.cmd_intrfce_structures = assets.load("imgs/cmd_cntr_structures.png");
+    my_assets.images.cmd_intrfce_units = assets.load("imgs/cmd_cntr_units.png");
+    my_assets.images.structure_barracks = assets.load("imgs/structures/barracks.glb#Scene0");
+    my_assets.images.structure_turret = assets.load("imgs/structures/turret.glb#Scene0");
+
+    my_assets.models.barracks = assets.load("models/structures/barracks.glb#Scene0");
+    my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");
+    my_assets.models.turret = assets.load("models/structures/turret.glb#Scene0");
 }

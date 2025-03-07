@@ -1,6 +1,8 @@
+use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_rapier3d::prelude::Collider;
+use bevy_rts_camera::RtsCameraControls;
 
 use super::components::*;
 use super::events::*;
@@ -92,8 +94,13 @@ fn cancel_build_structure(
     mut cmds: Commands,
     mut cursor_state: ResMut<CursorState>,
     input: Res<ButtonInput<MouseButton>>,
+    mut q_cam_ctrls: Query<&mut RtsCameraControls, With<pf_comps::GameCamera>>,
 ) {
     if q_placeholder.is_empty() {
+        if let Ok(mut ctrls) = q_cam_ctrls.get_single_mut() {
+            ctrls.zoom_sensitivity = 0.2;
+        };
+
         return;
     }
 
@@ -162,22 +169,31 @@ fn sync_placeholder(
         (&mut Transform, &pf_comps::RtsObjSize),
         With<BuildStructurePlaceholder>,
     >,
-    cam_q: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
+    mut cam_q: Query<
+        (&Camera, &GlobalTransform, &mut RtsCameraControls),
+        With<pf_comps::GameCamera>,
+    >,
     map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
     q_window: Query<&Window, With<PrimaryWindow>>,
+    mut mouse_wheel_events: EventReader<MouseWheel>,
 ) {
     let Ok((mut transform, size)) = q_placeholder.get_single_mut() else {
         return;
     };
 
-    let (cam, cam_trans) = cam_q.single();
+    const ROTATION_SPEED: f32 = 0.3;
+    for event in mouse_wheel_events.read() {
+        transform.rotate_y(event.y * ROTATION_SPEED);
+    }
+
+    let (cam, cam_trans, mut rts_cam_ctrls) = cam_q.single_mut();
+    rts_cam_ctrls.zoom_sensitivity = 0.0;
 
     let Some(viewport_cursor) = q_window.single().cursor_position() else {
         return;
     };
 
     let coords = utils::get_world_coords(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
-
     if let Some(coords) = coords {
         transform.translation = coords;
         transform.translation.y = size.0.y / 2.0;

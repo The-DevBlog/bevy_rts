@@ -24,31 +24,31 @@ pub struct Structure(pub StructureType);
 
 #[derive(Clone, Copy)]
 pub enum StructureType {
-    Turret,
+    Cannon,
     Barracks,
     VehicleDepot,
-    Black,
-    White,
+    ResearchCenter,
+    SatelliteDish,
 }
 
 impl StructureType {
     pub fn to_string(&self) -> &str {
         match self {
-            StructureType::Turret => "Turret",
+            StructureType::Cannon => "Cannon",
             StructureType::Barracks => "Barracks",
             StructureType::VehicleDepot => "Vehicle Depot",
-            StructureType::Black => "Black",
-            StructureType::White => "White",
+            StructureType::ResearchCenter => "Research Center",
+            StructureType::SatelliteDish => "Satellite Dish",
         }
     }
 
     pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
         match self {
-            StructureType::Turret => my_assets.images.structure_turret.clone(),
+            StructureType::Cannon => my_assets.images.structure_cannon.clone(),
             StructureType::Barracks => my_assets.images.structure_barracks.clone(),
-            StructureType::VehicleDepot => my_assets.images.structure_barracks.clone(),
-            StructureType::Black => my_assets.images.structure_turret.clone(),
-            StructureType::White => my_assets.images.structure_turret.clone(),
+            StructureType::VehicleDepot => my_assets.images.structure_vehicle_depot.clone(),
+            StructureType::ResearchCenter => my_assets.images.structure_research_center.clone(),
+            StructureType::SatelliteDish => my_assets.images.structure_satellite_dish.clone(),
         }
     }
 }
@@ -56,38 +56,38 @@ impl StructureType {
 impl Structure {
     pub fn build(&self, my_assets: Res<MyAssets>) -> (SceneRoot, pf_comps::RtsObjSize) {
         match self.0 {
-            StructureType::Turret => {
+            StructureType::Cannon => {
                 let size = Vec3::new(10.0, 0.75, 10.0);
                 (
-                    SceneRoot(my_assets.models.turret.clone()),
+                    SceneRoot(my_assets.models.cannon.clone()),
                     pf_comps::RtsObjSize(size),
                 )
             }
             StructureType::Barracks => {
-                let size = Vec3::new(40.0, 16.0, 30.0);
+                let size = Vec3::new(30.0, 12.0, 25.0);
                 (
                     SceneRoot(my_assets.models.barracks.clone()),
                     pf_comps::RtsObjSize(size),
                 )
             }
             StructureType::VehicleDepot => {
-                let size = Vec3::new(30.0, 25.0, 40.0);
+                let size = Vec3::new(60.0, 4.0, 40.0);
                 (
-                    SceneRoot(my_assets.models.barracks.clone()),
+                    SceneRoot(my_assets.models.vehicle_depot.clone()),
                     pf_comps::RtsObjSize(size),
                 )
             }
-            StructureType::Black => {
-                let size = Vec3::new(25.0, 25.0, 25.0);
+            StructureType::ResearchCenter => {
+                let size = Vec3::new(30.0, 18.0, 30.0);
                 (
-                    SceneRoot(my_assets.models.barracks.clone()),
+                    SceneRoot(my_assets.models.research_center.clone()),
                     pf_comps::RtsObjSize(size),
                 )
             }
-            StructureType::White => {
-                let size = Vec3::new(25.0, 25.0, 25.0);
+            StructureType::SatelliteDish => {
+                let size = Vec3::new(32.0, 8.0, 32.0);
                 (
-                    SceneRoot(my_assets.models.barracks.clone()),
+                    SceneRoot(my_assets.models.satellite_dish.clone()),
                     pf_comps::RtsObjSize(size),
                 )
             }

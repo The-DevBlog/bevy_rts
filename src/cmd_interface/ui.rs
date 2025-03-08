@@ -128,7 +128,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
     let build_opt = |txt: &str| -> (Node, Text, TextFont, TextLayout, Name) {
         (
             Node {
-                margin: UiRect::all(Val::Auto),
+                margin: UiRect::new(Val::Auto, Val::Auto, Val::Auto, Val::Percent(0.0)),
                 ..default()
             },
             Text::new(txt),
@@ -164,11 +164,11 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
             .with_children(|p: &mut ChildBuilder<'_>| {
                 // Structures Column
                 p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                    spawn_structure_btn(p, StructureType::Turret, &my_assets);
+                    spawn_structure_btn(p, StructureType::Cannon, &my_assets);
                     spawn_structure_btn(p, StructureType::Barracks, &my_assets);
                     spawn_structure_btn(p, StructureType::VehicleDepot, &my_assets);
-                    spawn_structure_btn(p, StructureType::Black, &my_assets);
-                    spawn_structure_btn(p, StructureType::White, &my_assets);
+                    spawn_structure_btn(p, StructureType::ResearchCenter, &my_assets);
+                    spawn_structure_btn(p, StructureType::SatelliteDish, &my_assets);
                 });
 
                 // Units Column

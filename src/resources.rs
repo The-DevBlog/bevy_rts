@@ -50,14 +50,20 @@ pub struct Images {
     pub cmd_intrfce_structures: Handle<Image>,
     pub cmd_intrfce_units: Handle<Image>,
     pub structure_barracks: Handle<Image>,
-    pub structure_turret: Handle<Image>,
+    pub structure_cannon: Handle<Image>,
+    pub structure_vehicle_depot: Handle<Image>,
+    pub structure_research_center: Handle<Image>,
+    pub structure_satellite_dish: Handle<Image>,
 }
 
 #[derive(Default)]
 pub struct Models {
     pub barracks: Handle<Scene>,
     pub tank: Handle<Scene>,
-    pub turret: Handle<Scene>,
+    pub cannon: Handle<Scene>,
+    pub vehicle_depot: Handle<Scene>,
+    pub research_center: Handle<Scene>,
+    pub satellite_dish: Handle<Scene>,
 }
 
 #[derive(Resource, Default, Debug)]
@@ -158,9 +164,15 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.cmd_intrfce_structures = assets.load("imgs/cmd_cntr_structures.png");
     my_assets.images.cmd_intrfce_units = assets.load("imgs/cmd_cntr_units.png");
     my_assets.images.structure_barracks = assets.load("imgs/structures/barracks.png");
-    my_assets.images.structure_turret = assets.load("imgs/structures/turret.png");
+    my_assets.images.structure_cannon = assets.load("imgs/structures/cannon.png");
+    my_assets.images.structure_vehicle_depot = assets.load("imgs/structures/vehicle_depot.png");
+    my_assets.images.structure_research_center = assets.load("imgs/structures/research_center.png");
+    my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
 
     my_assets.models.barracks = assets.load("models/structures/barracks.glb#Scene0");
     my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");
-    my_assets.models.turret = assets.load("models/structures/turret.glb#Scene0");
+    my_assets.models.cannon = assets.load("models/structures/cannon.glb#Scene0");
+    my_assets.models.vehicle_depot = assets.load("models/structures/vehicle_depot.glb#Scene0");
+    my_assets.models.research_center = assets.load("models/structures/research_center.glb#Scene0");
+    my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.glb#Scene0");
 }

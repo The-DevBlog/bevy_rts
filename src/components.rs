@@ -76,7 +76,7 @@ impl UnitBundle {
             }),
             rigid_body: RigidBody::Dynamic,
             scene_root: SceneRoot(scene), // TODO: uncomment
-            size: pf_comps::RtsObjSize(Vec2::new(size.x * 2.0, size.z * 2.0)), // TODO: uncomment
+            size: pf_comps::RtsObjSize(Vec3::new(size.x * 2.0, size.y * 2.0, size.z * 2.0)), // TODO: uncomment
             speed: Speed(speed),
             transform,
             transform_global: GlobalTransform::default(),

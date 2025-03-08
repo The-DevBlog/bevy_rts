@@ -22,12 +22,13 @@ impl Plugin for MousePlugin {
                 Update,
                 (
                     set_is_any_selected,
-                    update_cursor_img,
-                    handle_mouse_input,
+                    mouse_input,
                     draw_drag_select_box,
                     set_drag_select,
                     sync_select_border_with_unit,
-                ),
+                    update_cursor_img,
+                )
+                    .chain(),
             )
             .add_observer(deselect_all)
             .add_observer(single_select)
@@ -96,7 +97,7 @@ fn spawn_drag_select_box(mut cmds: Commands) {
     cmds.spawn(select_box);
 }
 
-fn handle_mouse_input(
+fn mouse_input(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
@@ -105,7 +106,10 @@ fn handle_mouse_input(
     mouse_coords: Res<MouseCoords>,
     q_unit: Query<Entity, With<Unit>>,
 ) {
-    // println!("Drag seelct: {}", game_cmds.drag_select);
+    if game_cmds.hvr_cmd_interface {
+        return;
+    }
+
     cmds.trigger(SetDragSelectEv);
 
     if input.just_pressed(MouseButton::Left) {
@@ -161,6 +165,10 @@ fn handle_mouse_input(
 }
 
 fn set_drag_select(box_coords: Res<SelectBox>, mut game_cmds: ResMut<GameCommands>) {
+    if game_cmds.hvr_cmd_interface {
+        return;
+    }
+
     let drag_threshold = 2.5;
     let viewport = box_coords.viewport.clone();
 
@@ -306,7 +314,7 @@ pub fn handle_drag_select(
         (
             UnitSelectBorder(ent),
             ImageNode {
-                image: my_assets.select_border.clone(),
+                image: my_assets.images.select_border.clone(),
                 ..default()
             },
         )
@@ -374,8 +382,9 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut q_select: Query<Entity, With<Unit>>,
+    q_unit: Query<&Unit>,
     mut q_cursor: Query<&mut CursorIcon>,
+    mut q_window: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let Ok(rapier_ctx) = q_rapier.get_single() else {
         return;
@@ -385,20 +394,28 @@ pub fn update_cursor_img(
         return;
     };
 
+    let Ok(mut window) = q_window.get_single_mut() else {
+        return;
+    };
+
     let (cam, cam_trans) = q_cam.single();
+
     let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
-    if let Some((ent, _)) = hit {
-        for selected_entity in q_select.iter_mut() {
-            let tmp = selected_entity.index() == ent.index();
-
-            if tmp && !game_cmds.drag_select {
+    if hit.is_some()
+        // && !game_cmds.is_any_selected
+        && !game_cmds.drag_select
+        && *cursor_state != CursorState::Build
+        && !game_cmds.hvr_cmd_interface
+    {
+        if let Some((hit_ent, _)) = hit {
+            if let Ok(_) = q_unit.get(hit_ent) {
                 *cursor_state = CursorState::Select;
             }
         }
     } else if game_cmds.is_any_selected && !game_cmds.drag_select {
         *cursor_state = CursorState::Relocate;
-    } else {
+    } else if !game_cmds.drag_select && *cursor_state != CursorState::Build {
         *cursor_state = CursorState::Standard;
     }
 
@@ -406,16 +423,24 @@ pub fn update_cursor_img(
     let hotspot: (u16, u16);
     match *cursor_state {
         CursorState::Relocate => {
-            img = my_assets.cursor_relocate.clone();
+            window.cursor_options.visible = true;
+            img = my_assets.images.cursor_relocate.clone();
             hotspot = (2, 2)
         }
         CursorState::Standard => {
-            img = my_assets.cursor_standard.clone();
+            window.cursor_options.visible = true;
+            img = my_assets.images.cursor_standard.clone();
             hotspot = (0, 0)
         }
         CursorState::Select => {
-            img = my_assets.cursor_select.clone();
+            window.cursor_options.visible = true;
+            img = my_assets.images.cursor_select.clone();
             hotspot = (25, 25)
+        }
+        CursorState::Build => {
+            window.cursor_options.visible = false;
+            img = my_assets.images.cursor_relocate.clone();
+            hotspot = (0, 0)
         }
     }
 
@@ -428,8 +453,13 @@ pub fn update_cursor_img(
 pub fn single_select(
     trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
+    game_cmds: Res<GameCommands>,
     my_assets: Res<MyAssets>,
 ) {
+    if game_cmds.hvr_cmd_interface {
+        return;
+    }
+
     let ent = trigger.0;
 
     // Closure that creates a new border for a given unit.
@@ -437,7 +467,7 @@ pub fn single_select(
         (
             UnitSelectBorder(ent),
             ImageNode {
-                image: my_assets.select_border.clone(),
+                image: my_assets.images.select_border.clone(),
                 ..default()
             },
         )

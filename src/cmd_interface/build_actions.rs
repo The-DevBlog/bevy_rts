@@ -172,7 +172,6 @@ fn build_structure(
             size.0.y / 2.0,
             size.0.z / 2.0,
         ));
-        // }
 
         dbg.print("Build Structure");
     }

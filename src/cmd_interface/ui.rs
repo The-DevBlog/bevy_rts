@@ -11,6 +11,15 @@ impl Plugin for UiPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct MiniMapCtr;
+
+#[derive(Component)]
+pub struct BuildColumnsCtr;
+
+#[derive(Component)]
+pub struct IconsCtr;
+
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
     let root_ctr = (
         CmdInterfaceCtr,

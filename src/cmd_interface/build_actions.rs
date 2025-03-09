@@ -211,11 +211,11 @@ fn sync_placeholder(
 
 fn validate_structure_placement(
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
-    mut q_placeholder: Query<(Entity, &BuildStructurePlaceholder, &mut SceneRoot)>,
-    q_collider: Query<&Collider, With<pf_comps::MapBase>>, // added query to check sensor flag
+    mut q_placeholder: Query<(Entity, &mut BuildStructurePlaceholder, &mut SceneRoot)>,
+    q_collider: Query<&Collider, With<pf_comps::MapBase>>,
     my_assets: Res<MyAssets>,
 ) {
-    let Ok((placeholder_ent, placeholder, mut scene)) = q_placeholder.get_single_mut() else {
+    let Ok((placeholder_ent, mut placeholder, mut scene)) = q_placeholder.get_single_mut() else {
         return;
     };
 
@@ -223,9 +223,9 @@ fn validate_structure_placement(
         return;
     };
 
-    // Iterate over intersections for the placeholder entity.
     let mut is_colliding = false;
     for (ent_1, ent_2, intersect) in rapier_ctx.intersection_pairs_with(placeholder_ent) {
+        // exclude any collisions with the map base
         if q_collider.get(ent_1).is_ok() || q_collider.get(ent_2).is_ok() {
             continue;
         }
@@ -234,10 +234,12 @@ fn validate_structure_placement(
     }
 
     if is_colliding {
+        placeholder.is_valid = false;
         placeholder
             .structure
             .invalid_placement(&my_assets, &mut scene);
     } else {
+        placeholder.is_valid = true;
         placeholder
             .structure
             .valid_placement(&my_assets, &mut scene);

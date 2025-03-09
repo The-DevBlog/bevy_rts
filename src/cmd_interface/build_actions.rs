@@ -133,32 +133,46 @@ fn select_structure(
 
     *cursor_state = CursorState::Build;
     cmds.trigger(DeselectAllEv);
-    cmds.spawn((placeholder_properties, transform, BuildStructurePlaceholder));
+    cmds.spawn((
+        placeholder_properties,
+        transform,
+        placeholder,
+        BuildStructurePlaceholder,
+    ));
 }
 
 fn build_structure(
     mut cmds: Commands,
-    q_placeholder: Query<(Entity, &pf_comps::RtsObjSize), With<BuildStructurePlaceholder>>,
+    mut q_placeholder: Query<
+        (Entity, &Structure, &mut SceneRoot, &pf_comps::RtsObjSize),
+        With<BuildStructurePlaceholder>,
+    >,
     dbg: Res<DbgOptions>,
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_state: ResMut<CursorState>,
+    my_assets: Res<MyAssets>,
 ) {
     if *cursor_state != CursorState::Build {
         return;
     }
 
     if input.just_pressed(MouseButton::Left) {
-        for (placeholder_ent, size) in q_placeholder.iter() {
-            *cursor_state = CursorState::Standard;
-            cmds.entity(placeholder_ent)
-                .remove::<BuildStructurePlaceholder>();
-            cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
-            cmds.entity(placeholder_ent).insert(Collider::cuboid(
-                size.0.x / 2.0,
-                size.0.y / 2.0,
-                size.0.z / 2.0,
-            ));
-        }
+        let Ok((placeholder_ent, structure, mut scene, size)) = q_placeholder.get_single_mut()
+        else {
+            return;
+        };
+
+        *cursor_state = CursorState::Standard;
+        structure.place(&my_assets, &mut scene);
+        cmds.entity(placeholder_ent)
+            .remove::<BuildStructurePlaceholder>();
+        cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
+        cmds.entity(placeholder_ent).insert(Collider::cuboid(
+            size.0.x / 2.0,
+            size.0.y / 2.0,
+            size.0.z / 2.0,
+        ));
+        // }
 
         dbg.print("Build Structure");
     }

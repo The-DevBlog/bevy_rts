@@ -294,7 +294,7 @@
 	"buffers":[
 		{
 			"byteLength":4352,
-			"uri":"bin/cannon.bin"
+			"uri":"gltf_bin/cannon.bin"
 		}
 	]
 }

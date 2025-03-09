@@ -120,7 +120,7 @@
 	"buffers":[
 		{
 			"byteLength":6552,
-			"uri":"bin/vehicle_depot.bin"
+			"uri":"gltf_bin/vehicle_depot.bin"
 		}
 	]
 }

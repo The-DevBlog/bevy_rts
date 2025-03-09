@@ -938,7 +938,7 @@
 	"buffers":[
 		{
 			"byteLength":10464,
-			"uri":"bin/satellite_dish.bin"
+			"uri":"gltf_bin/satellite_dish.bin"
 		}
 	]
 }

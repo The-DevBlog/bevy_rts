@@ -126,7 +126,7 @@
 	"buffers":[
 		{
 			"byteLength":1208,
-			"uri":"bin/barracks.bin"
+			"uri":"gltf_bin/barracks.bin"
 		}
 	]
 }

@@ -59,16 +59,26 @@ pub struct Images {
 #[derive(Default)]
 pub struct Models {
     pub barracks: Handle<Scene>,
-    pub barracks_placeholder: Handle<Scene>,
     pub tank: Handle<Scene>,
     pub cannon: Handle<Scene>,
-    pub cannon_placeholder: Handle<Scene>,
     pub vehicle_depot: Handle<Scene>,
-    pub vehicle_depot_placeholder: Handle<Scene>,
     pub research_center: Handle<Scene>,
-    pub research_center_placeholder: Handle<Scene>,
     pub satellite_dish: Handle<Scene>,
-    pub satellite_dish_placeholder: Handle<Scene>,
+    pub placeholders: Placeholders,
+}
+
+#[derive(Default)]
+pub struct Placeholders {
+    pub barracks_valid: Handle<Scene>,
+    pub barracks_invalid: Handle<Scene>,
+    pub cannon_valid: Handle<Scene>,
+    pub cannon_invalid: Handle<Scene>,
+    pub vehicle_depot_valid: Handle<Scene>,
+    pub vehicle_depot_invalid: Handle<Scene>,
+    pub research_center_valid: Handle<Scene>,
+    pub research_center_invalid: Handle<Scene>,
+    pub satellite_dish_valid: Handle<Scene>,
+    pub satellite_dish_invalid: Handle<Scene>,
 }
 
 #[derive(Resource, Default, Debug)]
@@ -175,19 +185,19 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
 
     my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");
-    my_assets.models.barracks_placeholder =
-        assets.load("models/structures/placeholders/barracks.gltf#Scene0");
+    my_assets.models.placeholders.barracks_valid =
+        assets.load("models/structures/placeholders/valid/barracks.gltf#Scene0");
     my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");
     my_assets.models.cannon = assets.load("models/structures/cannon.gltf#Scene0");
-    my_assets.models.cannon_placeholder =
-        assets.load("models/structures/placeholders/cannon.gltf#Scene0");
+    my_assets.models.placeholders.cannon_valid =
+        assets.load("models/structures/placeholders/valid/cannon.gltf#Scene0");
     my_assets.models.vehicle_depot = assets.load("models/structures/vehicle_depot.gltf#Scene0");
-    my_assets.models.vehicle_depot_placeholder =
-        assets.load("models/structures/placeholders/vehicle_depot.gltf#Scene0");
+    my_assets.models.placeholders.vehicle_depot_valid =
+        assets.load("models/structures/placeholders/valid/vehicle_depot.gltf#Scene0");
     my_assets.models.research_center = assets.load("models/structures/research_center.gltf#Scene0");
-    my_assets.models.research_center_placeholder =
-        assets.load("models/structures/placeholders/research_center.gltf#Scene0");
+    my_assets.models.placeholders.research_center_valid =
+        assets.load("models/structures/placeholders/valid/research_center.gltf#Scene0");
     my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.gltf#Scene0");
-    my_assets.models.satellite_dish_placeholder =
-        assets.load("models/structures/placeholders/satellite_dish.gltf#Scene0");
+    my_assets.models.placeholders.satellite_dish_valid =
+        assets.load("models/structures/placeholders/valid/satellite_dish.gltf#Scene0");
 }

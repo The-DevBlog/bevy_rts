@@ -169,10 +169,10 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.structure_research_center = assets.load("imgs/structures/research_center.png");
     my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
 
-    my_assets.models.barracks = assets.load("models/structures/barracks.glb#Scene0");
+    my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");
     my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");
-    my_assets.models.cannon = assets.load("models/structures/cannon.glb#Scene0");
-    my_assets.models.vehicle_depot = assets.load("models/structures/vehicle_depot.glb#Scene0");
-    my_assets.models.research_center = assets.load("models/structures/research_center.glb#Scene0");
-    my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.glb#Scene0");
+    my_assets.models.cannon = assets.load("models/structures/cannon.gltf#Scene0");
+    my_assets.models.vehicle_depot = assets.load("models/structures/vehicle_depot.gltf#Scene0");
+    my_assets.models.research_center = assets.load("models/structures/research_center.gltf#Scene0");
+    my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.gltf#Scene0");
 }

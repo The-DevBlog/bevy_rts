@@ -172,6 +172,7 @@ pub struct GameCommands {
 }
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
+    // images
     my_assets.images.select_border = assets.load("imgs/select_border.png");
     my_assets.images.cursor_relocate = assets.load("imgs/cursor/relocate.png");
     my_assets.images.cursor_select = assets.load("imgs/cursor/select.png");
@@ -184,20 +185,25 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.structure_research_center = assets.load("imgs/structures/research_center.png");
     my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
 
+    // units
+    my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");
+
+    // structures
     my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");
+    my_assets.models.cannon = assets.load("models/structures/cannon.gltf#Scene0");
+    my_assets.models.vehicle_depot = assets.load("models/structures/vehicle_depot.gltf#Scene0");
+    my_assets.models.research_center = assets.load("models/structures/research_center.gltf#Scene0");
+    my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.gltf#Scene0");
+
+    // structure placeholders valid
     my_assets.models.placeholders.barracks_valid =
         assets.load("models/structures/placeholders/valid/barracks.gltf#Scene0");
-    my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");
-    my_assets.models.cannon = assets.load("models/structures/cannon.gltf#Scene0");
     my_assets.models.placeholders.cannon_valid =
         assets.load("models/structures/placeholders/valid/cannon.gltf#Scene0");
-    my_assets.models.vehicle_depot = assets.load("models/structures/vehicle_depot.gltf#Scene0");
     my_assets.models.placeholders.vehicle_depot_valid =
         assets.load("models/structures/placeholders/valid/vehicle_depot.gltf#Scene0");
-    my_assets.models.research_center = assets.load("models/structures/research_center.gltf#Scene0");
     my_assets.models.placeholders.research_center_valid =
         assets.load("models/structures/placeholders/valid/research_center.gltf#Scene0");
-    my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.gltf#Scene0");
     my_assets.models.placeholders.satellite_dish_valid =
         assets.load("models/structures/placeholders/valid/satellite_dish.gltf#Scene0");
 }

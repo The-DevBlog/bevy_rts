@@ -206,4 +206,16 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
         assets.load("models/structures/placeholders/valid/research_center.gltf#Scene0");
     my_assets.models.placeholders.satellite_dish_valid =
         assets.load("models/structures/placeholders/valid/satellite_dish.gltf#Scene0");
+
+    // structure placeholders invalid
+    my_assets.models.placeholders.barracks_invalid =
+        assets.load("models/structures/placeholders/invalid/barracks.gltf#Scene0");
+    my_assets.models.placeholders.cannon_invalid =
+        assets.load("models/structures/placeholders/invalid/cannon.gltf#Scene0");
+    my_assets.models.placeholders.vehicle_depot_invalid =
+        assets.load("models/structures/placeholders/invalid/vehicle_depot.gltf#Scene0");
+    my_assets.models.placeholders.research_center_invalid =
+        assets.load("models/structures/placeholders/invalid/research_center.gltf#Scene0");
+    my_assets.models.placeholders.satellite_dish_invalid =
+        assets.load("models/structures/placeholders/invalid/satellite_dish.gltf#Scene0");
 }

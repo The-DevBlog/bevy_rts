@@ -1,4 +1,5 @@
-use bevy::prelude::*;
+use bevy::{math::VectorSpace, prelude::*};
+use bevy_rapier3d::prelude::{Collider, Sensor};
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
 use crate::resources::MyAssets;
@@ -51,44 +52,48 @@ impl Structure {
         }
     }
 
-    pub fn build(&self, my_assets: Res<MyAssets>) -> (SceneRoot, pf_comps::RtsObjSize) {
+    pub fn build_placeholder(
+        &self,
+        my_assets: Res<MyAssets>,
+    ) -> (
+        SceneRoot,
+        Collider,
+        Sensor,
+        BuildStructurePlaceholder,
+        pf_comps::RtsObjSize,
+    ) {
+        let size;
+        let structure;
         match self.0 {
             StructureType::Cannon => {
-                let size = Vec3::new(10.0, 0.75, 10.0);
-                (
-                    SceneRoot(my_assets.models.placeholders.cannon_valid.clone()),
-                    pf_comps::RtsObjSize(size),
-                )
+                size = Vec3::new(10.0, 0.75, 10.0);
+                structure = SceneRoot(my_assets.models.placeholders.cannon_valid.clone());
             }
             StructureType::Barracks => {
-                let size = Vec3::new(30.0, 12.0, 25.0);
-                (
-                    SceneRoot(my_assets.models.placeholders.barracks_valid.clone()),
-                    pf_comps::RtsObjSize(size),
-                )
+                size = Vec3::new(30.0, 12.0, 25.0);
+                structure = SceneRoot(my_assets.models.placeholders.barracks_valid.clone());
             }
             StructureType::VehicleDepot => {
-                let size = Vec3::new(60.0, 4.0, 40.0);
-                (
-                    SceneRoot(my_assets.models.placeholders.vehicle_depot_valid.clone()),
-                    pf_comps::RtsObjSize(size),
-                )
+                size = Vec3::new(60.0, 4.0, 40.0);
+                structure = SceneRoot(my_assets.models.placeholders.vehicle_depot_valid.clone());
             }
             StructureType::ResearchCenter => {
-                let size = Vec3::new(30.0, 18.0, 30.0);
-                (
-                    SceneRoot(my_assets.models.placeholders.research_center_valid.clone()),
-                    pf_comps::RtsObjSize(size),
-                )
+                size = Vec3::new(30.0, 18.0, 30.0);
+                structure = SceneRoot(my_assets.models.placeholders.research_center_valid.clone());
             }
             StructureType::SatelliteDish => {
-                let size = Vec3::new(32.0, 8.0, 32.0);
-                (
-                    SceneRoot(my_assets.models.placeholders.satellite_dish_valid.clone()),
-                    pf_comps::RtsObjSize(size),
-                )
+                size = Vec3::new(32.0, 8.0, 32.0);
+                structure = SceneRoot(my_assets.models.placeholders.satellite_dish_valid.clone());
             }
         }
+
+        (
+            structure,
+            Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0),
+            Sensor,
+            BuildStructurePlaceholder,
+            pf_comps::RtsObjSize(size),
+        )
     }
 }
 

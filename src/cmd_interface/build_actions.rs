@@ -1,7 +1,10 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use bevy_rapier3d::plugin::DefaultRapierContext;
+use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::Sensor;
 use bevy_rts_camera::RtsCameraControls;
 
 use super::components::*;
@@ -128,7 +131,7 @@ fn select_structure(
         cmds.entity(placeholder_ent).despawn_recursive();
     }
 
-    let placeholder_properties = placeholder.build(my_assets);
+    let placeholder_properties = placeholder.build_placeholder(my_assets);
     let transform = Transform::from_xyz(100000.0, 0.0, 0.0); // avoid bug flicker
 
     *cursor_state = CursorState::Build;
@@ -137,7 +140,7 @@ fn select_structure(
         placeholder_properties,
         transform,
         placeholder,
-        BuildStructurePlaceholder,
+        // BuildStructurePlaceholder,
     ));
 }
 
@@ -157,7 +160,7 @@ fn build_structure(
     }
 
     if input.just_pressed(MouseButton::Left) {
-        let Ok((placeholder_ent, structure, mut scene, size)) = q_placeholder.get_single_mut()
+        let Ok((placeholder_ent, structure, mut scene, _size)) = q_placeholder.get_single_mut()
         else {
             return;
         };
@@ -166,12 +169,8 @@ fn build_structure(
         structure.place(&my_assets, &mut scene);
         cmds.entity(placeholder_ent)
             .remove::<BuildStructurePlaceholder>();
+        cmds.entity(placeholder_ent).remove::<Sensor>();
         cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
-        cmds.entity(placeholder_ent).insert(Collider::cuboid(
-            size.0.x / 2.0,
-            size.0.y / 2.0,
-            size.0.z / 2.0,
-        ));
 
         dbg.print("Build Structure");
     }
@@ -211,4 +210,33 @@ fn sync_placeholder(
         transform.translation = coords;
         transform.translation.y = size.0.y / 2.0;
     }
+}
+
+fn placeholder_collision_system(
+    q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+) {
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    // for placeholder_ent in q_placeholder.iter() {
+    //     // Use Rapier's intersections_with method, which returns an iterator over
+    //     // all entities that are intersecting with the given placeholder.
+    //     // rapier_ctx.intersection_pair(collider1, collider2)
+    //     let is_colliding = rapier_ctx
+    //         .intersections_with(placeholder_ent, None)
+    //         .next()
+    //         .is_some();
+
+    //     if is_colliding {
+    //         info!(
+    //             "Placeholder {:?} is colliding with another collider",
+    //             placeholder_ent
+    //         );
+    //         // You might want to store this state on the placeholder or trigger some feedback.
+    //     } else {
+    //         info!("Placeholder {:?} is not colliding", placeholder_ent);
+    //     }
+    // }
 }

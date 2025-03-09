@@ -92,7 +92,7 @@ fn build_unit_btn_interaction(
 }
 
 fn cancel_build_structure(
-    q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    q_placeholder: Query<Entity, With<StructurePlaceholder>>,
     mut cmds: Commands,
     mut cursor_state: ResMut<CursorState>,
     input: Res<ButtonInput<MouseButton>>,
@@ -116,7 +116,7 @@ fn cancel_build_structure(
 
 fn select_structure(
     trigger: Trigger<BuildStructureSelectEv>,
-    q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    q_placeholder: Query<Entity, With<StructurePlaceholder>>,
     dbg: Res<DbgOptions>,
     mut cursor_state: ResMut<CursorState>,
     mut cmds: Commands,
@@ -143,12 +143,13 @@ fn place_structure(
     mut q_placeholder: Query<
         (
             Entity,
+            &StructurePlaceholder,
             &Structure,
             &mut RigidBody,
             &mut SceneRoot,
             &pf_comps::RtsObjSize,
         ),
-        With<BuildStructurePlaceholder>,
+        With<StructurePlaceholder>,
     >,
     dbg: Res<DbgOptions>,
     input: Res<ButtonInput<MouseButton>>,
@@ -159,13 +160,13 @@ fn place_structure(
         return;
     }
 
-    if input.just_pressed(MouseButton::Left) {
-        let Ok((placeholder_ent, structure, mut rb, mut scene, _size)) =
-            q_placeholder.get_single_mut()
-        else {
-            return;
-        };
+    let Ok((placeholder_ent, placeholder, structure, mut rb, mut scene, _size)) =
+        q_placeholder.get_single_mut()
+    else {
+        return;
+    };
 
+    if input.just_pressed(MouseButton::Left) && placeholder.is_valid {
         *cursor_state = CursorState::Standard;
         structure.place(placeholder_ent, &my_assets, &mut scene, &mut rb, &mut cmds);
 
@@ -174,10 +175,7 @@ fn place_structure(
 }
 
 fn sync_placeholder(
-    mut q_placeholder: Query<
-        (&mut Transform, &pf_comps::RtsObjSize),
-        With<BuildStructurePlaceholder>,
-    >,
+    mut q_placeholder: Query<(&mut Transform, &pf_comps::RtsObjSize), With<StructurePlaceholder>>,
     mut cam_q: Query<
         (&Camera, &GlobalTransform, &mut RtsCameraControls),
         With<pf_comps::GameCamera>,
@@ -211,7 +209,7 @@ fn sync_placeholder(
 
 fn validate_structure_placement(
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
-    mut q_placeholder: Query<(Entity, &mut BuildStructurePlaceholder, &mut SceneRoot)>,
+    mut q_placeholder: Query<(Entity, &mut StructurePlaceholder, &mut SceneRoot)>,
     q_collider: Query<&Collider, With<pf_comps::MapBase>>,
     my_assets: Res<MyAssets>,
 ) {

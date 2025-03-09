@@ -58,7 +58,7 @@ impl Structure {
         }
 
         cmds.entity(placeholder_ent)
-            .remove::<BuildStructurePlaceholder>();
+            .remove::<StructurePlaceholder>();
         cmds.entity(placeholder_ent).remove::<ActiveEvents>();
         cmds.entity(placeholder_ent).remove::<Sensor>();
         cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
@@ -105,7 +105,7 @@ impl Structure {
         RigidBody,
         Sensor,
         ActiveEvents,
-        BuildStructurePlaceholder,
+        StructurePlaceholder,
         pf_comps::RtsObjSize,
     ) {
         let size;
@@ -139,7 +139,7 @@ impl Structure {
             RigidBody::Dynamic,
             Sensor,
             ActiveEvents::COLLISION_EVENTS,
-            BuildStructurePlaceholder::new(*self),
+            StructurePlaceholder::new(*self),
             pf_comps::RtsObjSize(size),
         )
     }
@@ -149,12 +149,12 @@ impl Structure {
 pub struct Unit;
 
 #[derive(Component)]
-pub struct BuildStructurePlaceholder {
+pub struct StructurePlaceholder {
     pub is_valid: bool,
     pub structure: Structure,
 }
 
-impl BuildStructurePlaceholder {
+impl StructurePlaceholder {
     pub fn new(structure: Structure) -> Self {
         Self {
             is_valid: true,

@@ -125,7 +125,7 @@
 	"buffers":[
 		{
 			"byteLength":4272,
-			"uri":"research_center.bin"
+			"uri":"bin/research_center.bin"
 		}
 	]
 }

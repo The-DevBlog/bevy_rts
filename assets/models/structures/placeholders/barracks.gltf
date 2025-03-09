@@ -16,10 +16,16 @@
 		{
 			"mesh":0,
 			"name":"Cube",
+			"rotation":[
+				0,
+				-0.7071067094802856,
+				0,
+				0.7071068286895752
+			],
 			"scale":[
-				30,
-				1.9999998807907104,
-				20
+				15,
+				6,
+				12.5
 			]
 		}
 	],
@@ -60,10 +66,10 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":186,
+			"count":34,
 			"max":[
 				1,
-				16.593904495239258,
+				2.1117591857910156,
 				1
 			],
 			"min":[
@@ -76,52 +82,52 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":186,
+			"count":34,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":186,
+			"count":34,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":300,
+			"count":60,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":2232,
+			"byteLength":408,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":2232,
-			"byteOffset":2232,
+			"byteLength":408,
+			"byteOffset":408,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1488,
-			"byteOffset":4464,
+			"byteLength":272,
+			"byteOffset":816,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":600,
-			"byteOffset":5952,
+			"byteLength":120,
+			"byteOffset":1088,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":6552,
-			"uri":"bin/vehicle_depot.bin"
+			"byteLength":1208,
+			"uri":"bin/barracks.bin"
 		}
 	]
 }

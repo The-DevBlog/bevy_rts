@@ -1,14 +1,8 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use bevy_rapier3d::plugin::DefaultRapierContext;
-use bevy_rapier3d::plugin::RapierContext;
-use bevy_rapier3d::prelude::ActiveEvents;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::CollisionEvent;
-use bevy_rapier3d::prelude::ContactForceEvent;
 use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Sensor;
+use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::RtsCameraControls;
 
 use super::components::*;
@@ -30,16 +24,16 @@ pub struct BuildActionsPlugin;
 
 impl Plugin for BuildActionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, display_events);
+        app.add_systems(Update, validate_structure_placement);
         app.add_systems(
             Update,
             (
+                cancel_build_structure,
                 cmd_interface_interaction,
                 build_structure_btn_interaction,
                 build_unit_btn_interaction,
                 sync_placeholder,
-                place_structure,
-                cancel_build_structure,
+                place_structure.after(validate_structure_placement),
             ),
         )
         .add_observer(select_structure);
@@ -215,28 +209,37 @@ fn sync_placeholder(
     }
 }
 
-/* A system that displays the events. */
-fn display_events(
-    mut collision_events: EventReader<CollisionEvent>,
-    mut contact_force_events: EventReader<ContactForceEvent>,
-    q_collision_events: Query<&ActiveEvents>,
+fn validate_structure_placement(
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    mut q_placeholder: Query<(Entity, &BuildStructurePlaceholder, &mut SceneRoot)>,
+    q_collider: Query<&Collider, With<pf_comps::MapBase>>, // added query to check sensor flag
+    my_assets: Res<MyAssets>,
 ) {
-    // println!("Active events: {}", q_collision_events.iter().len());
+    let Ok((placeholder_ent, placeholder, mut scene)) = q_placeholder.get_single_mut() else {
+        return;
+    };
 
-    for collision_event in collision_events.read() {
-        // println!("Received collision event: {:?}", collision_event);
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
 
-        match collision_event {
-            CollisionEvent::Started(collider1, collider2, _) => {
-                println!("Collision started: {:?} {:?}", collider1, collider2);
-            }
-            CollisionEvent::Stopped(collider1, collider2, _) => {
-                println!("Collision stopped: {:?} {:?}", collider1, collider2);
-            }
+    // Iterate over intersections for the placeholder entity.
+    let mut is_colliding = false;
+    for (ent_1, ent_2, intersect) in rapier_ctx.intersection_pairs_with(placeholder_ent) {
+        if q_collider.get(ent_1).is_ok() || q_collider.get(ent_2).is_ok() {
+            continue;
         }
+
+        is_colliding = intersect;
     }
 
-    // for contact_force_event in contact_force_events.read() {
-    //     println!("Received contact force event: {:?}", contact_force_event);
-    // }
+    if is_colliding {
+        placeholder
+            .structure
+            .invalid_placement(&my_assets, &mut scene);
+    } else {
+        placeholder
+            .structure
+            .valid_placement(&my_assets, &mut scene);
+    }
 }

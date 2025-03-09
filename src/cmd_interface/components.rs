@@ -64,22 +64,34 @@ impl Structure {
         cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
     }
 
-    pub fn invalid_placement(&self, my_assets: &MyAssets, scene: &mut SceneRoot) {
+    pub fn invalid_placement(&self, assets: &MyAssets, scene: &mut SceneRoot) {
         match self {
-            Structure::Cannon => scene.0 = my_assets.models.placeholders.cannon_invalid.clone(),
-            Structure::Barracks => scene.0 = my_assets.models.placeholders.barracks_invalid.clone(),
+            Structure::Cannon => scene.0 = assets.models.placeholders.cannon_invalid.clone(),
+            Structure::Barracks => scene.0 = assets.models.placeholders.barracks_invalid.clone(),
             Structure::VehicleDepot => {
-                scene.0 = my_assets.models.placeholders.vehicle_depot_invalid.clone()
+                scene.0 = assets.models.placeholders.vehicle_depot_invalid.clone()
             }
             Structure::ResearchCenter => {
-                scene.0 = my_assets
-                    .models
-                    .placeholders
-                    .research_center_invalid
-                    .clone()
+                scene.0 = assets.models.placeholders.research_center_invalid.clone()
             }
             Structure::SatelliteDish => {
-                scene.0 = my_assets.models.placeholders.satellite_dish_invalid.clone()
+                scene.0 = assets.models.placeholders.satellite_dish_invalid.clone()
+            }
+        }
+    }
+
+    pub fn valid_placement(&self, assets: &MyAssets, scene: &mut SceneRoot) {
+        match self {
+            Structure::Cannon => scene.0 = assets.models.placeholders.cannon_valid.clone(),
+            Structure::Barracks => scene.0 = assets.models.placeholders.barracks_valid.clone(),
+            Structure::VehicleDepot => {
+                scene.0 = assets.models.placeholders.vehicle_depot_valid.clone()
+            }
+            Structure::ResearchCenter => {
+                scene.0 = assets.models.placeholders.research_center_valid.clone()
+            }
+            Structure::SatelliteDish => {
+                scene.0 = assets.models.placeholders.satellite_dish_valid.clone()
             }
         }
     }
@@ -127,7 +139,7 @@ impl Structure {
             RigidBody::Dynamic,
             Sensor,
             ActiveEvents::COLLISION_EVENTS,
-            BuildStructurePlaceholder::default(),
+            BuildStructurePlaceholder::new(*self),
             pf_comps::RtsObjSize(size),
         )
     }
@@ -136,7 +148,17 @@ impl Structure {
 #[derive(Component)]
 pub struct Unit;
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct BuildStructurePlaceholder {
-    is_valid: bool,
+    pub is_valid: bool,
+    pub structure: Structure,
+}
+
+impl BuildStructurePlaceholder {
+    pub fn new(structure: Structure) -> Self {
+        Self {
+            is_valid: true,
+            structure,
+        }
+    }
 }

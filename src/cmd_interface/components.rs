@@ -1,5 +1,5 @@
 use bevy::{math::VectorSpace, prelude::*};
-use bevy_rapier3d::prelude::{Collider, Sensor};
+use bevy_rapier3d::prelude::{ActiveEvents, Collider, RigidBody, Sensor};
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
 use crate::resources::MyAssets;
@@ -42,13 +42,50 @@ impl StructureType {
 }
 
 impl Structure {
-    pub fn place(&self, my_assets: &MyAssets, scene: &mut SceneRoot) {
+    pub fn place(
+        &self,
+        placeholder_ent: Entity,
+        my_assets: &MyAssets,
+        scene: &mut SceneRoot,
+        rb: &mut RigidBody,
+        cmds: &mut Commands,
+    ) {
+        *rb = RigidBody::Fixed;
+
         match self.0 {
             StructureType::Cannon => scene.0 = my_assets.models.cannon.clone(),
             StructureType::Barracks => scene.0 = my_assets.models.barracks.clone(),
             StructureType::VehicleDepot => scene.0 = my_assets.models.vehicle_depot.clone(),
             StructureType::ResearchCenter => scene.0 = my_assets.models.research_center.clone(),
             StructureType::SatelliteDish => scene.0 = my_assets.models.satellite_dish.clone(),
+        }
+
+        cmds.entity(placeholder_ent)
+            .remove::<BuildStructurePlaceholder>();
+        cmds.entity(placeholder_ent).remove::<ActiveEvents>();
+        cmds.entity(placeholder_ent).remove::<Sensor>();
+        cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
+    }
+
+    pub fn invalid_placement(&self, my_assets: &MyAssets, scene: &mut SceneRoot) {
+        match self.0 {
+            StructureType::Cannon => scene.0 = my_assets.models.placeholders.cannon_invalid.clone(),
+            StructureType::Barracks => {
+                scene.0 = my_assets.models.placeholders.barracks_invalid.clone()
+            }
+            StructureType::VehicleDepot => {
+                scene.0 = my_assets.models.placeholders.vehicle_depot_invalid.clone()
+            }
+            StructureType::ResearchCenter => {
+                scene.0 = my_assets
+                    .models
+                    .placeholders
+                    .research_center_invalid
+                    .clone()
+            }
+            StructureType::SatelliteDish => {
+                scene.0 = my_assets.models.placeholders.satellite_dish_invalid.clone()
+            }
         }
     }
 
@@ -58,7 +95,9 @@ impl Structure {
     ) -> (
         SceneRoot,
         Collider,
+        RigidBody,
         Sensor,
+        ActiveEvents,
         BuildStructurePlaceholder,
         pf_comps::RtsObjSize,
     ) {
@@ -90,8 +129,10 @@ impl Structure {
         (
             structure,
             Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0),
+            RigidBody::Dynamic,
             Sensor,
-            BuildStructurePlaceholder,
+            ActiveEvents::COLLISION_EVENTS,
+            BuildStructurePlaceholder::default(),
             pf_comps::RtsObjSize(size),
         )
     }
@@ -100,5 +141,7 @@ impl Structure {
 #[derive(Component)]
 pub struct Unit;
 
-#[derive(Component)]
-pub struct BuildStructurePlaceholder;
+#[derive(Component, Default)]
+pub struct BuildStructurePlaceholder {
+    is_valid: bool,
+}

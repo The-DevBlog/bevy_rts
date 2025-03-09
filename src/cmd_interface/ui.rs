@@ -98,7 +98,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         )
     };
 
-    let structure_opt_ctr = |structure: StructureType,
+    let structure_opt_ctr = |structure: Structure,
                              assets: &Res<MyAssets>|
      -> (Button, BorderColor, ImageNode, Node, Structure, Name) {
         (
@@ -115,7 +115,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
                 border: UiRect::all(Val::Px(2.5)),
                 ..default()
             },
-            Structure(structure),
+            structure,
             Name::new("Build Option"),
         )
     };
@@ -151,7 +151,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
     };
 
     let spawn_structure_btn =
-        |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyAssets>| {
+        |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
                 .with_child(build_opt(structure.to_string()));
@@ -173,11 +173,11 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
             .with_children(|p: &mut ChildBuilder<'_>| {
                 // Structures Column
                 p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                    spawn_structure_btn(p, StructureType::Cannon, &my_assets);
-                    spawn_structure_btn(p, StructureType::Barracks, &my_assets);
-                    spawn_structure_btn(p, StructureType::VehicleDepot, &my_assets);
-                    spawn_structure_btn(p, StructureType::ResearchCenter, &my_assets);
-                    spawn_structure_btn(p, StructureType::SatelliteDish, &my_assets);
+                    spawn_structure_btn(p, Structure::Cannon, &my_assets);
+                    spawn_structure_btn(p, Structure::Barracks, &my_assets);
+                    spawn_structure_btn(p, Structure::VehicleDepot, &my_assets);
+                    spawn_structure_btn(p, Structure::ResearchCenter, &my_assets);
+                    spawn_structure_btn(p, Structure::SatelliteDish, &my_assets);
                 });
 
                 // Units Column

@@ -1,7 +1,8 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::RigidBody;
+use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::RtsCameraControls;
 
 use super::components::*;
@@ -23,15 +24,16 @@ pub struct BuildActionsPlugin;
 
 impl Plugin for BuildActionsPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(Update, validate_structure_placement);
         app.add_systems(
             Update,
             (
+                cancel_build_structure,
                 cmd_interface_interaction,
                 build_structure_btn_interaction,
                 build_unit_btn_interaction,
                 sync_placeholder,
-                build_structure,
-                cancel_build_structure,
+                place_structure.after(validate_structure_placement),
             ),
         )
         .add_observer(select_structure);
@@ -90,7 +92,7 @@ fn build_unit_btn_interaction(
 }
 
 fn cancel_build_structure(
-    q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    q_placeholder: Query<Entity, With<StructurePlaceholder>>,
     mut cmds: Commands,
     mut cursor_state: ResMut<CursorState>,
     input: Res<ButtonInput<MouseButton>>,
@@ -114,7 +116,7 @@ fn cancel_build_structure(
 
 fn select_structure(
     trigger: Trigger<BuildStructureSelectEv>,
-    q_placeholder: Query<Entity, With<BuildStructurePlaceholder>>,
+    q_placeholder: Query<Entity, With<StructurePlaceholder>>,
     dbg: Res<DbgOptions>,
     mut cursor_state: ResMut<CursorState>,
     mut cmds: Commands,
@@ -128,47 +130,52 @@ fn select_structure(
         cmds.entity(placeholder_ent).despawn_recursive();
     }
 
-    let placeholder_properties = placeholder.build(my_assets);
+    let placeholder_properties = placeholder.build_placeholder(my_assets);
     let transform = Transform::from_xyz(100000.0, 0.0, 0.0); // avoid bug flicker
 
     *cursor_state = CursorState::Build;
     cmds.trigger(DeselectAllEv);
-    cmds.spawn((placeholder_properties, transform, BuildStructurePlaceholder));
+    cmds.spawn((placeholder_properties, transform, placeholder));
 }
 
-fn build_structure(
+fn place_structure(
     mut cmds: Commands,
-    q_placeholder: Query<(Entity, &pf_comps::RtsObjSize), With<BuildStructurePlaceholder>>,
+    mut q_placeholder: Query<
+        (
+            Entity,
+            &StructurePlaceholder,
+            &Structure,
+            &mut RigidBody,
+            &mut SceneRoot,
+            &pf_comps::RtsObjSize,
+        ),
+        With<StructurePlaceholder>,
+    >,
     dbg: Res<DbgOptions>,
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_state: ResMut<CursorState>,
+    my_assets: Res<MyAssets>,
 ) {
     if *cursor_state != CursorState::Build {
         return;
     }
 
-    if input.just_pressed(MouseButton::Left) {
-        for (placeholder_ent, size) in q_placeholder.iter() {
-            *cursor_state = CursorState::Standard;
-            cmds.entity(placeholder_ent)
-                .remove::<BuildStructurePlaceholder>();
-            cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
-            cmds.entity(placeholder_ent).insert(Collider::cuboid(
-                size.0.x / 2.0,
-                size.0.y / 2.0,
-                size.0.z / 2.0,
-            ));
-        }
+    let Ok((placeholder_ent, placeholder, structure, mut rb, mut scene, _size)) =
+        q_placeholder.get_single_mut()
+    else {
+        return;
+    };
+
+    if input.just_pressed(MouseButton::Left) && placeholder.is_valid {
+        *cursor_state = CursorState::Standard;
+        structure.place(placeholder_ent, &my_assets, &mut scene, &mut rb, &mut cmds);
 
         dbg.print("Build Structure");
     }
 }
 
 fn sync_placeholder(
-    mut q_placeholder: Query<
-        (&mut Transform, &pf_comps::RtsObjSize),
-        With<BuildStructurePlaceholder>,
-    >,
+    mut q_placeholder: Query<(&mut Transform, &pf_comps::RtsObjSize), With<StructurePlaceholder>>,
     mut cam_q: Query<
         (&Camera, &GlobalTransform, &mut RtsCameraControls),
         With<pf_comps::GameCamera>,
@@ -197,5 +204,42 @@ fn sync_placeholder(
     if let Some(coords) = coords {
         transform.translation = coords;
         transform.translation.y = size.0.y / 2.0;
+    }
+}
+
+fn validate_structure_placement(
+    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    mut q_placeholder: Query<(Entity, &mut StructurePlaceholder, &mut SceneRoot)>,
+    q_collider: Query<&Collider, With<pf_comps::MapBase>>,
+    my_assets: Res<MyAssets>,
+) {
+    let Ok((placeholder_ent, mut placeholder, mut scene)) = q_placeholder.get_single_mut() else {
+        return;
+    };
+
+    let Ok(rapier_ctx) = q_rapier.get_single() else {
+        return;
+    };
+
+    let mut is_colliding = false;
+    for (ent_1, ent_2, intersect) in rapier_ctx.intersection_pairs_with(placeholder_ent) {
+        // exclude any collisions with the map base
+        if q_collider.get(ent_1).is_ok() || q_collider.get(ent_2).is_ok() {
+            continue;
+        }
+
+        is_colliding = intersect;
+    }
+
+    if is_colliding {
+        placeholder.is_valid = false;
+        placeholder
+            .structure
+            .invalid_placement(&my_assets, &mut scene);
+    } else {
+        placeholder.is_valid = true;
+        placeholder
+            .structure
+            .valid_placement(&my_assets, &mut scene);
     }
 }

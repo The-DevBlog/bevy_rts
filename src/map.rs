@@ -73,7 +73,6 @@ fn spawn_obstacle(
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    assets: Res<AssetServer>,
 ) {
     let size = 12.0;
     cmds.spawn((
@@ -81,6 +80,7 @@ fn spawn_obstacle(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+        RigidBody::Fixed,
         pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec3::new(size, size, size)),
     ));
@@ -90,6 +90,7 @@ fn spawn_obstacle(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(-100.0, 6.0, 150.0)),
         Collider::cuboid(size, size / 2.0, size),
+        RigidBody::Fixed,
         pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec3::new(size * 2.0, size, size * 2.0)),
     );
@@ -100,6 +101,7 @@ fn spawn_obstacle(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(-175.0, 2.5, 0.0)),
         Collider::cuboid(5.0 / 2.0, 5.0 / 2.0, size / 2.0),
+        RigidBody::Fixed,
         pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec3::new(5.0, 5.0, size)),
     );
@@ -119,6 +121,7 @@ fn spawn_obstacle_2(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(-100.0, 6.0, -150.0)),
         Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
+        RigidBody::Fixed,
         pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec3::new(size, size, size)),
     ));
@@ -128,6 +131,7 @@ fn spawn_obstacle_2(
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
         Transform::from_translation(Vec3::new(100.0, 6.0, -150.0)),
         Collider::cuboid(size, size / 2.0, size),
+        RigidBody::Fixed,
         pf_comps::RtsObj,
         pf_comps::RtsObjSize(Vec3::new(size * 2.0, size * 2.0, size * 2.0)),
     );

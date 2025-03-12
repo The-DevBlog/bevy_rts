@@ -59,6 +59,7 @@ pub struct Images {
 #[derive(Default)]
 pub struct Models {
     pub barracks: Handle<Scene>,
+    pub ground: Handle<Scene>,
     pub tank: Handle<Scene>,
     pub cannon: Handle<Scene>,
     pub vehicle_depot: Handle<Scene>,
@@ -184,6 +185,9 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.structure_vehicle_depot = assets.load("imgs/structures/vehicle_depot.png");
     my_assets.images.structure_research_center = assets.load("imgs/structures/research_center.png");
     my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
+
+    // ground
+    my_assets.models.ground = assets.load("models/grass_field.gltf#Scene0");
 
     // units
     my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");

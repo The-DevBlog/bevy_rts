@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
-use crate::resources::MyAssets;
+use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
 
@@ -12,15 +12,18 @@ impl Plugin for UiPlugin {
 }
 
 #[derive(Component)]
-pub struct MiniMapCtr;
+struct MiniMapCtr;
 
 #[derive(Component)]
-pub struct BuildColumnsCtr;
+struct BankCtr;
 
 #[derive(Component)]
-pub struct IconsCtr;
+struct BuildColumnsCtr;
 
-fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
+#[derive(Component)]
+struct IconsCtr;
+
+fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
     let root_ctr = (
         CmdInterfaceCtr,
         Button,
@@ -49,6 +52,14 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         TextLayout::new_with_justify(JustifyText::Center),
         BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         Name::new("Mini Map Ctr"),
+    );
+
+    let bank_ctr = (
+        BankCtr,
+        Node { ..default() },
+        Text::new(format!("${}", bank.money.to_string())),
+        TextLayout::new_with_justify(JustifyText::Center),
+        Name::new("Bank"),
     );
 
     let icons_ctr = (
@@ -110,6 +121,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
                 ..default()
             },
             Node {
+                flex_direction: FlexDirection::Column,
                 height: Val::Percent(20.0),
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
@@ -154,13 +166,17 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
         |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
-                .with_child(build_opt(structure.to_string()));
+                .with_child(build_opt(structure.to_string()))
+                .with_child(build_opt(&format!("${}", structure.cost())));
         };
 
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
         //  Mini Map
         p.spawn(mini_map_ctr);
+
+        // Bank
+        p.spawn(bank_ctr);
 
         // Structure/Units Icons
         p.spawn(icons_ctr).with_children(|parent| {
@@ -182,15 +198,15 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>) {
 
                 // Units Column
                 p.spawn(build_column(2.5, 5.0)).with_children(|p| {
-                    p.spawn((unit_opt_ctr(), Unit))
+                    p.spawn((unit_opt_ctr(), UnitCtr))
                         .with_child(build_opt("Unit 1"));
-                    p.spawn((unit_opt_ctr(), Unit))
+                    p.spawn((unit_opt_ctr(), UnitCtr))
                         .with_child(build_opt("Unit 2"));
-                    p.spawn((unit_opt_ctr(), Unit))
+                    p.spawn((unit_opt_ctr(), UnitCtr))
                         .with_child(build_opt("Unit 3"));
-                    p.spawn((unit_opt_ctr(), Unit))
+                    p.spawn((unit_opt_ctr(), UnitCtr))
                         .with_child(build_opt("Unit 4"));
-                    p.spawn((unit_opt_ctr(), Unit))
+                    p.spawn((unit_opt_ctr(), UnitCtr))
                         .with_child(build_opt("Unit 5"));
                 });
             });

@@ -43,7 +43,7 @@ impl Plugin for BuildActionsPlugin {
 fn cmd_interface_interaction(
     mut game_cmds: ResMut<GameCommands>,
     q_p: Query<&Interaction, With<CmdInterfaceCtr>>,
-    q_c: Query<&Interaction, Or<(With<Structure>, With<Unit>)>>,
+    q_c: Query<&Interaction, Or<(With<Structure>, With<UnitCtr>)>>,
 ) {
     let hvr_parent = q_p.iter().any(|intrct| *intrct == Interaction::Hovered);
     let hvr_child = q_c.iter().any(|intrct| *intrct == Interaction::Hovered);
@@ -75,7 +75,7 @@ fn build_structure_btn_interaction(
 fn build_unit_btn_interaction(
     mut cmds: Commands,
     input: Res<ButtonInput<MouseButton>>,
-    mut q_btn_unit: Query<(&Interaction, &mut BackgroundColor), With<Unit>>,
+    mut q_btn_unit: Query<(&Interaction, &mut BackgroundColor), With<UnitCtr>>,
 ) {
     for (interaction, mut border_clr) in q_btn_unit.iter_mut() {
         match interaction {

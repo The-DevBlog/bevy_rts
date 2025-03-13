@@ -17,6 +17,16 @@ pub enum Structure {
 }
 
 impl Structure {
+    pub fn cost(&self) -> u32 {
+        match self {
+            Structure::Cannon => 500,
+            Structure::Barracks => 500,
+            Structure::VehicleDepot => 2000,
+            Structure::ResearchCenter => 1500,
+            Structure::SatelliteDish => 1000,
+        }
+    }
+
     pub fn to_string(&self) -> &str {
         match self {
             Structure::Cannon => "Cannon",
@@ -146,7 +156,7 @@ impl Structure {
 }
 
 #[derive(Component)]
-pub struct Unit;
+pub struct UnitCtr;
 
 #[derive(Component)]
 pub struct StructurePlaceholder {

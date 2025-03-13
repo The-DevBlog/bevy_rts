@@ -39,6 +39,12 @@ impl DbgOptions {
 pub struct MyAssets {
     pub models: Models,
     pub images: Images,
+    pub audio: Audio,
+}
+
+#[derive(Default)]
+pub struct Audio {
+    pub place_structure: Handle<AudioSource>,
 }
 
 #[derive(Default)]
@@ -218,4 +224,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
         assets.load("models/structures/placeholders/invalid/research_center.gltf#Scene0");
     my_assets.models.placeholders.satellite_dish_invalid =
         assets.load("models/structures/placeholders/invalid/satellite_dish.gltf#Scene0");
+
+    // audio
+    my_assets.audio.place_structure = assets.load("audio/place_structure.ogg");
 }

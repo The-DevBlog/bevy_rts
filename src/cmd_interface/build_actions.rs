@@ -170,6 +170,8 @@ fn place_structure(
         *cursor_state = CursorState::Standard;
         structure.place(placeholder_ent, &my_assets, &mut scene, &mut rb, &mut cmds);
 
+        let e = AudioPlayer::new(my_assets.audio.place_structure.clone());
+        cmds.spawn(e);
         dbg.print("Build Structure");
     }
 }

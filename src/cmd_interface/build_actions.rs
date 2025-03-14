@@ -7,6 +7,8 @@ use bevy_rts_camera::RtsCameraControls;
 
 use super::components::*;
 use super::events::*;
+use crate::bank::AdjustFundsEv;
+use crate::bank::Bank;
 use crate::events::DeselectAllEv;
 use crate::resources::CursorState;
 use crate::resources::DbgOptions;
@@ -170,8 +172,13 @@ fn place_structure(
         *cursor_state = CursorState::Standard;
         structure.place(placeholder_ent, &my_assets, &mut scene, &mut rb, &mut cmds);
 
-        let e = AudioPlayer::new(my_assets.audio.place_structure.clone());
-        cmds.spawn(e);
+        // Adjust bank
+        cmds.trigger(AdjustFundsEv(-structure.cost()));
+
+        // place structure audio
+        let audio = AudioPlayer::new(my_assets.audio.place_structure.clone());
+        cmds.spawn(audio);
+
         dbg.print("Build Structure");
     }
 }

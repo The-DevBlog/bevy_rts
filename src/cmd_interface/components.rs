@@ -17,7 +17,7 @@ pub enum Structure {
 }
 
 impl Structure {
-    pub fn cost(&self) -> u32 {
+    pub fn cost(&self) -> i32 {
         match self {
             Structure::Cannon => 500,
             Structure::Barracks => 500,

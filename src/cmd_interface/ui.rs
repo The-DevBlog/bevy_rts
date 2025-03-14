@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{log::tracing_subscriber::fmt::format, prelude::*};
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::{bank::Bank, resources::MyAssets};
@@ -7,7 +7,8 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui);
+        app.add_systems(Startup, command_center_ui)
+            .add_systems(Update, update_bank_funds.run_if(resource_changed::<Bank>));
     }
 }
 
@@ -211,4 +212,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
             });
     });
+}
+
+fn update_bank_funds(bank: Res<Bank>, mut bank_txt: Query<&mut Text, With<BankCtr>>) {
+    let mut bank_txt = bank_txt.single_mut();
+    bank_txt.0 = format!("${}", bank.money.to_string());
 }

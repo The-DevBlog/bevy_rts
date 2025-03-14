@@ -7,8 +7,8 @@ use bevy_rts_camera::RtsCameraControls;
 
 use super::components::*;
 use super::events::*;
+use super::ui::CostCtr;
 use crate::bank::AdjustFundsEv;
-use crate::bank::Bank;
 use crate::events::DeselectAllEv;
 use crate::resources::CursorState;
 use crate::resources::DbgOptions;
@@ -26,7 +26,6 @@ pub struct BuildActionsPlugin;
 
 impl Plugin for BuildActionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, validate_structure_placement);
         app.add_systems(
             Update,
             (
@@ -35,6 +34,7 @@ impl Plugin for BuildActionsPlugin {
                 build_structure_btn_interaction,
                 build_unit_btn_interaction,
                 sync_placeholder,
+                validate_structure_placement,
                 place_structure.after(validate_structure_placement),
             ),
         )
@@ -58,18 +58,35 @@ fn cmd_interface_interaction(
 fn build_structure_btn_interaction(
     mut cmds: Commands,
     input: Res<ButtonInput<MouseButton>>,
-    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure), With<Structure>>,
+    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure, &Children), With<Structure>>,
+    mut q_cost: Query<&mut Visibility, With<CostCtr>>,
 ) {
-    for (interaction, mut img, structure) in q_btn_bldg.iter_mut() {
+    for (interaction, mut img, structure, children) in q_btn_bldg.iter_mut() {
         match interaction {
-            Interaction::None => img.color = CLR_STRUCTURE_BUILD_ACTIONS,
+            Interaction::None => {
+                img.color = CLR_STRUCTURE_BUILD_ACTIONS;
+
+                for child in children.iter() {
+                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
+                        *cost_vis = Visibility::Hidden;
+                    }
+                }
+            }
             Interaction::Pressed => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
                 if input.just_pressed(MouseButton::Left) {
                     cmds.trigger(BuildStructureSelectEv(structure.clone()));
                 }
             }
-            Interaction::Hovered => img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR,
+            Interaction::Hovered => {
+                img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
+
+                for child in children.iter() {
+                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
+                        *cost_vis = Visibility::Visible;
+                    }
+                }
+            }
         }
     }
 }

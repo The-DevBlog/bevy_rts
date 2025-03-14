@@ -1,4 +1,4 @@
-use bevy::{log::tracing_subscriber::fmt::format, prelude::*};
+use bevy::prelude::*;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::{bank::Bank, resources::MyAssets};
@@ -7,9 +7,7 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui)
-            .add_systems(Update, update_bank_funds);
-        // .add_systems(Update, update_bank_funds.run_if(resource_changed::<Bank>));
+        app.add_systems(Startup, command_center_ui);
     }
 }
 
@@ -17,13 +15,16 @@ impl Plugin for UiPlugin {
 struct MiniMapCtr;
 
 #[derive(Component)]
-struct BankCtr;
+pub struct BankCtr;
 
 #[derive(Component)]
 struct BuildColumnsCtr;
 
 #[derive(Component)]
 struct IconsCtr;
+
+#[derive(Component)]
+pub struct CostCtr;
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
     let root_ctr = (
@@ -164,12 +165,21 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
+    let cost_ctr = |cost: i32| -> (CostCtr, Node, Text, Name) {
+        (
+            CostCtr,
+            Node::default(),
+            Text::new(format!("${}", cost)),
+            Name::new("Cost Ctr"),
+        )
+    };
+
     let spawn_structure_btn =
         |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
                 .with_child(build_opt(structure.to_string()))
-                .with_child(build_opt(&format!("${}", structure.cost())));
+                .with_child(cost_ctr(structure.cost()));
         };
 
     // Root Container
@@ -213,30 +223,4 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
             });
     });
-}
-
-fn update_bank_funds(
-    time: Res<Time>,
-    mut bank: ResMut<Bank>,
-    mut bank_txt: Query<&mut Text, With<BankCtr>>,
-) {
-    if bank.funds == bank.displayed_funds {
-        return;
-    }
-
-    let target = bank.funds;
-    let speed = 1250.0; // units per second
-    let diff = (target - bank.displayed_funds) as f32;
-    let step = speed * time.delta_secs();
-
-    if diff.abs() < step {
-        bank.displayed_funds = target;
-    } else if diff > 0.0 {
-        bank.displayed_funds += step as i32;
-    } else {
-        bank.displayed_funds -= step as i32;
-    }
-
-    let mut text = bank_txt.single_mut();
-    text.0 = format!("${}", bank.displayed_funds);
 }

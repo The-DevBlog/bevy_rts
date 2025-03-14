@@ -3,7 +3,7 @@ use bevy::prelude::*;
 mod build_actions;
 pub mod components;
 pub mod events;
-mod ui;
+pub mod ui;
 
 use build_actions::BuildActionsPlugin;
 use ui::UiPlugin;

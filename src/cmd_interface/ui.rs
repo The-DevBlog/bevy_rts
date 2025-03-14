@@ -5,6 +5,8 @@ use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
 
+const CLR_BASE: Color = Color::srgb(0.29, 0.29, 0.3);
+
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, command_center_ui);
@@ -40,7 +42,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             max_width: Val::Px(500.0),
             ..default()
         },
-        BackgroundColor(Color::srgb(0.29, 0.29, 0.3)),
+        BackgroundColor(CLR_BASE),
         Name::new("Command Interface Ctr"),
     );
 
@@ -152,7 +154,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let build_opt = |txt: &str| -> (Node, Text, TextFont, TextLayout, Name) {
         (
             Node {
-                margin: UiRect::new(Val::Auto, Val::Auto, Val::Auto, Val::Percent(0.0)),
+                margin: UiRect::top(Val::Auto),
                 ..default()
             },
             Text::new(txt),
@@ -165,10 +167,17 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let cost_ctr = |cost: i32| -> (CostCtr, Node, Text, Name) {
+    let cost_ctr = |cost: i32| -> (CostCtr, BackgroundColor, Node, Text, Name) {
         (
             CostCtr,
-            Node::default(),
+            BackgroundColor(CLR_BASE),
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Percent(50.0),
+                left: Val::Percent(-30.0),
+                // padding: UiRect::all(Val::Px(20.0)),
+                ..default()
+            },
             Text::new(format!("${}", cost)),
             Name::new("Cost Ctr"),
         )

@@ -68,7 +68,7 @@ fn build_structure_btn_interaction(
 
                 for child in children.iter() {
                     if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
-                        *cost_vis = Visibility::Hidden;
+                        // *cost_vis = Visibility::Hidden;
                     }
                 }
             }

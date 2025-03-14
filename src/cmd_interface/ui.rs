@@ -8,7 +8,8 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, command_center_ui)
-            .add_systems(Update, update_bank_funds.run_if(resource_changed::<Bank>));
+            .add_systems(Update, update_bank_funds);
+        // .add_systems(Update, update_bank_funds.run_if(resource_changed::<Bank>));
     }
 }
 
@@ -58,7 +59,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let bank_ctr = (
         BankCtr,
         Node { ..default() },
-        Text::new(format!("${}", bank.money.to_string())),
+        Text::new(format!("${}", bank.funds.to_string())),
         TextLayout::new_with_justify(JustifyText::Center),
         Name::new("Bank"),
     );
@@ -214,7 +215,28 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     });
 }
 
-fn update_bank_funds(bank: Res<Bank>, mut bank_txt: Query<&mut Text, With<BankCtr>>) {
-    let mut bank_txt = bank_txt.single_mut();
-    bank_txt.0 = format!("${}", bank.money.to_string());
+fn update_bank_funds(
+    time: Res<Time>,
+    mut bank: ResMut<Bank>,
+    mut bank_txt: Query<&mut Text, With<BankCtr>>,
+) {
+    if bank.funds == bank.displayed_funds {
+        return;
+    }
+
+    let target = bank.funds;
+    let speed = 1250.0; // units per second
+    let diff = (target - bank.displayed_funds) as f32;
+    let step = speed * time.delta_secs();
+
+    if diff.abs() < step {
+        bank.displayed_funds = target;
+    } else if diff > 0.0 {
+        bank.displayed_funds += step as i32;
+    } else {
+        bank.displayed_funds -= step as i32;
+    }
+
+    let mut text = bank_txt.single_mut();
+    text.0 = format!("${}", bank.displayed_funds);
 }

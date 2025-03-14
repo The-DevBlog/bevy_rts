@@ -13,30 +13,20 @@ pub struct AdjustFundsEv(pub i32);
 
 #[derive(Resource)]
 pub struct Bank {
-    pub money: i32,
-}
-
-impl Bank {
-    pub fn new(money: i32) -> Self {
-        Self { money }
-    }
-
-    pub fn add(&mut self, amount: i32) {
-        self.money += amount;
-    }
-
-    pub fn remove(&mut self, amount: i32) {
-        self.money -= amount;
-    }
+    pub funds: i32,
+    pub displayed_funds: i32,
 }
 
 impl Default for Bank {
     fn default() -> Self {
-        Self { money: 10000 }
+        Self {
+            funds: 10000,
+            displayed_funds: 0,
+        }
     }
 }
 
 fn adjust_funds(trigger: Trigger<AdjustFundsEv>, mut bank: ResMut<Bank>) {
-    let amount = trigger.0;
-    bank.money += amount;
+    let adjustment = trigger.0;
+    bank.funds += adjustment;
 }

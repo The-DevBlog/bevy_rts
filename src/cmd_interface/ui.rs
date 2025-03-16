@@ -1,6 +1,8 @@
 use accesskit::{Node as Accessible, Role};
-use bevy::picking;
+use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
+use bevy::picking::focus::HoverMap;
 use bevy::{a11y::AccessibilityNode, prelude::*};
+use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::{bank::Bank, resources::MyAssets};
@@ -11,8 +13,14 @@ const CLR_BASE: Color = Color::srgb(0.29, 0.29, 0.3);
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui)
-            .add_systems(Update, (update_minimap_aspect, update_build_opt_aspect));
+        app.add_systems(Startup, command_center_ui).add_systems(
+            Update,
+            (
+                update_minimap_aspect,
+                // update_build_opt_aspect,
+                update_scroll_position,
+            ),
+        );
     }
 }
 
@@ -48,19 +56,19 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
     }
 }
 
-fn update_build_opt_aspect(mut q_opt: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
-    for (mut opt, computed_node) in q_opt.iter_mut() {
-        let width = computed_node.size().x;
+// fn update_build_opt_aspect(mut q_opt: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
+// for (mut opt, computed_node) in q_opt.iter_mut() {
+//     let width = computed_node.size().x;
 
-        // first frame is 0.0 for some reason
-        if width == 0.0 {
-            return;
-        }
+// first frame is 0.0 for some reason
+// if width == 0.0 {
+//     return;
+// }
 
-        // opt.height = Val::Px(width * 3.0);
-        // opt.width = Val::Px(width);
-    }
-}
+// opt.height = Val::Px(width * 3.0);
+// opt.width = Val::Px(width);
+// }
+// }
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
     let root_ctr = (
@@ -141,6 +149,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 margin: UiRect::new(Val::Px(margin_l), Val::Px(margin_r), Val::ZERO, Val::ZERO),
+                overflow: Overflow::scroll_y(),
                 ..default()
             },
             Name::new("Build Column"),
@@ -171,7 +180,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
-                height: Val::Px(500.0),
+                min_height: Val::Percent(25.0),
+                max_height: Val::Percent(25.0),
                 ..default()
             },
             structure,
@@ -193,7 +203,15 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let build_opt_txt = |txt: &str| -> (Node, Text, TextFont, TextLayout, Name) {
+    let build_opt_txt = |txt: &str| -> (
+        Node,
+        Text,
+        TextFont,
+        TextLayout,
+        Label,
+        AccessibilityNode,
+        Name,
+    ) {
         (
             Node {
                 margin: UiRect::top(Val::Auto),
@@ -205,6 +223,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 ..default()
             },
             TextLayout::new_with_justify(JustifyText::Center),
+            Label,
+            AccessibilityNode(Accessible::new(Role::ListItem)),
             Name::new("Build Option Ctr"),
         )
     };
@@ -228,8 +248,18 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
-                .with_child(build_opt_txt(structure.to_string()))
-                .with_child(cost_ctr(structure.cost()));
+                .insert(PickingBehavior {
+                    should_block_lower: false,
+                    ..default()
+                })
+                .with_children(|p| {
+                    p.spawn(build_opt_txt(structure.to_string()))
+                        .insert(PickingBehavior {
+                            should_block_lower: false,
+                            ..default()
+                        });
+                });
+            // .with_child(cost_ctr(structure.cost()));
         };
 
     // Root Container
@@ -250,12 +280,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         p.spawn(build_columns_ctr)
             .with_children(|p: &mut ChildBuilder<'_>| {
                 // Structures Column
-                p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                    spawn_structure_btn(p, Structure::Cannon, &my_assets);
-                    spawn_structure_btn(p, Structure::Barracks, &my_assets);
-                    spawn_structure_btn(p, Structure::VehicleDepot, &my_assets);
-                    spawn_structure_btn(p, Structure::ResearchCenter, &my_assets);
-                    spawn_structure_btn(p, Structure::SatelliteDish, &my_assets);
+                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                    for structure in Structure::iter() {
+                        spawn_structure_btn(parent, structure, &my_assets);
+                    }
                 });
 
                 // Units Column
@@ -273,4 +301,33 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
             });
     });
+}
+
+pub fn update_scroll_position(
+    mut mouse_wheel_events: EventReader<MouseWheel>,
+    hover_map: Res<HoverMap>,
+    mut scrolled_node_query: Query<&mut ScrollPosition>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    for mouse_wheel_event in mouse_wheel_events.read() {
+        let (mut dx, mut dy) = match mouse_wheel_event.unit {
+            MouseScrollUnit::Line => (mouse_wheel_event.x * 25.0, mouse_wheel_event.y * 25.0),
+            MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
+        };
+
+        if keyboard_input.pressed(KeyCode::ControlLeft)
+            || keyboard_input.pressed(KeyCode::ControlRight)
+        {
+            std::mem::swap(&mut dx, &mut dy);
+        }
+
+        for (_pointer, pointer_map) in hover_map.iter() {
+            for (entity, _hit) in pointer_map.iter() {
+                if let Ok(mut scroll_position) = scrolled_node_query.get_mut(*entity) {
+                    scroll_position.offset_x -= dx;
+                    scroll_position.offset_y -= dy;
+                }
+            }
+        }
+    }
 }

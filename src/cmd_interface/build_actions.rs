@@ -113,13 +113,14 @@ fn build_unit_btn_interaction(
 fn cancel_build_structure(
     q_placeholder: Query<Entity, With<StructurePlaceholder>>,
     mut cmds: Commands,
+    game_cmds: Res<GameCommands>,
     mut cursor_state: ResMut<CursorState>,
     input: Res<ButtonInput<MouseButton>>,
     mut q_cam_ctrls: Query<&mut RtsCameraControls, With<pf_comps::GameCamera>>,
 ) {
     if q_placeholder.is_empty() {
         if let Ok(mut ctrls) = q_cam_ctrls.get_single_mut() {
-            ctrls.zoom_sensitivity = 0.2;
+            // ctrls.zoom_sensitivity = 0.2;
         };
 
         return;
@@ -220,7 +221,7 @@ fn sync_placeholder(
     }
 
     let (cam, cam_trans, mut rts_cam_ctrls) = cam_q.single_mut();
-    rts_cam_ctrls.zoom_sensitivity = 0.0;
+    // rts_cam_ctrls.zoom_sensitivity = 0.0;
 
     let Some(viewport_cursor) = q_window.single().cursor_position() else {
         return;

@@ -38,10 +38,12 @@ fn spawn_map(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Ground
+    // rgb(95, 123, 155)
     cmds.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_DEPTH))),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.3, 0.5, 0.3),
+            // base_color: Color::srgb(0.37, 0.48, 0.61), // blue
+            base_color: Color::srgb(0.3, 0.5, 0.3), // green
             depth_bias: INFINITY,
             ..Default::default()
         })),
@@ -137,10 +139,4 @@ fn spawn_obstacle_2(
     );
 
     cmds.spawn(obst);
-}
-
-fn despawn_obstacles(mut cmds: Commands, query: Query<Entity, With<pf_comps::RtsObj>>) {
-    for entity in query.iter() {
-        cmds.entity(entity).despawn_recursive();
-    }
 }

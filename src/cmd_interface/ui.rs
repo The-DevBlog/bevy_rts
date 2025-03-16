@@ -1,23 +1,38 @@
-use bevy::{log::tracing_subscriber::fmt::format, prelude::*};
+use accesskit::{Node as Accessible, Role};
+use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
+use bevy::picking::focus::HoverMap;
+use bevy::{a11y::AccessibilityNode, prelude::*};
+use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
 
+const CLR_BASE: Color = Color::srgb(0.29, 0.29, 0.3);
+const CLR_BORDER_1: Color = Color::srgb(0.89, 0.89, 0.89);
+
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui)
-            .add_systems(Update, update_bank_funds);
-        // .add_systems(Update, update_bank_funds.run_if(resource_changed::<Bank>));
+        app.add_systems(Startup, command_center_ui).add_systems(
+            Update,
+            (
+                update_minimap_aspect,
+                update_scroll_position,
+                update_option_ctrs_aspect,
+            ),
+        );
     }
 }
+
+#[derive(Component)]
+struct OptCtr;
 
 #[derive(Component)]
 struct MiniMapCtr;
 
 #[derive(Component)]
-struct BankCtr;
+pub struct BankCtr;
 
 #[derive(Component)]
 struct BuildColumnsCtr;
@@ -25,29 +40,61 @@ struct BuildColumnsCtr;
 #[derive(Component)]
 struct IconsCtr;
 
+#[derive(Component)]
+struct Cost;
+
+#[derive(Component)]
+pub struct CostCtr;
+
+fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
+    if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
+        let width = computed_node.size().x;
+
+        // first frame is 0.0 for some reason
+        if width == 0.0 {
+            return;
+        }
+
+        mini_map.height = Val::Px(width);
+    }
+}
+
+fn update_option_ctrs_aspect(mut q_opt_ctr: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
+    for (mut opt_ctr, computed_node) in q_opt_ctr.iter_mut() {
+        let width = computed_node.size().x;
+
+        // first frame is 0.0 for some reason
+        if width == 0.0 {
+            continue;
+        }
+
+        opt_ctr.height = Val::Px(width);
+    }
+}
+
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
     let root_ctr = (
         CmdInterfaceCtr,
         Button,
         Node {
+            border: UiRect::all(Val::Px(8.0)),
             flex_direction: FlexDirection::Column,
             position_type: PositionType::Absolute,
             right: Val::Px(0.0),
             height: Val::Percent(100.0),
-            width: Val::Percent(18.0),
-            min_width: Val::Px(225.0),
-            max_width: Val::Px(500.0),
+            width: Val::Percent(15.0),
             ..default()
         },
-        BackgroundColor(Color::srgb(0.29, 0.29, 0.3)),
+        BackgroundColor(CLR_BASE),
+        BorderColor(CLR_BORDER_1),
         Name::new("Command Interface Ctr"),
     );
 
     let mini_map_ctr = (
         MiniMapCtr,
         Node {
-            margin: UiRect::all(Val::Px(5.0)),
-            height: Val::Percent(30.0),
+            margin: UiRect::all(Val::Px(8.0)),
+            min_height: Val::Percent(25.0),
             ..default()
         },
         Text::new("Mini Map"),
@@ -89,10 +136,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BuildColumnsCtr,
         BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(60.0),
             padding: UiRect::top(Val::Px(5.0)),
-            margin: UiRect::new(Val::Px(5.0), Val::Px(5.0), Val::ZERO, Val::ZERO),
+            margin: UiRect::new(Val::Px(8.0), Val::Px(8.0), Val::ZERO, Val::ZERO),
+            overflow: Overflow::scroll_y(),
             ..default()
         },
         Name::new("Build Columns Ctr"),
@@ -102,9 +148,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         (
             Node {
                 flex_direction: FlexDirection::Column,
-                width: Val::Percent(100.0),
+                width: Val::Percent(50.0),
                 height: Val::Percent(100.0),
                 margin: UiRect::new(Val::Px(margin_l), Val::Px(margin_r), Val::ZERO, Val::ZERO),
+                overflow: Overflow::scroll_y(),
                 ..default()
             },
             Name::new("Build Column"),
@@ -113,8 +160,17 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
     let structure_opt_ctr = |structure: Structure,
                              assets: &Res<MyAssets>|
-     -> (Button, BorderColor, ImageNode, Node, Structure, Name) {
+     -> (
+        OptCtr,
+        Button,
+        BorderColor,
+        ImageNode,
+        Node,
+        Structure,
+        Name,
+    ) {
         (
+            OptCtr,
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             ImageNode {
@@ -124,9 +180,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             },
             Node {
                 flex_direction: FlexDirection::Column,
-                height: Val::Percent(20.0),
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
+                min_height: Val::Percent(20.0),
                 ..default()
             },
             structure,
@@ -134,12 +190,13 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let unit_opt_ctr = || -> (Button, BorderColor, Node, Name) {
+    let unit_opt_ctr = || -> (OptCtr, Button, BorderColor, Node, Name) {
         (
+            OptCtr,
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             Node {
-                height: Val::Percent(20.0),
+                flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
                 ..default()
@@ -148,10 +205,18 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let build_opt = |txt: &str| -> (Node, Text, TextFont, TextLayout, Name) {
+    let build_opt_txt = |txt: &str| -> (
+        Node,
+        Text,
+        TextFont,
+        TextLayout,
+        Label,
+        AccessibilityNode,
+        Name,
+    ) {
         (
             Node {
-                margin: UiRect::new(Val::Auto, Val::Auto, Val::Auto, Val::Percent(0.0)),
+                margin: UiRect::top(Val::Auto),
                 ..default()
             },
             Text::new(txt),
@@ -160,7 +225,36 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 ..default()
             },
             TextLayout::new_with_justify(JustifyText::Center),
+            Label,
+            AccessibilityNode(Accessible::new(Role::ListItem)),
             Name::new("Build Option Ctr"),
+        )
+    };
+
+    let cost = |cost: i32| -> (Cost, Text, Name) {
+        (Cost, Text::new(format!("${}", cost)), Name::new("Cost"))
+    };
+
+    let cost_ctr = |cost: i32| -> (CostCtr, BackgroundColor, BorderColor, Node, Name) {
+        let cost_str = cost.to_string();
+        let offset = match cost_str.len() {
+            4 => -87.5, // 4-digit cost
+            _ => -75.5, // default for other cases
+        };
+
+        (
+            CostCtr,
+            BackgroundColor(CLR_BASE),
+            BorderColor(CLR_BORDER_1),
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Percent(50.0),
+                border: UiRect::new(Val::Px(5.0), Val::ZERO, Val::Px(5.0), Val::Px(5.0)),
+                padding: UiRect::all(Val::Px(5.0)),
+                left: Val::Px(offset),
+                ..default()
+            },
+            Name::new("Cost Ctr"),
         )
     };
 
@@ -168,8 +262,20 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
-                .with_child(build_opt(structure.to_string()))
-                .with_child(build_opt(&format!("${}", structure.cost())));
+                .insert(PickingBehavior {
+                    should_block_lower: false,
+                    ..default()
+                })
+                .with_children(|p| {
+                    p.spawn(build_opt_txt(structure.to_string()))
+                        .insert(PickingBehavior {
+                            should_block_lower: false,
+                            ..default()
+                        });
+
+                    p.spawn(cost_ctr(structure.cost()))
+                        .with_child(cost(structure.cost()));
+                });
         };
 
     // Root Container
@@ -190,53 +296,57 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         p.spawn(build_columns_ctr)
             .with_children(|p: &mut ChildBuilder<'_>| {
                 // Structures Column
-                p.spawn(build_column(5.0, 2.5)).with_children(|p| {
-                    spawn_structure_btn(p, Structure::Cannon, &my_assets);
-                    spawn_structure_btn(p, Structure::Barracks, &my_assets);
-                    spawn_structure_btn(p, Structure::VehicleDepot, &my_assets);
-                    spawn_structure_btn(p, Structure::ResearchCenter, &my_assets);
-                    spawn_structure_btn(p, Structure::SatelliteDish, &my_assets);
+                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                    for structure in Structure::iter() {
+                        spawn_structure_btn(parent, structure, &my_assets);
+                    }
+                    for structure in Structure::iter() {
+                        spawn_structure_btn(parent, structure, &my_assets);
+                    }
                 });
 
                 // Units Column
                 p.spawn(build_column(2.5, 5.0)).with_children(|p| {
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 1"));
+                        .with_child(build_opt_txt("Unit 1"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 2"));
+                        .with_child(build_opt_txt("Unit 2"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 3"));
+                        .with_child(build_opt_txt("Unit 3"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 4"));
+                        .with_child(build_opt_txt("Unit 4"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 5"));
+                        .with_child(build_opt_txt("Unit 5"));
                 });
             });
     });
 }
 
-fn update_bank_funds(
-    time: Res<Time>,
-    mut bank: ResMut<Bank>,
-    mut bank_txt: Query<&mut Text, With<BankCtr>>,
+pub fn update_scroll_position(
+    mut mouse_wheel_events: EventReader<MouseWheel>,
+    hover_map: Res<HoverMap>,
+    mut scrolled_node_query: Query<&mut ScrollPosition>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    if bank.funds == bank.displayed_funds {
-        return;
+    for mouse_wheel_event in mouse_wheel_events.read() {
+        let (mut dx, mut dy) = match mouse_wheel_event.unit {
+            MouseScrollUnit::Line => (mouse_wheel_event.x * 25.0, mouse_wheel_event.y * 25.0),
+            MouseScrollUnit::Pixel => (mouse_wheel_event.x, mouse_wheel_event.y),
+        };
+
+        if keyboard_input.pressed(KeyCode::ControlLeft)
+            || keyboard_input.pressed(KeyCode::ControlRight)
+        {
+            std::mem::swap(&mut dx, &mut dy);
+        }
+
+        for (_pointer, pointer_map) in hover_map.iter() {
+            for (entity, _hit) in pointer_map.iter() {
+                if let Ok(mut scroll_position) = scrolled_node_query.get_mut(*entity) {
+                    scroll_position.offset_x -= dx;
+                    scroll_position.offset_y -= dy;
+                }
+            }
+        }
     }
-
-    let target = bank.funds;
-    let speed = 1250.0; // units per second
-    let diff = (target - bank.displayed_funds) as f32;
-    let step = speed * time.delta_secs();
-
-    if diff.abs() < step {
-        bank.displayed_funds = target;
-    } else if diff > 0.0 {
-        bank.displayed_funds += step as i32;
-    } else {
-        bank.displayed_funds -= step as i32;
-    }
-
-    let mut text = bank_txt.single_mut();
-    text.0 = format!("${}", bank.displayed_funds);
 }

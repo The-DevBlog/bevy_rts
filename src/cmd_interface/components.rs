@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};
+use strum_macros::EnumIter;
 
 use crate::resources::MyAssets;
 
 #[derive(Component)]
 pub struct CmdInterfaceCtr;
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, EnumIter)]
 pub enum Structure {
     Cannon,
     Barracks,

@@ -17,8 +17,8 @@ impl Plugin for UiPlugin {
             Update,
             (
                 update_minimap_aspect,
-                // update_build_opt_aspect,
                 update_scroll_position,
+                update_option_ctrs_aspect,
             ),
         );
     }
@@ -52,23 +52,21 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
         }
 
         mini_map.height = Val::Px(width);
-        // mini_map.width = Val::Px(width);
     }
 }
 
-// fn update_build_opt_aspect(mut q_opt: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
-// for (mut opt, computed_node) in q_opt.iter_mut() {
-//     let width = computed_node.size().x;
+fn update_option_ctrs_aspect(mut q_opt_ctr: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
+    for (mut opt_ctr, computed_node) in q_opt_ctr.iter_mut() {
+        let width = computed_node.size().x;
 
-// first frame is 0.0 for some reason
-// if width == 0.0 {
-//     return;
-// }
+        // first frame is 0.0 for some reason
+        if width == 0.0 {
+            continue;
+        }
 
-// opt.height = Val::Px(width * 3.0);
-// opt.width = Val::Px(width);
-// }
-// }
+        opt_ctr.height = Val::Px(width);
+    }
+}
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
     let root_ctr = (
@@ -79,9 +77,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             position_type: PositionType::Absolute,
             right: Val::Px(0.0),
             height: Val::Percent(100.0),
-            width: Val::Percent(18.0),
-            min_width: Val::Px(225.0),
-            max_width: Val::Px(500.0),
+            width: Val::Percent(15.0),
             ..default()
         },
         BackgroundColor(CLR_BASE),
@@ -92,6 +88,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         MiniMapCtr,
         Node {
             margin: UiRect::all(Val::Px(5.0)),
+            min_height: Val::Percent(25.0),
             ..default()
         },
         Text::new("Mini Map"),
@@ -133,10 +130,11 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BuildColumnsCtr,
         BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(60.0),
+            // width: Val::Percent(100.0),
+            // height: Val::Percent(100.0),
             padding: UiRect::top(Val::Px(5.0)),
             margin: UiRect::new(Val::Px(5.0), Val::Px(5.0), Val::ZERO, Val::ZERO),
+            overflow: Overflow::scroll_y(),
             ..default()
         },
         Name::new("Build Columns Ctr"),
@@ -146,7 +144,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         (
             Node {
                 flex_direction: FlexDirection::Column,
-                width: Val::Percent(100.0),
+                width: Val::Percent(50.0),
                 height: Val::Percent(100.0),
                 margin: UiRect::new(Val::Px(margin_l), Val::Px(margin_r), Val::ZERO, Val::ZERO),
                 overflow: Overflow::scroll_y(),
@@ -180,8 +178,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
-                min_height: Val::Percent(25.0),
-                max_height: Val::Percent(25.0),
+                // width: Val::Percent(100.0),
+                min_height: Val::Percent(20.0),
+                // max_height: Val::Percent(25.0),
                 ..default()
             },
             structure,
@@ -195,7 +194,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             Node {
+                flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
+                // width: Val::Percent(100.0),
                 border: UiRect::all(Val::Px(2.5)),
                 ..default()
             },
@@ -230,13 +231,19 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     };
 
     let cost_ctr = |cost: i32| -> (CostCtr, BackgroundColor, Node, Text, Name) {
+        let cost_str = cost.to_string();
+        let offset = match cost_str.len() {
+            4 => -70.0, // 4-digit cost
+            _ => -58.0, // default for other cases
+        };
+
         (
             CostCtr,
             BackgroundColor(CLR_BASE),
             Node {
                 position_type: PositionType::Absolute,
                 top: Val::Percent(50.0),
-                left: Val::Percent(-30.0),
+                left: Val::Px(offset), // -70 for 4 digit costs, -58 for 3 digit costs
                 ..default()
             },
             Text::new(format!("${}", cost)),
@@ -258,8 +265,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                             should_block_lower: false,
                             ..default()
                         });
+
+                    p.spawn(cost_ctr(structure.cost()));
                 });
-            // .with_child(cost_ctr(structure.cost()));
         };
 
     // Root Container
@@ -281,6 +289,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             .with_children(|p: &mut ChildBuilder<'_>| {
                 // Structures Column
                 p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                    for structure in Structure::iter() {
+                        spawn_structure_btn(parent, structure, &my_assets);
+                    }
                     for structure in Structure::iter() {
                         spawn_structure_btn(parent, structure, &my_assets);
                     }

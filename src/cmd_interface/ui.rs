@@ -1,4 +1,6 @@
-use bevy::prelude::*;
+use accesskit::{Node as Accessible, Role};
+use bevy::picking;
+use bevy::{a11y::AccessibilityNode, prelude::*};
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::{bank::Bank, resources::MyAssets};
@@ -9,9 +11,13 @@ const CLR_BASE: Color = Color::srgb(0.29, 0.29, 0.3);
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui);
+        app.add_systems(Startup, command_center_ui)
+            .add_systems(Update, (update_minimap_aspect, update_build_opt_aspect));
     }
 }
+
+#[derive(Component)]
+struct OptCtr;
 
 #[derive(Component)]
 struct MiniMapCtr;
@@ -27,6 +33,34 @@ struct IconsCtr;
 
 #[derive(Component)]
 pub struct CostCtr;
+
+fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
+    if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
+        let width = computed_node.size().x;
+
+        // first frame is 0.0 for some reason
+        if width == 0.0 {
+            return;
+        }
+
+        mini_map.height = Val::Px(width);
+        // mini_map.width = Val::Px(width);
+    }
+}
+
+fn update_build_opt_aspect(mut q_opt: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
+    for (mut opt, computed_node) in q_opt.iter_mut() {
+        let width = computed_node.size().x;
+
+        // first frame is 0.0 for some reason
+        if width == 0.0 {
+            return;
+        }
+
+        // opt.height = Val::Px(width * 3.0);
+        // opt.width = Val::Px(width);
+    }
+}
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
     let root_ctr = (
@@ -50,7 +84,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         MiniMapCtr,
         Node {
             margin: UiRect::all(Val::Px(5.0)),
-            height: Val::Percent(30.0),
             ..default()
         },
         Text::new("Mini Map"),
@@ -116,8 +149,17 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
     let structure_opt_ctr = |structure: Structure,
                              assets: &Res<MyAssets>|
-     -> (Button, BorderColor, ImageNode, Node, Structure, Name) {
+     -> (
+        OptCtr,
+        Button,
+        BorderColor,
+        ImageNode,
+        Node,
+        Structure,
+        Name,
+    ) {
         (
+            OptCtr,
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             ImageNode {
@@ -127,9 +169,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             },
             Node {
                 flex_direction: FlexDirection::Column,
-                height: Val::Percent(20.0),
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
+                height: Val::Px(500.0),
                 ..default()
             },
             structure,
@@ -137,12 +179,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let unit_opt_ctr = || -> (Button, BorderColor, Node, Name) {
+    let unit_opt_ctr = || -> (OptCtr, Button, BorderColor, Node, Name) {
         (
+            OptCtr,
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             Node {
-                height: Val::Percent(20.0),
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
                 ..default()
@@ -151,7 +193,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let build_opt = |txt: &str| -> (Node, Text, TextFont, TextLayout, Name) {
+    let build_opt_txt = |txt: &str| -> (Node, Text, TextFont, TextLayout, Name) {
         (
             Node {
                 margin: UiRect::top(Val::Auto),
@@ -175,7 +217,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 position_type: PositionType::Absolute,
                 top: Val::Percent(50.0),
                 left: Val::Percent(-30.0),
-                // padding: UiRect::all(Val::Px(20.0)),
                 ..default()
             },
             Text::new(format!("${}", cost)),
@@ -187,7 +228,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
-                .with_child(build_opt(structure.to_string()))
+                .with_child(build_opt_txt(structure.to_string()))
                 .with_child(cost_ctr(structure.cost()));
         };
 
@@ -220,15 +261,15 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 // Units Column
                 p.spawn(build_column(2.5, 5.0)).with_children(|p| {
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 1"));
+                        .with_child(build_opt_txt("Unit 1"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 2"));
+                        .with_child(build_opt_txt("Unit 2"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 3"));
+                        .with_child(build_opt_txt("Unit 3"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 4"));
+                        .with_child(build_opt_txt("Unit 4"));
                     p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt("Unit 5"));
+                        .with_child(build_opt_txt("Unit 5"));
                 });
             });
     });

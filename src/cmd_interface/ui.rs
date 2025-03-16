@@ -10,6 +10,7 @@ use crate::{bank::Bank, resources::MyAssets};
 pub struct UiPlugin;
 
 const CLR_BASE: Color = Color::srgb(0.29, 0.29, 0.3);
+const CLR_BORDER_1: Color = Color::srgb(0.89, 0.89, 0.89);
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
@@ -38,6 +39,9 @@ struct BuildColumnsCtr;
 
 #[derive(Component)]
 struct IconsCtr;
+
+#[derive(Component)]
+struct Cost;
 
 #[derive(Component)]
 pub struct CostCtr;
@@ -73,6 +77,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         CmdInterfaceCtr,
         Button,
         Node {
+            border: UiRect::all(Val::Px(8.0)),
             flex_direction: FlexDirection::Column,
             position_type: PositionType::Absolute,
             right: Val::Px(0.0),
@@ -81,13 +86,14 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             ..default()
         },
         BackgroundColor(CLR_BASE),
+        BorderColor(CLR_BORDER_1),
         Name::new("Command Interface Ctr"),
     );
 
     let mini_map_ctr = (
         MiniMapCtr,
         Node {
-            margin: UiRect::all(Val::Px(5.0)),
+            margin: UiRect::all(Val::Px(8.0)),
             min_height: Val::Percent(25.0),
             ..default()
         },
@@ -130,10 +136,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BuildColumnsCtr,
         BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         Node {
-            // width: Val::Percent(100.0),
-            // height: Val::Percent(100.0),
             padding: UiRect::top(Val::Px(5.0)),
-            margin: UiRect::new(Val::Px(5.0), Val::Px(5.0), Val::ZERO, Val::ZERO),
+            margin: UiRect::new(Val::Px(8.0), Val::Px(8.0), Val::ZERO, Val::ZERO),
             overflow: Overflow::scroll_y(),
             ..default()
         },
@@ -178,9 +182,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
-                // width: Val::Percent(100.0),
                 min_height: Val::Percent(20.0),
-                // max_height: Val::Percent(25.0),
                 ..default()
             },
             structure,
@@ -196,7 +198,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             Node {
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
-                // width: Val::Percent(100.0),
                 border: UiRect::all(Val::Px(2.5)),
                 ..default()
             },
@@ -230,23 +231,29 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let cost_ctr = |cost: i32| -> (CostCtr, BackgroundColor, Node, Text, Name) {
+    let cost = |cost: i32| -> (Cost, Text, Name) {
+        (Cost, Text::new(format!("${}", cost)), Name::new("Cost"))
+    };
+
+    let cost_ctr = |cost: i32| -> (CostCtr, BackgroundColor, BorderColor, Node, Name) {
         let cost_str = cost.to_string();
         let offset = match cost_str.len() {
-            4 => -70.0, // 4-digit cost
-            _ => -58.0, // default for other cases
+            4 => -87.5, // 4-digit cost
+            _ => -75.5, // default for other cases
         };
 
         (
             CostCtr,
             BackgroundColor(CLR_BASE),
+            BorderColor(CLR_BORDER_1),
             Node {
                 position_type: PositionType::Absolute,
                 top: Val::Percent(50.0),
-                left: Val::Px(offset), // -70 for 4 digit costs, -58 for 3 digit costs
+                border: UiRect::new(Val::Px(5.0), Val::ZERO, Val::Px(5.0), Val::Px(5.0)),
+                padding: UiRect::all(Val::Px(5.0)),
+                left: Val::Px(offset),
                 ..default()
             },
-            Text::new(format!("${}", cost)),
             Name::new("Cost Ctr"),
         )
     };
@@ -266,7 +273,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                             ..default()
                         });
 
-                    p.spawn(cost_ctr(structure.cost()));
+                    p.spawn(cost_ctr(structure.cost()))
+                        .with_child(cost(structure.cost()));
                 });
         };
 

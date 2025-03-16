@@ -9,10 +9,7 @@ use super::events::*;
 use super::ui::CostCtr;
 use crate::bank::AdjustFundsEv;
 use crate::events::DeselectAllEv;
-use crate::resources::CursorState;
-use crate::resources::DbgOptions;
-use crate::resources::GameCommands;
-use crate::resources::MyAssets;
+use crate::resources::*;
 use crate::utils;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 

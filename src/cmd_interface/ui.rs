@@ -83,6 +83,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             right: Val::Px(0.0),
             height: Val::Percent(100.0),
             width: Val::Percent(15.0),
+            min_width: Val::Percent(25.0), // TODO: Remove. This is for YT short recordings
             ..default()
         },
         BackgroundColor(CLR_BASE),

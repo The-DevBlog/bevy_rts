@@ -8,6 +8,7 @@ use super::components::*;
 use super::events::*;
 use super::ui::CostCtr;
 use crate::bank::AdjustFundsEv;
+use crate::bank::Bank;
 use crate::events::DeselectAllEv;
 use crate::resources::*;
 use crate::utils;
@@ -56,6 +57,8 @@ fn build_structure_btn_interaction(
     input: Res<ButtonInput<MouseButton>>,
     mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure, &Children), With<Structure>>,
     mut q_cost: Query<&mut Visibility, With<CostCtr>>,
+    bank: Res<Bank>,
+    dbg: Res<DbgOptions>,
 ) {
     for (interaction, mut img, structure, children) in q_btn_bldg.iter_mut() {
         match interaction {
@@ -71,7 +74,11 @@ fn build_structure_btn_interaction(
             Interaction::Pressed => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
                 if input.just_pressed(MouseButton::Left) {
-                    cmds.trigger(BuildStructureSelectEv(structure.clone()));
+                    if bank.funds >= structure.cost() {
+                        cmds.trigger(BuildStructureSelectEv(structure.clone()));
+                    } else {
+                        dbg.print("Not enough funds");
+                    }
                 }
             }
             Interaction::Hovered => {

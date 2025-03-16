@@ -1,5 +1,4 @@
 use bevy::math::bounding::Aabb2d;
-use bevy_rapier3d::rapier::prelude::BroadPhasePairEvent;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use bevy_rts_pathfinding::components as pf_comps;
 

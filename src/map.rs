@@ -138,9 +138,3 @@ fn spawn_obstacle_2(
 
     cmds.spawn(obst);
 }
-
-fn despawn_obstacles(mut cmds: Commands, query: Query<Entity, With<pf_comps::RtsObj>>) {
-    for entity in query.iter() {
-        cmds.entity(entity).despawn_recursive();
-    }
-}

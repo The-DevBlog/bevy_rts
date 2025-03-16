@@ -3,7 +3,6 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::*;
-use bevy_rts_camera::RtsCameraControls;
 
 use super::components::*;
 use super::events::*;
@@ -113,19 +112,9 @@ fn build_unit_btn_interaction(
 fn cancel_build_structure(
     q_placeholder: Query<Entity, With<StructurePlaceholder>>,
     mut cmds: Commands,
-    game_cmds: Res<GameCommands>,
     mut cursor_state: ResMut<CursorState>,
     input: Res<ButtonInput<MouseButton>>,
-    mut q_cam_ctrls: Query<&mut RtsCameraControls, With<pf_comps::GameCamera>>,
 ) {
-    if q_placeholder.is_empty() {
-        if let Ok(mut ctrls) = q_cam_ctrls.get_single_mut() {
-            // ctrls.zoom_sensitivity = 0.2;
-        };
-
-        return;
-    }
-
     if input.just_pressed(MouseButton::Right) {
         for placeholder_ent in q_placeholder.iter() {
             *cursor_state = CursorState::Standard;
@@ -203,10 +192,7 @@ fn place_structure(
 
 fn sync_placeholder(
     mut q_placeholder: Query<(&mut Transform, &pf_comps::RtsObjSize), With<StructurePlaceholder>>,
-    mut cam_q: Query<
-        (&Camera, &GlobalTransform, &mut RtsCameraControls),
-        With<pf_comps::GameCamera>,
-    >,
+    mut cam_q: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
     map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
     q_window: Query<&Window, With<PrimaryWindow>>,
     mut mouse_wheel_events: EventReader<MouseWheel>,
@@ -220,8 +206,7 @@ fn sync_placeholder(
         transform.rotate_y(event.y * ROTATION_SPEED);
     }
 
-    let (cam, cam_trans, mut rts_cam_ctrls) = cam_q.single_mut();
-    // rts_cam_ctrls.zoom_sensitivity = 0.0;
+    let (cam, cam_trans) = cam_q.single_mut();
 
     let Some(viewport_cursor) = q_window.single().cursor_position() else {
         return;

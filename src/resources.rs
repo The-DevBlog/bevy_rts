@@ -262,7 +262,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
 
     // units
-    my_assets.models.tank = assets.load("models/units/tank_tan.glb#Scene0");
+    my_assets.models.tank = assets.load("models/units/tank.gltf#Scene0");
 
     // structures
     my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");

@@ -68,6 +68,7 @@ fn update_option_ctrs_aspect(mut q_opt_ctr: Query<(&mut Node, &ComputedNode), Wi
             continue;
         }
 
+        opt_ctr.min_height = Val::Px(width);
         opt_ctr.height = Val::Px(width);
     }
 }
@@ -84,7 +85,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             height: Val::Percent(100.0),
             width: Val::Percent(15.0),
             max_width: Val::Px(394.0),
-            // min_width: Val::Percent(25.0), // TODO: Remove. This is for YT short recordings
+            min_width: Val::Px(200.0),
             ..default()
         },
         BackgroundColor(CLR_BASE),
@@ -184,7 +185,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
-                min_height: Val::Percent(20.0),
                 ..default()
             },
             structure,

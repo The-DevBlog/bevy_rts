@@ -77,8 +77,9 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let root_ctr = (
         CmdInterfaceCtr,
         Button,
+        ImageNode::new(my_assets.images.cmd_intrfce_background.clone()),
         Node {
-            border: UiRect::all(Val::Px(8.0)),
+            padding: UiRect::left(Val::Percent(0.75)),
             flex_direction: FlexDirection::Column,
             position_type: PositionType::Absolute,
             right: Val::Px(0.0),
@@ -88,8 +89,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             min_width: Val::Px(200.0),
             ..default()
         },
-        BackgroundColor(CLR_BASE),
-        BorderColor(CLR_BORDER_1),
         Name::new("Command Interface Ctr"),
     );
 

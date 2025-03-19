@@ -75,6 +75,7 @@ pub struct Images {
     pub structure_vehicle_depot: Handle<Image>,
     pub structure_research_center: Handle<Image>,
     pub structure_satellite_dish: Handle<Image>,
+    pub cmd_intrfce_background: Handle<Image>,
 }
 
 #[derive(Default)]
@@ -260,6 +261,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.structure_vehicle_depot = assets.load("imgs/structures/vehicle_depot.png");
     my_assets.images.structure_research_center = assets.load("imgs/structures/research_center.png");
     my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
+    my_assets.images.cmd_intrfce_background = assets.load("imgs/cmd_interface/root_ctr.png");
 
     // units
     my_assets.models.tank = assets.load("models/units/tank.gltf#Scene0");

@@ -10,8 +10,8 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
-const TANK_SIZE: Vec3 = Vec3::new(4.8, 2.0, 7.8);
-const BORDER_SIZE: Vec2 = Vec2::new(35.0, 35.0);
+const TANK_SIZE: Vec3 = Vec3::new(7.44, 3.1, 12.09);
+const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
 
 pub struct TankPlugin;
 
@@ -24,7 +24,6 @@ impl Plugin for TankPlugin {
                 // move_unit.run_if(any_with_component::<pf_comps::Destination>),
                 set_is_moving,
                 spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
-                // spawn_tank.run_if(once_after_delay(Duration::from_secs(1))),
                 move_unit.run_if(any_with_component::<pf_comps::Destination>),
             )
                 .chain(),

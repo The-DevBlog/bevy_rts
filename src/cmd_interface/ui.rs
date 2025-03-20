@@ -95,8 +95,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let mini_map_ctr = (
         MiniMapCtr,
         Node {
-            margin: UiRect::all(Val::Px(8.0)),
             min_height: Val::Percent(25.0),
+            max_height: Val::Px(341.0),
+            max_width: Val::Px(341.0),
+            margin: UiRect::bottom(Val::Px(41.0)),
+            top: Val::Px(22.1),
+            right: Val::Px(0.5),
             ..default()
         },
         Text::new("Mini Map"),
@@ -107,8 +111,15 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
     let bank_ctr = (
         BankCtr,
-        Node { ..default() },
+        Node {
+            margin: UiRect::bottom(Val::Percent(2.8)),
+            ..default()
+        },
         Text::new(format!("${}", bank.funds.to_string())),
+        TextFont {
+            font_size: 30.0,
+            ..default()
+        },
         TextLayout::new_with_justify(JustifyText::Center),
         Name::new("Bank"),
     );
@@ -139,7 +150,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         Node {
             padding: UiRect::top(Val::Px(5.0)),
-            margin: UiRect::new(Val::Px(8.0), Val::Px(8.0), Val::ZERO, Val::ZERO),
+            margin: UiRect::new(Val::Px(12.0), Val::Px(10.0), Val::ZERO, Val::ZERO),
             overflow: Overflow::scroll_y(),
             ..default()
         },

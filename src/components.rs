@@ -55,9 +55,12 @@ impl UnitBundle {
         // material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         transform: Transform,
     ) -> Self {
+        // let scale = 1.55;
         Self {
             border_size: BorderSize(border_size),
             collider: Collider::cuboid(size.x, size.y, size.z), // TODO: uncomment
+            // collider: Collider::cuboid(size.x * scale, size.y * scale, size.z * scale), // TODO: uncomment
+
             // collider: Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0), // TODO: remove
             damping: Damping {
                 linear_damping: 10.0,

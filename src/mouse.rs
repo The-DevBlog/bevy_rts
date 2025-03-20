@@ -310,13 +310,11 @@ pub fn handle_drag_select(
     let c = box_coords.world.end_2;
     let d = box_coords.world.end_1;
 
-    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
+    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode, Name) {
         (
             UnitSelectBorder(ent),
-            ImageNode {
-                image: my_assets.images.select_border.clone(),
-                ..default()
-            },
+            ImageNode::new(my_assets.images.select_border.clone()),
+            Name::new("Unit Select Border"),
         )
     };
 

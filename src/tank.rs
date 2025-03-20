@@ -10,7 +10,7 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
-const TANK_SIZE: Vec3 = Vec3::new(7.44, 3.1, 12.09);
+const TANK_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
 const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
 
 pub struct TankPlugin;

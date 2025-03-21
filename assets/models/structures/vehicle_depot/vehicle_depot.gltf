@@ -57,7 +57,7 @@
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"garage door",
+			"name":"crane",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
@@ -68,7 +68,7 @@
 		},
 		{
 			"doubleSided":true,
-			"name":"garage",
+			"name":"garage door",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":1
@@ -79,10 +79,21 @@
 		},
 		{
 			"doubleSided":true,
-			"name":"base",
+			"name":"garage",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":2
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"base",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":3
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.5
@@ -99,7 +110,8 @@
 						"NORMAL":1,
 						"TEXCOORD_0":2
 					},
-					"indices":3
+					"indices":3,
+					"material":0
 				}
 			]
 		},
@@ -112,7 +124,8 @@
 						"NORMAL":5,
 						"TEXCOORD_0":6
 					},
-					"indices":7
+					"indices":7,
+					"material":0
 				}
 			]
 		},
@@ -125,7 +138,8 @@
 						"NORMAL":9,
 						"TEXCOORD_0":10
 					},
-					"indices":11
+					"indices":11,
+					"material":0
 				}
 			]
 		},
@@ -138,7 +152,8 @@
 						"NORMAL":13,
 						"TEXCOORD_0":14
 					},
-					"indices":15
+					"indices":15,
+					"material":0
 				}
 			]
 		},
@@ -152,7 +167,7 @@
 						"TEXCOORD_0":18
 					},
 					"indices":19,
-					"material":0
+					"material":1
 				}
 			]
 		},
@@ -166,7 +181,7 @@
 						"TEXCOORD_0":22
 					},
 					"indices":23,
-					"material":1
+					"material":2
 				}
 			]
 		},
@@ -180,7 +195,7 @@
 						"TEXCOORD_0":26
 					},
 					"indices":27,
-					"material":2
+					"material":3
 				}
 			]
 		}
@@ -192,14 +207,23 @@
 		},
 		{
 			"sampler":0,
-			"source":0
+			"source":1
 		},
 		{
 			"sampler":0,
 			"source":1
+		},
+		{
+			"sampler":0,
+			"source":2
 		}
 	],
 	"images":[
+		{
+			"mimeType":"image/png",
+			"name":"crane",
+			"uri":"crane.png"
+		},
 		{
 			"mimeType":"image/png",
 			"name":"garage",

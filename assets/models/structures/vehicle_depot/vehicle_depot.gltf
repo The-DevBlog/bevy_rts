@@ -51,7 +51,12 @@
 				5
 			],
 			"mesh":6,
-			"name":"Base"
+			"name":"Base",
+			"translation":[
+				0,
+				-0.7020640969276428,
+				0
+			]
 		}
 	],
 	"materials":[
@@ -68,7 +73,7 @@
 		},
 		{
 			"doubleSided":true,
-			"name":"garage door",
+			"name":"garage",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":1
@@ -79,21 +84,10 @@
 		},
 		{
 			"doubleSided":true,
-			"name":"garage",
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":2
-				},
-				"metallicFactor":0,
-				"roughnessFactor":0.5
-			}
-		},
-		{
-			"doubleSided":true,
 			"name":"base",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":3
+					"index":2
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.5
@@ -181,7 +175,7 @@
 						"TEXCOORD_0":22
 					},
 					"indices":23,
-					"material":2
+					"material":1
 				}
 			]
 		},
@@ -195,7 +189,7 @@
 						"TEXCOORD_0":26
 					},
 					"indices":27,
-					"material":3
+					"material":2
 				}
 			]
 		}
@@ -204,10 +198,6 @@
 		{
 			"sampler":0,
 			"source":0
-		},
-		{
-			"sampler":0,
-			"source":1
 		},
 		{
 			"sampler":0,

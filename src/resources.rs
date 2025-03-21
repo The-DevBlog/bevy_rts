@@ -264,7 +264,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.cmd_intrfce_background = assets.load("imgs/cmd_interface/root_ctr.png");
 
     // units
-    my_assets.models.tank = assets.load("models/units/tank.gltf#Scene0");
+    my_assets.models.tank = assets.load("models/units/tank/tank.gltf#Scene0");
 
     // structures
     my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");

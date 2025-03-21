@@ -100,7 +100,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             max_width: Val::Px(341.0),
             margin: UiRect::bottom(Val::Px(41.0)),
             top: Val::Px(22.1),
-            right: Val::Px(0.5),
+            left: Val::Percent(2.0),
             ..default()
         },
         Text::new("Mini Map"),

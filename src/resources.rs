@@ -269,7 +269,8 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     // structures
     my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");
     my_assets.models.cannon = assets.load("models/structures/cannon.gltf#Scene0");
-    my_assets.models.vehicle_depot = assets.load("models/structures/vehicle_depot.gltf#Scene0");
+    my_assets.models.vehicle_depot =
+        assets.load("models/structures/vehicle_depot/vehicle_depot.gltf#Scene0");
     my_assets.models.research_center = assets.load("models/structures/research_center.gltf#Scene0");
     my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.gltf#Scene0");
 

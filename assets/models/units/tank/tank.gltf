@@ -235,13 +235,13 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"body_2",
-			"uri":"body_2.png"
+			"name":"body",
+			"uri":"body.png"
 		},
 		{
 			"mimeType":"image/png",
-			"name":"head_2",
-			"uri":"head_2.png"
+			"name":"head",
+			"uri":"head.png"
 		}
 	],
 	"accessors":[

@@ -10,7 +10,8 @@ use std::time::Duration;
 use crate::{components::*, resources::*, *};
 use events::SetUnitDestinationEv;
 
-const TANK_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
+const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
+const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
 const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
 
 pub struct TankPlugin;
@@ -39,15 +40,28 @@ pub fn spawn_tank(
     // mut meshes: ResMut<Assets<Mesh>>,
     // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    // GEN I
     cmds.spawn((UnitBundle::new(
         BORDER_SIZE,
         TANK_SPEED * SPEED_QUANTIFIER,
         "Tank".to_string(),
         my_assets.models.tank.clone(),
-        TANK_SIZE,
+        TANK_GEN1_SIZE,
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
+    ),));
+
+    // GEN II
+    cmds.spawn((UnitBundle::new(
+        BORDER_SIZE,
+        TANK_SPEED * SPEED_QUANTIFIER,
+        "Tank".to_string(),
+        my_assets.models.tank_gen2.clone(),
+        TANK_GEN2_SIZE,
+        // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+        // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
+        Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
     ),));
 }
 
@@ -75,7 +89,7 @@ pub fn spawn_tanks(
             "Tank".to_string(),
             // assets.load("tank_tan.glb#Scene0"),
             my_assets.models.tank.clone(),
-            TANK_SIZE,
+            TANK_GEN1_SIZE,
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),
@@ -91,7 +105,7 @@ pub fn spawn_tanks(
             "Tank".to_string(),
             // assets.load("tank_tan.glb#Scene0"),
             my_assets.models.tank.clone(),
-            TANK_SIZE,
+            TANK_GEN1_SIZE,
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),

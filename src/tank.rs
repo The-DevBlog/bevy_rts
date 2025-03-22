@@ -45,7 +45,7 @@ pub fn spawn_tank(
         BORDER_SIZE,
         TANK_SPEED * SPEED_QUANTIFIER,
         "Tank".to_string(),
-        my_assets.models.tank.clone(),
+        my_assets.models.tank_gen1.clone(),
         TANK_GEN1_SIZE,
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
@@ -88,7 +88,7 @@ pub fn spawn_tanks(
             TANK_SPEED * SPEED_QUANTIFIER,
             "Tank".to_string(),
             // assets.load("tank_tan.glb#Scene0"),
-            my_assets.models.tank.clone(),
+            my_assets.models.tank_gen1.clone(),
             TANK_GEN1_SIZE,
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
@@ -104,7 +104,7 @@ pub fn spawn_tanks(
             TANK_SPEED * SPEED_QUANTIFIER,
             "Tank".to_string(),
             // assets.load("tank_tan.glb#Scene0"),
-            my_assets.models.tank.clone(),
+            my_assets.models.tank_gen1.clone(),
             TANK_GEN1_SIZE,
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove

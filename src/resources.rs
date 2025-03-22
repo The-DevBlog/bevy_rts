@@ -81,7 +81,7 @@ pub struct Images {
 #[derive(Default)]
 pub struct Models {
     pub barracks: Handle<Scene>,
-    pub tank: Handle<Scene>,
+    pub tank_gen1: Handle<Scene>,
     pub tank_gen2: Handle<Scene>,
     pub cannon: Handle<Scene>,
     pub vehicle_depot: Handle<Scene>,
@@ -265,7 +265,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.images.cmd_intrfce_background = assets.load("imgs/cmd_interface/root_ctr.png");
 
     // units
-    my_assets.models.tank = assets.load("models/units/tank/tank.gltf#Scene0");
+    my_assets.models.tank_gen1 = assets.load("models/units/tank_gen1/tank.gltf#Scene0");
     my_assets.models.tank_gen2 = assets.load("models/units/tank_gen2/tank_gen2.gltf#Scene0");
 
     // structures

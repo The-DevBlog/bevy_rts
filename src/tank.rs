@@ -61,6 +61,18 @@ pub fn spawn_tank(
         TANK_GEN2_SIZE,
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
+        Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0)),
+    ),));
+
+    // GEN II
+    cmds.spawn((UnitBundle::new(
+        BORDER_SIZE,
+        TANK_SPEED * SPEED_QUANTIFIER,
+        "Tank".to_string(),
+        my_assets.models.tank_gen2.clone(),
+        TANK_GEN2_SIZE,
+        // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+        // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
     ),));
 }

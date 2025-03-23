@@ -5,6 +5,8 @@ use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
+use crate::components::structures::Structure;
+use crate::components::units::UnitType;
 use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
@@ -57,7 +59,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let root_ctr = (
         CmdInterfaceCtr,
         Button,
-        ImageNode::new(my_assets.images.cmd_intrfce_background.clone()),
+        ImageNode::new(my_assets.imgs.cmd_intrfce_background.clone()),
         Node {
             padding: UiRect::left(Val::Percent(0.75)),
             flex_direction: FlexDirection::Column,
@@ -181,15 +183,18 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 ..default()
             },
             structure,
-            Name::new("Build Option"),
+            Name::new("Structure Build Option"),
         )
     };
 
-    let unit_opt_ctr = || -> (OptCtr, Button, BorderColor, Node, Name) {
+    let unit_opt_ctr = |unit: UnitType,
+                        assets: &Res<MyAssets>|
+     -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
         (
             OptCtr,
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+            ImageNode::from(unit.img(assets)),
             Node {
                 width: Val::Percent(100.0),
                 min_width: Val::Percent(100.0),
@@ -199,7 +204,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 aspect_ratio: Some(1.0),
                 ..default()
             },
-            Name::new("Build Option"),
+            UnitCtr(unit),
+            Name::new("Unit Build Option"),
         )
     };
 
@@ -276,6 +282,24 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
         };
 
+    let spawn_unit_btn = |parent: &mut ChildBuilder, unit: UnitType, assets: &Res<MyAssets>| {
+        parent
+            .spawn(unit_opt_ctr(unit, assets))
+            .insert(PickingBehavior {
+                should_block_lower: false,
+                ..default()
+            })
+            .with_children(|p| {
+                p.spawn(build_opt_txt(unit.to_string()))
+                    .insert(PickingBehavior {
+                        should_block_lower: false,
+                        ..default()
+                    });
+
+                p.spawn(cost_ctr(unit.cost())).with_child(cost(unit.cost()));
+            });
+    };
+
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
         //  Mini Map
@@ -286,8 +310,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
         // Structure/Units Icons
         p.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_assets.images.cmd_intrfce_structures.clone()));
-            parent.spawn(icon(my_assets.images.cmd_intrfce_units.clone()));
+            parent.spawn(icon(my_assets.imgs.cmd_intrfce_structures.clone()));
+            parent.spawn(icon(my_assets.imgs.cmd_intrfce_units.clone()));
         });
 
         // Structure/Units Columns
@@ -304,18 +328,29 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
 
                 // Units Column
-                p.spawn(build_column(2.5, 5.0)).with_children(|p| {
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 1"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 2"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 3"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 4"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 5"));
+                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                    for unit in UnitType::iter() {
+                        spawn_unit_btn(parent, unit, &my_assets);
+                    }
                 });
+
+                // p.spawn(build_column(2.5, 5.0)).with_children(|p| {
+                // for unit in Unit::iter() {
+                // p.spawn((unit_opt_ctr(unit, &my_assets), UnitCtr));
+                // .with_child(build_opt_txt(unit_str));
+                // }
+
+                // p.spawn((unit_opt_ctr(), UnitCtr))
+                //     .with_child(build_opt_txt("Unit 1"));
+                // p.spawn((unit_opt_ctr(), UnitCtr))
+                //     .with_child(build_opt_txt("Unit 2"));
+                // p.spawn((unit_opt_ctr(), UnitCtr))
+                //     .with_child(build_opt_txt("Unit 3"));
+                // p.spawn((unit_opt_ctr(), UnitCtr))
+                //     .with_child(build_opt_txt("Unit 4"));
+                // p.spawn((unit_opt_ctr(), UnitCtr))
+                //     .with_child(build_opt_txt("Unit 5"));
+                // });
             });
     });
 }

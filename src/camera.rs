@@ -2,7 +2,7 @@ use bevy::math::bounding::Aabb2d;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use bevy_rts_pathfinding::components as pf_comps;
 
-use crate::{cmd_interface::components::StructurePlaceholder, resources::GameCommands};
+use crate::{components::structures::*, resources::GameCommands};
 
 use super::*;
 

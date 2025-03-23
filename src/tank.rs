@@ -7,7 +7,8 @@ use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
 use std::time::Duration;
 
-use crate::{components::*, resources::*, *};
+use crate::components::units::*;
+use crate::{resources::*, *};
 use events::SetUnitDestinationEv;
 
 const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
@@ -50,6 +51,7 @@ pub fn spawn_tank(
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
+        UnitType::TankGen1,
     ),));
 
     // GEN II
@@ -62,6 +64,7 @@ pub fn spawn_tank(
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0)),
+        UnitType::TankGen2,
     ),));
 
     // GEN II
@@ -74,6 +77,7 @@ pub fn spawn_tank(
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
+        UnitType::TankGen2,
     ),));
 }
 
@@ -105,6 +109,7 @@ pub fn spawn_tanks(
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),
+            UnitType::TankGen1,
         ),)
     };
 
@@ -121,6 +126,7 @@ pub fn spawn_tanks(
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),
+            UnitType::TankGen1,
         ),)
     };
 
@@ -181,7 +187,7 @@ pub fn set_unit_destination(
     cmds.trigger(pf_events::InitializeFlowFieldEv(units));
 }
 
-fn set_is_moving(mut q_is_moving: Query<(&mut IsMoving, &Velocity), With<Unit>>) {
+fn set_is_moving(mut q_is_moving: Query<(&mut IsMoving, &Velocity), With<UnitType>>) {
     for (mut is_moving, velocity) in q_is_moving.iter_mut() {
         is_moving.0 = velocity.linvel.length_squared() > 0.0001;
     }
@@ -193,7 +199,7 @@ fn move_unit(
         (Entity, &mut Transform, &pf_comps::Boid, &Speed),
         With<pf_comps::Destination>,
     >,
-    mut q_impulse: Query<(&mut ExternalImpulse, &IsMoving), With<Unit>>,
+    mut q_impulse: Query<(&mut ExternalImpulse, &IsMoving), With<UnitType>>,
     time: Res<Time>,
 ) {
     let delta_secs = time.delta_secs();
@@ -220,7 +226,7 @@ fn apply_steering(
     speed: &Speed,
     delta_secs: f32,
     ent: Entity,
-    q_impulse: &mut Query<(&mut ExternalImpulse, &IsMoving), With<Unit>>,
+    q_impulse: &mut Query<(&mut ExternalImpulse, &IsMoving), With<UnitType>>,
 ) {
     if steering.length_squared() > 0.00001 {
         let target_yaw = f32::atan2(-steering.x, -steering.z);

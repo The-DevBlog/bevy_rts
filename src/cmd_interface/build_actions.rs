@@ -9,6 +9,7 @@ use super::events::*;
 use super::ui::CostCtr;
 use crate::bank::AdjustFundsEv;
 use crate::bank::Bank;
+use crate::components::structures::*;
 use crate::events::DeselectAllEv;
 use crate::resources::*;
 use crate::utils;
@@ -97,18 +98,37 @@ fn build_structure_btn_interaction(
 fn build_unit_btn_interaction(
     mut cmds: Commands,
     input: Res<ButtonInput<MouseButton>>,
-    mut q_btn_unit: Query<(&Interaction, &mut BackgroundColor), With<UnitCtr>>,
+    mut q_btn_unit: Query<(&Interaction, &mut ImageNode, &UnitCtr, &Children), With<UnitCtr>>,
+    mut q_cost: Query<&mut Visibility, With<CostCtr>>,
+    bank: Res<Bank>,
+    dbg: Res<DbgOptions>,
 ) {
-    for (interaction, mut border_clr) in q_btn_unit.iter_mut() {
+    for (interaction, mut img, unit_ctr, children) in q_btn_unit.iter_mut() {
+        let unit_type = unit_ctr.0;
+
         match interaction {
-            Interaction::None => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND,
-            Interaction::Pressed => {
-                border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER;
-                if input.just_pressed(MouseButton::Left) {
-                    cmds.trigger(BuildUnitEv);
+            Interaction::None => {
+                img.color = CLR_STRUCTURE_BUILD_ACTIONS;
+
+                for child in children.iter() {
+                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
+                        *cost_vis = Visibility::Hidden;
+                    }
                 }
             }
-            Interaction::Hovered => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
+            Interaction::Pressed => {
+                img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
+                if input.just_pressed(MouseButton::Left) {}
+            }
+            Interaction::Hovered => {
+                img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
+
+                for child in children.iter() {
+                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
+                        *cost_vis = Visibility::Visible;
+                    }
+                }
+            }
         }
     }
 }

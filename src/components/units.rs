@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
+use strum_macros::EnumIter;
+
+use crate::resources::MyAssets;
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder(pub Entity);
@@ -24,6 +27,36 @@ pub struct IsMoving(pub bool);
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub struct Unit;
 
+#[derive(Component, EnumIter, Clone, Copy)]
+#[require(pf_comps::RtsObj, IsMoving, Velocity)]
+pub enum UnitType {
+    TankGen1,
+    TankGen2,
+}
+
+impl UnitType {
+    pub fn cost(&self) -> i32 {
+        match self {
+            UnitType::TankGen1 => 500,
+            UnitType::TankGen2 => 800,
+        }
+    }
+
+    pub fn to_string(&self) -> &str {
+        match self {
+            UnitType::TankGen1 => "Tank Gen I",
+            UnitType::TankGen2 => "Tank Gen II",
+        }
+    }
+
+    pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
+        match self {
+            UnitType::TankGen1 => my_assets.imgs.unit_tank_gen1.clone(),
+            UnitType::TankGen2 => my_assets.imgs.unit_tank_gen2.clone(),
+        }
+    }
+}
+
 #[derive(Bundle)]
 pub struct UnitBundle {
     pub border_size: BorderSize,
@@ -39,6 +72,7 @@ pub struct UnitBundle {
     pub speed: Speed,
     pub transform: Transform,
     pub transform_global: GlobalTransform,
+    pub unit_type: UnitType,
     pub unit: Unit,
     // pub mesh: Mesh3d,
     // pub material: MeshMaterial3d<StandardMaterial>, // TODO: remove
@@ -54,6 +88,7 @@ impl UnitBundle {
         // mesh: Mesh3d,                               // TODO: remove
         // material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         transform: Transform,
+        unit_type: UnitType,
     ) -> Self {
         // let scale = 1.55;
         Self {
@@ -83,6 +118,7 @@ impl UnitBundle {
             speed: Speed(speed),
             transform,
             transform_global: GlobalTransform::default(),
+            unit_type: unit_type,
             unit: Unit,
             // mesh,     // TODO: remove
             // material, // TODO: remove

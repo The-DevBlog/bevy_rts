@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
+use strum_macros::EnumIter;
 
 use crate::resources::MyAssets;
 
@@ -22,7 +23,7 @@ pub struct SelectionBox;
 #[derive(Component, Default)]
 pub struct IsMoving(pub bool);
 
-#[derive(Component)]
+#[derive(Component, EnumIter)]
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub enum Unit {
     TankGen1,

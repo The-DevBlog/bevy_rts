@@ -6,6 +6,7 @@ use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::components::structures::Structure;
+use crate::components::units::Unit;
 use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
@@ -191,12 +192,14 @@ fn command_center_ui(
         )
     };
 
-    let unit_opt_ctr = || -> (OptCtr, Button, BorderColor, ImageNode, Node, Name) {
+    let unit_opt_ctr = |unit: Unit,
+                        assets: &Res<MyAssets>|
+     -> (OptCtr, Button, BorderColor, ImageNode, Node, Name) {
         (
             OptCtr,
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
-            ImageNode::from(assets.load("tmp.png")),
+            ImageNode::from(unit.img(assets)),
             Node {
                 width: Val::Percent(100.0),
                 min_width: Val::Percent(100.0),
@@ -312,16 +315,21 @@ fn command_center_ui(
 
                 // Units Column
                 p.spawn(build_column(2.5, 5.0)).with_children(|p| {
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 1"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 2"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 3"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 4"));
-                    p.spawn((unit_opt_ctr(), UnitCtr))
-                        .with_child(build_opt_txt("Unit 5"));
+                    for unit in Unit::iter() {
+                        p.spawn((unit_opt_ctr(unit, &my_assets), UnitCtr));
+                        // .with_child(build_opt_txt(unit_str));
+                    }
+
+                    // p.spawn((unit_opt_ctr(), UnitCtr))
+                    //     .with_child(build_opt_txt("Unit 1"));
+                    // p.spawn((unit_opt_ctr(), UnitCtr))
+                    //     .with_child(build_opt_txt("Unit 2"));
+                    // p.spawn((unit_opt_ctr(), UnitCtr))
+                    //     .with_child(build_opt_txt("Unit 3"));
+                    // p.spawn((unit_opt_ctr(), UnitCtr))
+                    //     .with_child(build_opt_txt("Unit 4"));
+                    // p.spawn((unit_opt_ctr(), UnitCtr))
+                    //     .with_child(build_opt_txt("Unit 5"));
                 });
             });
     });

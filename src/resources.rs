@@ -44,7 +44,7 @@ impl DbgOptions {
 #[derive(Resource, Default)]
 pub struct MyAssets {
     pub models: Models,
-    pub images: Images,
+    pub imgs: Images,
     pub textures: Textures,
     pub audio: Audio,
 }
@@ -70,12 +70,14 @@ pub struct Images {
     pub cursor_standard: Handle<Image>,
     pub cmd_intrfce_structures: Handle<Image>,
     pub cmd_intrfce_units: Handle<Image>,
+    pub cmd_intrfce_background: Handle<Image>,
     pub structure_barracks: Handle<Image>,
     pub structure_cannon: Handle<Image>,
     pub structure_vehicle_depot: Handle<Image>,
     pub structure_research_center: Handle<Image>,
     pub structure_satellite_dish: Handle<Image>,
-    pub cmd_intrfce_background: Handle<Image>,
+    pub unit_tank_gen1: Handle<Image>,
+    pub unit_tank_gen2: Handle<Image>,
 }
 
 #[derive(Default)]
@@ -251,18 +253,20 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
         });
 
     // images
-    my_assets.images.select_border = assets.load("imgs/select_border.png");
-    my_assets.images.cursor_relocate = assets.load("imgs/cursor/relocate.png");
-    my_assets.images.cursor_select = assets.load("imgs/cursor/select.png");
-    my_assets.images.cursor_standard = assets.load("imgs/cursor/standard.png");
-    my_assets.images.cmd_intrfce_structures = assets.load("imgs/cmd_cntr_structures.png");
-    my_assets.images.cmd_intrfce_units = assets.load("imgs/cmd_cntr_units.png");
-    my_assets.images.structure_barracks = assets.load("imgs/structures/barracks.png");
-    my_assets.images.structure_cannon = assets.load("imgs/structures/cannon.png");
-    my_assets.images.structure_vehicle_depot = assets.load("imgs/structures/vehicle_depot.png");
-    my_assets.images.structure_research_center = assets.load("imgs/structures/research_center.png");
-    my_assets.images.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
-    my_assets.images.cmd_intrfce_background = assets.load("imgs/cmd_interface/root_ctr.png");
+    my_assets.imgs.select_border = assets.load("imgs/select_border.png");
+    my_assets.imgs.cursor_relocate = assets.load("imgs/cursor/relocate.png");
+    my_assets.imgs.cursor_select = assets.load("imgs/cursor/select.png");
+    my_assets.imgs.cursor_standard = assets.load("imgs/cursor/standard.png");
+    my_assets.imgs.cmd_intrfce_structures = assets.load("imgs/cmd_cntr_structures.png");
+    my_assets.imgs.cmd_intrfce_units = assets.load("imgs/cmd_cntr_units.png");
+    my_assets.imgs.cmd_intrfce_background = assets.load("imgs/cmd_interface/root_ctr.png");
+    my_assets.imgs.structure_barracks = assets.load("imgs/structures/barracks.png");
+    my_assets.imgs.structure_cannon = assets.load("imgs/structures/cannon.png");
+    my_assets.imgs.structure_vehicle_depot = assets.load("imgs/structures/vehicle_depot.png");
+    my_assets.imgs.structure_research_center = assets.load("imgs/structures/research_center.png");
+    my_assets.imgs.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
+    my_assets.imgs.unit_tank_gen1 = assets.load("imgs/units/tank_gen1.png");
+    my_assets.imgs.unit_tank_gen2 = assets.load("imgs/units/tank_gen2.png");
 
     // units
     my_assets.models.tank_gen1 = assets.load("models/units/tank_gen1/tank.gltf#Scene0");

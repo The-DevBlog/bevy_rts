@@ -37,16 +37,14 @@ impl Structure {
 
     pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
         match self {
-            Structure::Cannon => my_assets.images.structure_cannon.clone(),
-            Structure::Barracks => my_assets.images.structure_barracks.clone(),
-            Structure::VehicleDepot => my_assets.images.structure_vehicle_depot.clone(),
-            Structure::ResearchCenter => my_assets.images.structure_research_center.clone(),
-            Structure::SatelliteDish => my_assets.images.structure_satellite_dish.clone(),
+            Structure::Cannon => my_assets.imgs.structure_cannon.clone(),
+            Structure::Barracks => my_assets.imgs.structure_barracks.clone(),
+            Structure::VehicleDepot => my_assets.imgs.structure_vehicle_depot.clone(),
+            Structure::ResearchCenter => my_assets.imgs.structure_research_center.clone(),
+            Structure::SatelliteDish => my_assets.imgs.structure_satellite_dish.clone(),
         }
     }
-}
 
-impl Structure {
     pub fn place(
         &self,
         placeholder_ent: Entity,

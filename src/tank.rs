@@ -51,6 +51,7 @@ pub fn spawn_tank(
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
+        Unit::TankGen1,
     ),));
 
     // GEN II
@@ -63,6 +64,7 @@ pub fn spawn_tank(
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0)),
+        Unit::TankGen2,
     ),));
 
     // GEN II
@@ -75,6 +77,7 @@ pub fn spawn_tank(
         // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
+        Unit::TankGen2,
     ),));
 }
 
@@ -106,6 +109,7 @@ pub fn spawn_tanks(
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),
+            Unit::TankGen1,
         ),)
     };
 
@@ -122,6 +126,7 @@ pub fn spawn_tanks(
             // mesh.clone(),     // TODO: remove
             // material.clone(), // TODO: remove
             Transform::from_translation(pos),
+            Unit::TankGen1,
         ),)
     };
 

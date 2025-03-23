@@ -63,7 +63,7 @@ fn command_center_ui(
     let root_ctr = (
         CmdInterfaceCtr,
         Button,
-        ImageNode::new(my_assets.images.cmd_intrfce_background.clone()),
+        ImageNode::new(my_assets.imgs.cmd_intrfce_background.clone()),
         Node {
             padding: UiRect::left(Val::Percent(0.75)),
             flex_direction: FlexDirection::Column,
@@ -293,8 +293,8 @@ fn command_center_ui(
 
         // Structure/Units Icons
         p.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_assets.images.cmd_intrfce_structures.clone()));
-            parent.spawn(icon(my_assets.images.cmd_intrfce_units.clone()));
+            parent.spawn(icon(my_assets.imgs.cmd_intrfce_structures.clone()));
+            parent.spawn(icon(my_assets.imgs.cmd_intrfce_units.clone()));
         });
 
         // Structure/Units Columns

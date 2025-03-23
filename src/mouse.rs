@@ -313,7 +313,7 @@ pub fn handle_drag_select(
     let border = |ent: Entity| -> (UnitSelectBorder, ImageNode, Name) {
         (
             UnitSelectBorder(ent),
-            ImageNode::new(my_assets.images.select_border.clone()),
+            ImageNode::new(my_assets.imgs.select_border.clone()),
             Name::new("Unit Select Border"),
         )
     };
@@ -422,22 +422,22 @@ pub fn update_cursor_img(
     match *cursor_state {
         CursorState::Relocate => {
             window.cursor_options.visible = true;
-            img = my_assets.images.cursor_relocate.clone();
+            img = my_assets.imgs.cursor_relocate.clone();
             hotspot = (2, 2)
         }
         CursorState::Standard => {
             window.cursor_options.visible = true;
-            img = my_assets.images.cursor_standard.clone();
+            img = my_assets.imgs.cursor_standard.clone();
             hotspot = (0, 0)
         }
         CursorState::Select => {
             window.cursor_options.visible = true;
-            img = my_assets.images.cursor_select.clone();
+            img = my_assets.imgs.cursor_select.clone();
             hotspot = (25, 25)
         }
         CursorState::Build => {
             window.cursor_options.visible = false;
-            img = my_assets.images.cursor_relocate.clone();
+            img = my_assets.imgs.cursor_relocate.clone();
             hotspot = (0, 0)
         }
     }
@@ -465,7 +465,7 @@ pub fn single_select(
         (
             UnitSelectBorder(ent),
             ImageNode {
-                image: my_assets.images.select_border.clone(),
+                image: my_assets.imgs.select_border.clone(),
                 ..default()
             },
         )

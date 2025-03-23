@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 
+use crate::resources::MyAssets;
+
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder(pub Entity);
 
@@ -28,7 +30,7 @@ pub enum Unit {
 }
 
 impl Unit {
-    pub fn cost(&self) -> i32 {
+    pub fn cost(&self) -> f32 {
         match self {
             Unit::TankGen1 => 500.0,
             Unit::TankGen2 => 800.0,
@@ -43,7 +45,10 @@ impl Unit {
     }
 
     pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
-        match self {}
+        match self {
+            Unit::TankGen1 => my_assets.imgs.unit_tank_gen1.clone(),
+            Unit::TankGen2 => my_assets.imgs.unit_tank_gen2.clone(),
+        }
     }
 }
 
@@ -77,6 +82,7 @@ impl UnitBundle {
         // mesh: Mesh3d,                               // TODO: remove
         // material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         transform: Transform,
+        unit: Unit,
     ) -> Self {
         // let scale = 1.55;
         Self {
@@ -106,7 +112,7 @@ impl UnitBundle {
             speed: Speed(speed),
             transform,
             transform_global: GlobalTransform::default(),
-            unit: Unit,
+            unit,
             // mesh,     // TODO: remove
             // material, // TODO: remove
         }

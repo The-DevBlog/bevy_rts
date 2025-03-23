@@ -48,16 +48,16 @@ struct Cost;
 pub struct CostCtr;
 
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
-    // if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
-    //     let width = computed_node.size().x;
+    if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
+        let width = computed_node.size().x;
 
-    //     // first frame is 0.0 for some reason
-    //     if width == 0.0 {
-    //         return;
-    //     }
+        // first frame is 0.0 for some reason
+        if width == 0.0 {
+            return;
+        }
 
-    //     mini_map.height = Val::Px(width);
-    // }
+        mini_map.height = Val::Px(width);
+    }
 }
 
 fn update_option_ctrs_aspect(mut q_opt_ctr: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
@@ -102,12 +102,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let mini_map_ctr = (
         MiniMapCtr,
         Node {
-            // min_height: Val::Percent(25.0),
-            width: Val::Percent(100.0),
+            min_height: Val::Percent(25.0),
             max_height: Val::Px(341.0),
             max_width: Val::Px(341.0),
             margin: UiRect::bottom(Val::Px(41.0)),
-            aspect_ratio: Some(1.0),
             top: Val::Px(22.1),
             left: Val::Percent(2.0),
             ..default()

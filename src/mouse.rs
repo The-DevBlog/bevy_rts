@@ -41,7 +41,7 @@ impl Plugin for MousePlugin {
 
 fn sync_select_border_with_unit(
     mut q_border: Query<(&mut Node, &UnitSelectBorder)>,
-    q_unit_transform: Query<(&Transform, &BorderSize), With<Unit>>,
+    q_unit_transform: Query<(&Transform, &BorderSize), With<UnitType>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
     window_q: Query<&Window, With<PrimaryWindow>>,
 ) {
@@ -104,7 +104,7 @@ fn mouse_input(
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     mouse_coords: Res<MouseCoords>,
-    q_unit: Query<Entity, With<Unit>>,
+    q_unit: Query<Entity, With<UnitType>>,
 ) {
     if game_cmds.hvr_cmd_interface {
         return;
@@ -294,7 +294,7 @@ fn draw_drag_select_box(
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
-    mut unit_q: Query<(Entity, &Transform), With<Unit>>,
+    mut unit_q: Query<(Entity, &Transform), With<UnitType>>,
     box_coords: Res<SelectBox>,
     q_selected: Query<&Selected>,
     my_assets: Res<MyAssets>,
@@ -380,7 +380,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    q_unit: Query<&Unit>,
+    q_unit: Query<&UnitType>,
     mut q_cursor: Query<&mut CursorIcon>,
     mut q_window: Query<&mut Window, With<PrimaryWindow>>,
 ) {

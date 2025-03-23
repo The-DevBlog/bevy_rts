@@ -133,25 +133,6 @@ fn build_unit_btn_interaction(
     }
 }
 
-// fn build_unit_btn_interaction(
-//     mut cmds: Commands,
-//     input: Res<ButtonInput<MouseButton>>,
-//     mut q_btn_unit: Query<(&Interaction, &mut BackgroundColor), With<UnitCtr>>,
-// ) {
-//     for (interaction, mut border_clr) in q_btn_unit.iter_mut() {
-//         match interaction {
-//             Interaction::None => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND,
-//             Interaction::Pressed => {
-//                 border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER;
-//                 if input.just_pressed(MouseButton::Left) {
-//                     cmds.trigger(BuildUnitEv);
-//                 }
-//             }
-//             Interaction::Hovered => border_clr.0 = CLR_BUILD_ACTIONS_BACKGROUND_HOVER,
-//         }
-//     }
-// }
-
 fn cancel_build_structure(
     q_placeholder: Query<Entity, With<StructurePlaceholder>>,
     mut cmds: Commands,

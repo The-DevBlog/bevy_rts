@@ -1,5 +1,6 @@
 use accesskit::{Node as Accessible, Role};
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
+use bevy::math::AspectRatio;
 use bevy::picking::focus::HoverMap;
 use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
@@ -47,30 +48,36 @@ struct Cost;
 pub struct CostCtr;
 
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
-    if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
-        let width = computed_node.size().x;
+    // if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
+    //     let width = computed_node.size().x;
 
-        // first frame is 0.0 for some reason
-        if width == 0.0 {
-            return;
-        }
+    //     // first frame is 0.0 for some reason
+    //     if width == 0.0 {
+    //         return;
+    //     }
 
-        mini_map.height = Val::Px(width);
-    }
+    //     mini_map.height = Val::Px(width);
+    // }
 }
 
 fn update_option_ctrs_aspect(mut q_opt_ctr: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
-    for (mut opt_ctr, computed_node) in q_opt_ctr.iter_mut() {
-        let width = computed_node.size().x;
+    // for (mut opt_ctr, computed_node) in q_opt_ctr.iter_mut() {
+    //     let width = computed_node.size().x;
 
-        // first frame is 0.0 for some reason
-        if width == 0.0 {
-            continue;
-        }
+    //     // first frame is 0.0 for some reason
+    //     if width == 0.0 {
+    //         continue;
+    //     }
 
-        opt_ctr.min_height = Val::Px(width);
-        opt_ctr.height = Val::Px(width);
-    }
+    //     println!(
+    //         "computed width: {}, computed height: {}",
+    //         width,
+    //         computed_node.size().y
+    //     );
+
+    //     opt_ctr.min_height = Val::Px(width);
+    //     opt_ctr.height = Val::Px(width);
+    // }
 }
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
@@ -95,10 +102,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let mini_map_ctr = (
         MiniMapCtr,
         Node {
-            min_height: Val::Percent(25.0),
+            // min_height: Val::Percent(25.0),
+            width: Val::Percent(100.0),
             max_height: Val::Px(341.0),
             max_width: Val::Px(341.0),
             margin: UiRect::bottom(Val::Px(41.0)),
+            aspect_ratio: Some(1.0),
             top: Val::Px(22.1),
             left: Val::Percent(2.0),
             ..default()
@@ -192,9 +201,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 ..default()
             },
             Node {
+                width: Val::Percent(100.0),
+                min_width: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
+                aspect_ratio: Some(1.0),
                 ..default()
             },
             structure,
@@ -208,9 +220,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             Node {
+                width: Val::Percent(100.0),
+                min_width: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
+                aspect_ratio: Some(1.0),
                 ..default()
             },
             Name::new("Build Option"),
@@ -239,7 +254,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             TextLayout::new_with_justify(JustifyText::Center),
             Label,
             AccessibilityNode(Accessible::new(Role::ListItem)),
-            Name::new("Build Option Ctr"),
+            Name::new("Build Option Txt"),
         )
     };
 

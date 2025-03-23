@@ -9,6 +9,7 @@ use super::events::*;
 use super::ui::CostCtr;
 use crate::bank::AdjustFundsEv;
 use crate::bank::Bank;
+use crate::components::structures::*;
 use crate::events::DeselectAllEv;
 use crate::resources::*;
 use crate::utils;

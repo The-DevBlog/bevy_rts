@@ -5,7 +5,7 @@ use bevy_rts_camera::RtsCamera;
 use core::f32;
 use std::f32::consts::FRAC_PI_2;
 
-use crate::components::*;
+use crate::components::units::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;

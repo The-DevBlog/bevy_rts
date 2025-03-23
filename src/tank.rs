@@ -7,7 +7,8 @@ use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
 use std::time::Duration;
 
-use crate::{components::*, resources::*, *};
+use crate::components::units::*;
+use crate::{resources::*, *};
 use events::SetUnitDestinationEv;
 
 const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);

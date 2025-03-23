@@ -5,6 +5,7 @@ use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
+use crate::components::structures::Structure;
 use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;

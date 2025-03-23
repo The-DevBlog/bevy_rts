@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::components::Structure;
+use crate::components::structures::Structure;
 
 #[derive(Event)]
 pub struct BuildStructureSelectEv(pub Structure);

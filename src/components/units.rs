@@ -22,7 +22,30 @@ pub struct IsMoving(pub bool);
 
 #[derive(Component)]
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
-pub struct Unit;
+pub enum Unit {
+    TankGen1,
+    TankGen2,
+}
+
+impl Unit {
+    pub fn cost(&self) -> i32 {
+        match self {
+            Unit::TankGen1 => 500.0,
+            Unit::TankGen2 => 800.0,
+        }
+    }
+
+    pub fn to_string(&self) -> &str {
+        match self {
+            Unit::TankGen1 => "Tank Gen I",
+            Unit::TankGen2 => "Tank Gen II",
+        }
+    }
+
+    pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
+        match self {}
+    }
+}
 
 #[derive(Bundle)]
 pub struct UnitBundle {

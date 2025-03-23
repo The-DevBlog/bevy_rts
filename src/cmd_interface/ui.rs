@@ -14,14 +14,8 @@ const CLR_BORDER_1: Color = Color::srgb(0.89, 0.89, 0.89);
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui).add_systems(
-            Update,
-            (
-                update_minimap_aspect,
-                update_scroll_position,
-                update_option_ctrs_aspect,
-            ),
-        );
+        app.add_systems(Startup, command_center_ui)
+            .add_systems(Update, (update_minimap_aspect, update_scroll_position));
     }
 }
 
@@ -56,20 +50,6 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
         }
 
         mini_map.height = Val::Px(width);
-    }
-}
-
-fn update_option_ctrs_aspect(mut q_opt_ctr: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
-    for (mut opt_ctr, computed_node) in q_opt_ctr.iter_mut() {
-        let width = computed_node.size().x;
-
-        // first frame is 0.0 for some reason
-        if width == 0.0 {
-            continue;
-        }
-
-        opt_ctr.min_height = Val::Px(width);
-        opt_ctr.height = Val::Px(width);
     }
 }
 
@@ -192,9 +172,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 ..default()
             },
             Node {
+                width: Val::Percent(100.0),
+                min_width: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
+                aspect_ratio: Some(1.0),
                 ..default()
             },
             structure,
@@ -208,9 +191,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             Node {
+                width: Val::Percent(100.0),
+                min_width: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(2.5)),
+                aspect_ratio: Some(1.0),
                 ..default()
             },
             Name::new("Build Option"),
@@ -239,7 +225,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             TextLayout::new_with_justify(JustifyText::Center),
             Label,
             AccessibilityNode(Accessible::new(Role::ListItem)),
-            Name::new("Build Option Ctr"),
+            Name::new("Build Option Txt"),
         )
     };
 

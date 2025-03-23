@@ -54,7 +54,12 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
     }
 }
 
-fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
+fn command_center_ui(
+    mut cmds: Commands,
+    my_assets: Res<MyAssets>,
+    bank: Res<Bank>,
+    assets: Res<AssetServer>,
+) {
     let root_ctr = (
         CmdInterfaceCtr,
         Button,
@@ -186,11 +191,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let unit_opt_ctr = || -> (OptCtr, Button, BorderColor, Node, Name) {
+    let unit_opt_ctr = || -> (OptCtr, Button, BorderColor, ImageNode, Node, Name) {
         (
             OptCtr,
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+            ImageNode::from(assets.load("tmp.png")),
             Node {
                 width: Val::Percent(100.0),
                 min_width: Val::Percent(100.0),

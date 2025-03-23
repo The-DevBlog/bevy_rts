@@ -1,6 +1,5 @@
 use accesskit::{Node as Accessible, Role};
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
-use bevy::math::AspectRatio;
 use bevy::picking::focus::HoverMap;
 use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
@@ -15,14 +14,8 @@ const CLR_BORDER_1: Color = Color::srgb(0.89, 0.89, 0.89);
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui).add_systems(
-            Update,
-            (
-                update_minimap_aspect,
-                update_scroll_position,
-                update_option_ctrs_aspect,
-            ),
-        );
+        app.add_systems(Startup, command_center_ui)
+            .add_systems(Update, (update_minimap_aspect, update_scroll_position));
     }
 }
 
@@ -58,26 +51,6 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
 
         mini_map.height = Val::Px(width);
     }
-}
-
-fn update_option_ctrs_aspect(mut q_opt_ctr: Query<(&mut Node, &ComputedNode), With<OptCtr>>) {
-    // for (mut opt_ctr, computed_node) in q_opt_ctr.iter_mut() {
-    //     let width = computed_node.size().x;
-
-    //     // first frame is 0.0 for some reason
-    //     if width == 0.0 {
-    //         continue;
-    //     }
-
-    //     println!(
-    //         "computed width: {}, computed height: {}",
-    //         width,
-    //         computed_node.size().y
-    //     );
-
-    //     opt_ctr.min_height = Val::Px(width);
-    //     opt_ctr.height = Val::Px(width);
-    // }
 }
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {

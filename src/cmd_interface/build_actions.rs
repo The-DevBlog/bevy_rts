@@ -104,6 +104,7 @@ fn build_unit_btn_interaction(
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS;
             }
             Interaction::Pressed => {
+                info_ctr_data.active = true;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
             }
             Interaction::Hovered => {

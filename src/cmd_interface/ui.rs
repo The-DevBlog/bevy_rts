@@ -57,6 +57,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             ..default()
         },
         Name::new("Root Ctr"),
+        ZIndex(100),
     );
 
     let info_ctr = (

@@ -44,7 +44,6 @@ pub fn spawn_tank(
     // GEN I
     cmds.spawn((UnitBundle::new(
         BORDER_SIZE,
-        TANK_SPEED * SPEED_QUANTIFIER,
         "Tank".to_string(),
         my_assets.models.tank_gen1.clone(),
         TANK_GEN1_SIZE,
@@ -57,7 +56,6 @@ pub fn spawn_tank(
     // GEN II
     cmds.spawn((UnitBundle::new(
         BORDER_SIZE,
-        TANK_SPEED * SPEED_QUANTIFIER,
         "Tank".to_string(),
         my_assets.models.tank_gen2.clone(),
         TANK_GEN2_SIZE,
@@ -70,7 +68,6 @@ pub fn spawn_tank(
     // GEN II
     cmds.spawn((UnitBundle::new(
         BORDER_SIZE,
-        TANK_SPEED * SPEED_QUANTIFIER,
         "Tank".to_string(),
         my_assets.models.tank_gen2.clone(),
         TANK_GEN2_SIZE,
@@ -101,7 +98,6 @@ pub fn spawn_tanks(
         let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         (UnitBundle::new(
             BORDER_SIZE,
-            TANK_SPEED * SPEED_QUANTIFIER,
             "Tank".to_string(),
             // assets.load("tank_tan.glb#Scene0"),
             my_assets.models.tank_gen1.clone(),
@@ -118,7 +114,6 @@ pub fn spawn_tanks(
         let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
         (UnitBundle::new(
             BORDER_SIZE,
-            TANK_SPEED * SPEED_QUANTIFIER,
             "Tank".to_string(),
             // assets.load("tank_tan.glb#Scene0"),
             my_assets.models.tank_gen1.clone(),

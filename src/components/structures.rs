@@ -15,6 +15,16 @@ pub enum Structure {
 }
 
 impl Structure {
+    pub fn build_time(&self) -> i32 {
+        match self {
+            Structure::Cannon => 5,
+            Structure::Barracks => 10,
+            Structure::VehicleDepot => 15,
+            Structure::ResearchCenter => 20,
+            Structure::SatelliteDish => 25,
+        }
+    }
+
     pub fn cost(&self) -> i32 {
         match self {
             Structure::Cannon => 500,

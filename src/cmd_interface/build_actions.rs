@@ -63,9 +63,6 @@ fn build_structure_btn_interaction(
     mut info_ctr_data: ResMut<InfoContainerData>,
 ) {
     for (interaction, mut img, structure) in q_btn_bldg.iter_mut() {
-        let name = structure.to_string();
-        let cost = structure.cost();
-
         match interaction {
             Interaction::None => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS;
@@ -81,8 +78,12 @@ fn build_structure_btn_interaction(
             }
             Interaction::Hovered => {
                 info_ctr_data.active = true;
-                info_ctr_data.name = name.clone();
-                info_ctr_data.cost = cost;
+                info_ctr_data.name = structure.to_string();
+                info_ctr_data.cost = structure.cost();
+                info_ctr_data.build_time = structure.build_time();
+                info_ctr_data.hp = None;
+                info_ctr_data.dmg = None;
+                info_ctr_data.speed = None;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
             }
         }
@@ -96,9 +97,6 @@ fn build_unit_btn_interaction(
     mut info_ctr_data: ResMut<InfoContainerData>,
 ) {
     for (interaction, mut img, unit_ctr) in q_btn_unit.iter_mut() {
-        let cost = unit_ctr.0.cost();
-        let name = unit_ctr.0.to_string();
-
         match interaction {
             Interaction::None => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS;
@@ -109,8 +107,13 @@ fn build_unit_btn_interaction(
             }
             Interaction::Hovered => {
                 info_ctr_data.active = true;
-                info_ctr_data.name = name.clone();
-                info_ctr_data.cost = cost;
+                // TODO: Make this a method that will fill everything in?
+                info_ctr_data.name = unit_ctr.0.to_string();
+                info_ctr_data.cost = unit_ctr.0.cost();
+                info_ctr_data.build_time = unit_ctr.0.build_time();
+                info_ctr_data.hp = Some(unit_ctr.0.hp());
+                info_ctr_data.dmg = Some(unit_ctr.0.dmg());
+                info_ctr_data.speed = Some(unit_ctr.0.speed());
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
             }
         }
@@ -272,8 +275,72 @@ fn reset_info_ctr_hvr_state(mut info_ctr_data: ResMut<InfoContainerData>) {
 fn toggle_info_ctr(
     mut q_info_ctr: Query<&mut Visibility, With<InfoCtr>>,
     info_ctr_data: Res<InfoContainerData>,
-    mut q_cost: Query<&mut Text, With<InfoCtrCost>>,
-    mut q_name: Query<&mut Text, (With<InfoCtrName>, Without<InfoCtrCost>)>,
+    mut q_cost: Query<
+        &mut Text,
+        (
+            With<InfoCtrCost>,
+            Without<InfoCtrName>,
+            Without<InfoCtrBuildTime>,
+            Without<InfoCtrHP>,
+            Without<InfoCtrDmg>,
+            Without<InfoCtrSpeed>,
+        ),
+    >,
+    mut q_name: Query<
+        &mut Text,
+        (
+            With<InfoCtrName>,
+            Without<InfoCtrCost>,
+            Without<InfoCtrBuildTime>,
+            Without<InfoCtrHP>,
+            Without<InfoCtrDmg>,
+            Without<InfoCtrSpeed>,
+        ),
+    >,
+    mut q_build_time: Query<
+        &mut Text,
+        (
+            With<InfoCtrBuildTime>,
+            Without<InfoCtrCost>,
+            Without<InfoCtrName>,
+            Without<InfoCtrHP>,
+            Without<InfoCtrDmg>,
+            Without<InfoCtrSpeed>,
+        ),
+    >,
+    mut q_hp: Query<
+        &mut Text,
+        (
+            With<InfoCtrHP>,
+            Without<InfoCtrCost>,
+            Without<InfoCtrName>,
+            Without<InfoCtrBuildTime>,
+            Without<InfoCtrDmg>,
+            Without<InfoCtrSpeed>,
+        ),
+    >,
+    mut q_dmg: Query<
+        &mut Text,
+        (
+            With<InfoCtrDmg>,
+            Without<InfoCtrCost>,
+            Without<InfoCtrName>,
+            Without<InfoCtrBuildTime>,
+            Without<InfoCtrHP>,
+            Without<InfoCtrSpeed>,
+        ),
+    >,
+    mut q_speed: Query<
+        &mut Text,
+        (
+            With<InfoCtrSpeed>,
+            Without<InfoCtrCost>,
+            Without<InfoCtrName>,
+            Without<InfoCtrBuildTime>,
+            Without<InfoCtrHP>,
+            Without<InfoCtrDmg>,
+        ),
+    >,
 ) {
     let Ok(mut info_ctr_vis) = q_info_ctr.get_single_mut() else {
         return;
@@ -293,6 +360,41 @@ fn toggle_info_ctr(
         return;
     };
 
+    let Ok(mut build_time) = q_build_time.get_single_mut() else {
+        return;
+    };
+
+    let Ok(mut hp) = q_hp.get_single_mut() else {
+        return;
+    };
+
+    let Ok(mut dmg) = q_dmg.get_single_mut() else {
+        return;
+    };
+
+    let Ok(mut speed) = q_speed.get_single_mut() else {
+        return;
+    };
+
     name.0 = info_ctr_data.name.to_string();
     cost.0 = format!("${}", info_ctr_data.cost);
+    build_time.0 = format!("Build Time: {}s", info_ctr_data.build_time);
+
+    if let Some(h) = info_ctr_data.hp {
+        hp.0 = format!("HP: {}", h);
+    } else {
+        hp.0 = String::new();
+    }
+
+    if let Some(d) = info_ctr_data.dmg {
+        dmg.0 = format!("DPS: {}", d);
+    } else {
+        dmg.0 = String::new();
+    }
+
+    if let Some(s) = info_ctr_data.speed {
+        speed.0 = format!("Speed: {}", s);
+    } else {
+        speed.0 = String::new();
+    }
 }

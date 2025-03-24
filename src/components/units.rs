@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
 
-use crate::resources::MyAssets;
+use crate::{resources::MyAssets, TANK_GEN1_SPEED, TANK_GEN2_SPEED};
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder(pub Entity);
@@ -35,6 +35,34 @@ pub enum UnitType {
 }
 
 impl UnitType {
+    pub fn hp(&self) -> i32 {
+        match self {
+            UnitType::TankGen1 => 100,
+            UnitType::TankGen2 => 200,
+        }
+    }
+
+    pub fn speed(&self) -> f32 {
+        match self {
+            UnitType::TankGen1 => TANK_GEN1_SPEED,
+            UnitType::TankGen2 => TANK_GEN2_SPEED,
+        }
+    }
+
+    pub fn dmg(&self) -> i32 {
+        match self {
+            UnitType::TankGen1 => 10,
+            UnitType::TankGen2 => 20,
+        }
+    }
+
+    pub fn build_time(&self) -> i32 {
+        match self {
+            UnitType::TankGen1 => 5,
+            UnitType::TankGen2 => 10,
+        }
+    }
+
     pub fn cost(&self) -> i32 {
         match self {
             UnitType::TankGen1 => 500,
@@ -81,7 +109,6 @@ pub struct UnitBundle {
 impl UnitBundle {
     pub fn new(
         border_size: Vec2,
-        speed: f32,
         name: String,
         scene: Handle<Scene>,
         size: Vec3,
@@ -115,7 +142,7 @@ impl UnitBundle {
             rigid_body: RigidBody::Dynamic,
             scene_root: SceneRoot(scene), // TODO: uncomment
             size: pf_comps::RtsObjSize(Vec3::new(size.x * 2.0, size.y * 2.0, size.z * 2.0)), // TODO: uncomment
-            speed: Speed(speed),
+            speed: Speed(unit_type.speed()),
             transform,
             transform_global: GlobalTransform::default(),
             unit_type: unit_type,

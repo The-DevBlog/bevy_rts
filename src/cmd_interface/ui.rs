@@ -65,17 +65,25 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BackgroundColor(Color::BLACK),
         Node {
             flex_direction: FlexDirection::Column,
-            width: Val::Px(200.0),
-            height: Val::Px(150.0),
+            padding: UiRect::all(Val::Px(5.0)),
+            align_self: AlignSelf::FlexStart,
             top: Val::Percent(50.0),
             right: Val::Px(10.0),
             ..default()
         },
-        Name::new("Cost Ctr"),
+        Name::new("Info Ctr"),
     );
 
     let name = (InfoCtrName, Text::new("Building Name"), Name::new("Name"));
     let cost = (InfoCtrCost, Text::new("$1000"), Name::new("Cost"));
+    let build_time = (
+        InfoCtrBuildTime,
+        Text::new("Build Time"),
+        Name::new("Build Time"),
+    );
+    let hp = (InfoCtrHP, Text::new("HP"), Name::new("HP"));
+    let speed = (InfoCtrSpeed, Text::new("Speed"), Name::new("Speed"));
+    let dmg = (InfoCtrDmg, Text::new("DPS"), Name::new("DPS"));
 
     let cmd_interface_ctr = (
         CmdInterfaceCtr,
@@ -294,6 +302,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         p.spawn(info_ctr).with_children(|p| {
             p.spawn(name);
             p.spawn(cost);
+            p.spawn(build_time);
+            p.spawn(hp);
+            p.spawn(dmg);
+            p.spawn(speed);
         });
 
         // Command Interface Ctr

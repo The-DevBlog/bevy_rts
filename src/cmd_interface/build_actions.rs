@@ -275,72 +275,14 @@ fn reset_info_ctr_hvr_state(mut info_ctr_data: ResMut<InfoContainerData>) {
 fn toggle_info_ctr(
     mut q_info_ctr: Query<&mut Visibility, With<InfoCtr>>,
     info_ctr_data: Res<InfoContainerData>,
-    mut q_cost: Query<
-        &mut Text,
-        (
-            With<InfoCtrCost>,
-            Without<InfoCtrName>,
-            Without<InfoCtrBuildTime>,
-            Without<InfoCtrHP>,
-            Without<InfoCtrDmg>,
-            Without<InfoCtrSpeed>,
-        ),
-    >,
-    mut q_name: Query<
-        &mut Text,
-        (
-            With<InfoCtrName>,
-            Without<InfoCtrCost>,
-            Without<InfoCtrBuildTime>,
-            Without<InfoCtrHP>,
-            Without<InfoCtrDmg>,
-            Without<InfoCtrSpeed>,
-        ),
-    >,
-    mut q_build_time: Query<
-        &mut Text,
-        (
-            With<InfoCtrBuildTime>,
-            Without<InfoCtrCost>,
-            Without<InfoCtrName>,
-            Without<InfoCtrHP>,
-            Without<InfoCtrDmg>,
-            Without<InfoCtrSpeed>,
-        ),
-    >,
-    mut q_hp: Query<
-        &mut Text,
-        (
-            With<InfoCtrHP>,
-            Without<InfoCtrCost>,
-            Without<InfoCtrName>,
-            Without<InfoCtrBuildTime>,
-            Without<InfoCtrDmg>,
-            Without<InfoCtrSpeed>,
-        ),
-    >,
-    mut q_dmg: Query<
-        &mut Text,
-        (
-            With<InfoCtrDmg>,
-            Without<InfoCtrCost>,
-            Without<InfoCtrName>,
-            Without<InfoCtrBuildTime>,
-            Without<InfoCtrHP>,
-            Without<InfoCtrSpeed>,
-        ),
-    >,
-    mut q_speed: Query<
-        &mut Text,
-        (
-            With<InfoCtrSpeed>,
-            Without<InfoCtrCost>,
-            Without<InfoCtrName>,
-            Without<InfoCtrBuildTime>,
-            Without<InfoCtrHP>,
-            Without<InfoCtrDmg>,
-        ),
-    >,
+    mut set: ParamSet<(
+        Query<&mut Text, With<InfoCtrName>>,
+        Query<&mut Text, With<InfoCtrCost>>,
+        Query<&mut Text, With<InfoCtrBuildTime>>,
+        Query<&mut Text, With<InfoCtrHP>>,
+        Query<&mut Text, With<InfoCtrDmg>>,
+        Query<&mut Text, With<InfoCtrSpeed>>,
+    )>,
 ) {
     let Ok(mut info_ctr_vis) = q_info_ctr.get_single_mut() else {
         return;
@@ -352,49 +294,39 @@ fn toggle_info_ctr(
         *info_ctr_vis = Visibility::Hidden;
     }
 
-    let Ok(mut cost) = q_cost.get_single_mut() else {
-        return;
+    if let Ok(mut name) = set.p0().get_single_mut() {
+        name.0 = info_ctr_data.name.to_string();
     };
 
-    let Ok(mut name) = q_name.get_single_mut() else {
-        return;
+    if let Ok(mut cost) = set.p1().get_single_mut() {
+        cost.0 = format!("${}", info_ctr_data.cost);
     };
 
-    let Ok(mut build_time) = q_build_time.get_single_mut() else {
-        return;
+    if let Ok(mut build_time) = set.p2().get_single_mut() {
+        build_time.0 = format!("Build Time: {}s", info_ctr_data.build_time);
     };
 
-    let Ok(mut hp) = q_hp.get_single_mut() else {
-        return;
-    };
-
-    let Ok(mut dmg) = q_dmg.get_single_mut() else {
-        return;
-    };
-
-    let Ok(mut speed) = q_speed.get_single_mut() else {
-        return;
-    };
-
-    name.0 = info_ctr_data.name.to_string();
-    cost.0 = format!("${}", info_ctr_data.cost);
-    build_time.0 = format!("Build Time: {}s", info_ctr_data.build_time);
-
-    if let Some(h) = info_ctr_data.hp {
-        hp.0 = format!("HP: {}", h);
-    } else {
-        hp.0 = String::new();
+    if let Ok(mut hp) = set.p3().get_single_mut() {
+        if let Some(h) = info_ctr_data.hp {
+            hp.0 = format!("HP: {}", h);
+        } else {
+            hp.0 = String::new();
+        }
     }
 
-    if let Some(d) = info_ctr_data.dmg {
-        dmg.0 = format!("DPS: {}", d);
-    } else {
-        dmg.0 = String::new();
+    if let Ok(mut dmg) = set.p4().get_single_mut() {
+        if let Some(d) = info_ctr_data.dmg {
+            dmg.0 = format!("DPS: {}", d);
+        } else {
+            dmg.0 = String::new();
+        }
     }
 
-    if let Some(s) = info_ctr_data.speed {
-        speed.0 = format!("Speed: {}", s);
-    } else {
-        speed.0 = String::new();
+    if let Ok(mut speed) = set.p5().get_single_mut() {
+        if let Some(s) = info_ctr_data.speed {
+            speed.0 = format!("Speed: {}", s);
+        } else {
+            speed.0 = String::new();
+        }
     }
 }

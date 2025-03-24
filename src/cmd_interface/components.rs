@@ -28,3 +28,6 @@ pub struct InfoCtrSpeed;
 
 #[derive(Component)]
 pub struct InfoCtrHP;
+
+#[derive(Component)]
+pub struct UnitBuildColumn;

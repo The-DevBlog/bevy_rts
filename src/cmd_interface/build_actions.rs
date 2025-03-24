@@ -45,7 +45,7 @@ impl Plugin for BuildActionsPlugin {
 fn cmd_interface_interaction(
     mut game_cmds: ResMut<GameCommands>,
     q_p: Query<&Interaction, With<CmdInterfaceCtr>>,
-    q_c: Query<&Interaction, Or<(With<Structure>, With<UnitCtr>)>>,
+    q_c: Query<&Interaction, Or<(With<StructureType>, With<UnitCtr>)>>,
 ) {
     let hvr_parent = q_p.iter().any(|intrct| *intrct == Interaction::Hovered);
     let hvr_child = q_c.iter().any(|intrct| *intrct == Interaction::Hovered);
@@ -57,7 +57,7 @@ fn cmd_interface_interaction(
 
 fn build_structure_btn_interaction(
     mut cmds: Commands,
-    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure), With<Structure>>,
+    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &StructureType), With<StructureType>>,
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
     mut info_ctr_data: ResMut<InfoContainerData>,
@@ -164,7 +164,7 @@ fn place_structure(
         (
             Entity,
             &StructurePlaceholder,
-            &Structure,
+            &StructureType,
             &mut RigidBody,
             &mut SceneRoot,
             &pf_comps::RtsObjSize,

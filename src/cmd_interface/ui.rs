@@ -5,7 +5,7 @@ use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
-use crate::components::structures::Structure;
+use crate::components::structures::StructureType;
 use crate::components::units::UnitType;
 use crate::{bank::Bank, resources::MyAssets};
 
@@ -181,7 +181,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let structure_opt_ctr = |structure: Structure,
+    let structure_opt_ctr = |structure: StructureType,
                              assets: &Res<MyAssets>|
      -> (
         OptCtr,
@@ -189,7 +189,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BorderColor,
         ImageNode,
         Node,
-        Structure,
+        StructureType,
         Name,
     ) {
         (
@@ -264,7 +264,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     };
 
     let spawn_structure_btn =
-        |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
+        |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
                 .insert(PickingBehavior {
@@ -327,20 +327,21 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 .with_children(|p: &mut ChildBuilder<'_>| {
                     // Structures Column
                     p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                        for structure in Structure::iter() {
+                        for structure in StructureType::iter() {
                             spawn_structure_btn(parent, structure, &my_assets);
                         }
-                        for structure in Structure::iter() {
+                        for structure in StructureType::iter() {
                             spawn_structure_btn(parent, structure, &my_assets);
                         }
                     });
 
                     // Units Column
-                    p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                        for unit in UnitType::iter() {
-                            spawn_unit_btn(parent, unit, &my_assets);
-                        }
-                    });
+                    p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
+                    // p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                    //     for unit in UnitType::iter() {
+                    //         spawn_unit_btn(parent, unit, &my_assets);
+                    //     }
+                    // });
                 });
         });
     });

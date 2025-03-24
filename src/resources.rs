@@ -20,6 +20,7 @@ impl Plugin for ResourcesPlugin {
             .init_resource::<GameCommands>()
             .init_resource::<MyAssets>()
             .init_resource::<CursorState>()
+            .init_resource::<AvailableUnits>()
             .insert_resource(DbgOptions {
                 print_statements: debug_flag,
             })
@@ -194,6 +195,12 @@ pub struct GameCommands {
     pub drag_select: bool,
     pub is_any_selected: bool,
     pub hvr_cmd_interface: bool,
+}
+
+#[derive(Resource, Default)]
+pub struct AvailableUnits {
+    pub tank_gen1: bool,
+    pub tank_gen2: bool,
 }
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {

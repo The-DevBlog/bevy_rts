@@ -11,6 +11,7 @@ mod events;
 mod map;
 mod mouse;
 mod resources;
+mod structures;
 mod tank;
 mod utils;
 
@@ -20,6 +21,7 @@ use cmd_interface::CmdInterfacePlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
+use structures::StructuresPlugin;
 use tank::TankPlugin;
 
 const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
@@ -44,6 +46,7 @@ fn main() {
             WorldInspectorPlugin::new(),
             bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
             ResourcesPlugin,
+            StructuresPlugin,
             CameraPlugin,
             MapPlugin,
             MousePlugin,

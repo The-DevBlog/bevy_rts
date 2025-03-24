@@ -6,7 +6,7 @@ use bevy_rapier3d::prelude::*;
 
 use super::components::*;
 use super::events::*;
-use super::ui::CostCtr;
+use super::resources::InfoContainerData;
 use crate::bank::AdjustFundsEv;
 use crate::bank::Bank;
 use crate::components::structures::*;
@@ -29,11 +29,13 @@ impl Plugin for BuildActionsPlugin {
             (
                 cancel_build_structure,
                 cmd_interface_interaction,
-                build_structure_btn_interaction,
-                build_unit_btn_interaction,
+                reset_info_ctr_hvr_state,
+                build_structure_btn_interaction.after(reset_info_ctr_hvr_state),
+                build_unit_btn_interaction.after(reset_info_ctr_hvr_state),
                 sync_placeholder,
                 validate_structure_placement,
                 place_structure.after(validate_structure_placement),
+                toggle_info_ctr,
             ),
         )
         .add_observer(select_structure);
@@ -55,79 +57,60 @@ fn cmd_interface_interaction(
 
 fn build_structure_btn_interaction(
     mut cmds: Commands,
-    input: Res<ButtonInput<MouseButton>>,
-    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure, &Children), With<Structure>>,
-    mut q_cost: Query<&mut Visibility, With<CostCtr>>,
+    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure), With<Structure>>,
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
+    mut info_ctr_data: ResMut<InfoContainerData>,
 ) {
-    for (interaction, mut img, structure, children) in q_btn_bldg.iter_mut() {
+    for (interaction, mut img, structure) in q_btn_bldg.iter_mut() {
+        let name = structure.to_string();
+        let cost = structure.cost();
+
         match interaction {
             Interaction::None => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS;
-
-                for child in children.iter() {
-                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
-                        *cost_vis = Visibility::Hidden;
-                    }
-                }
             }
             Interaction::Pressed => {
+                info_ctr_data.active = true;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
-                if input.just_pressed(MouseButton::Left) {
-                    if bank.funds >= structure.cost() {
-                        cmds.trigger(BuildStructureSelectEv(structure.clone()));
-                    } else {
-                        dbg.print("Not enough funds");
-                    }
+                if bank.funds >= structure.cost() {
+                    cmds.trigger(BuildStructureSelectEv(structure.clone()));
+                } else {
+                    dbg.print("Not enough funds");
                 }
             }
             Interaction::Hovered => {
+                info_ctr_data.active = true;
+                info_ctr_data.name = name.clone();
+                info_ctr_data.cost = cost;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
-
-                for child in children.iter() {
-                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
-                        *cost_vis = Visibility::Visible;
-                    }
-                }
             }
         }
     }
 }
 
 fn build_unit_btn_interaction(
-    mut cmds: Commands,
-    input: Res<ButtonInput<MouseButton>>,
-    mut q_btn_unit: Query<(&Interaction, &mut ImageNode, &UnitCtr, &Children), With<UnitCtr>>,
-    mut q_cost: Query<&mut Visibility, With<CostCtr>>,
+    mut q_btn_unit: Query<(&Interaction, &mut ImageNode, &UnitCtr), With<UnitCtr>>,
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
+    mut info_ctr_data: ResMut<InfoContainerData>,
 ) {
-    for (interaction, mut img, unit_ctr, children) in q_btn_unit.iter_mut() {
-        let unit_type = unit_ctr.0;
+    for (interaction, mut img, unit_ctr) in q_btn_unit.iter_mut() {
+        let cost = unit_ctr.0.cost();
+        let name = unit_ctr.0.to_string();
 
         match interaction {
             Interaction::None => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS;
-
-                for child in children.iter() {
-                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
-                        *cost_vis = Visibility::Hidden;
-                    }
-                }
             }
             Interaction::Pressed => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
-                if input.just_pressed(MouseButton::Left) {}
             }
             Interaction::Hovered => {
+                info_ctr_data.active = true;
+                info_ctr_data.name = name.clone();
+                info_ctr_data.cost = cost;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
-
-                for child in children.iter() {
-                    if let Ok(mut cost_vis) = q_cost.get_mut(*child) {
-                        *cost_vis = Visibility::Visible;
-                    }
-                }
             }
         }
     }
@@ -278,4 +261,36 @@ fn validate_structure_placement(
             .structure
             .valid_placement(&my_assets, &mut scene);
     }
+}
+
+fn reset_info_ctr_hvr_state(mut info_ctr_data: ResMut<InfoContainerData>) {
+    info_ctr_data.active = false;
+}
+
+fn toggle_info_ctr(
+    mut q_info_ctr: Query<&mut Visibility, With<InfoCtr>>,
+    info_ctr_data: Res<InfoContainerData>,
+    mut q_cost: Query<&mut Text, With<InfoCtrCost>>,
+    mut q_name: Query<&mut Text, (With<InfoCtrName>, Without<InfoCtrCost>)>,
+) {
+    let Ok(mut info_ctr_vis) = q_info_ctr.get_single_mut() else {
+        return;
+    };
+
+    if info_ctr_data.active {
+        *info_ctr_vis = Visibility::Visible;
+    } else {
+        *info_ctr_vis = Visibility::Hidden;
+    }
+
+    let Ok(mut cost) = q_cost.get_single_mut() else {
+        return;
+    };
+
+    let Ok(mut name) = q_name.get_single_mut() else {
+        return;
+    };
+
+    name.0 = info_ctr_data.name.to_string();
+    cost.0 = format!("${}", info_ctr_data.cost);
 }

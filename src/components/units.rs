@@ -42,10 +42,10 @@ impl UnitType {
         }
     }
 
-    pub fn to_string(&self) -> &str {
+    pub fn to_string(&self) -> String {
         match self {
-            UnitType::TankGen1 => "Tank Gen I",
-            UnitType::TankGen2 => "Tank Gen II",
+            UnitType::TankGen1 => "Tank Gen I".to_string(),
+            UnitType::TankGen2 => "Tank Gen II".to_string(),
         }
     }
 

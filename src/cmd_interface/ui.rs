@@ -36,12 +36,6 @@ struct BuildColumnsCtr;
 #[derive(Component)]
 struct IconsCtr;
 
-#[derive(Component)]
-struct Cost;
-
-#[derive(Component)]
-pub struct CostCtr;
-
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
     if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
         let width = computed_node.size().x;
@@ -57,13 +51,38 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
     let root_ctr = (
+        Node {
+            height: Val::Percent(100.0),
+            margin: UiRect::left(Val::Auto),
+            ..default()
+        },
+        Name::new("Root Ctr"),
+    );
+
+    let info_ctr = (
+        InfoCtr,
+        BackgroundColor(Color::BLACK),
+        Node {
+            flex_direction: FlexDirection::Column,
+            width: Val::Px(200.0),
+            height: Val::Px(150.0),
+            top: Val::Percent(50.0),
+            right: Val::Px(10.0),
+            ..default()
+        },
+        Name::new("Cost Ctr"),
+    );
+
+    let name = (InfoCtrName, Text::new("Building Name"), Name::new("Name"));
+    let cost = (InfoCtrCost, Text::new("$1000"), Name::new("Cost"));
+
+    let cmd_interface_ctr = (
         CmdInterfaceCtr,
         Button,
         ImageNode::new(my_assets.imgs.cmd_intrfce_background.clone()),
         Node {
             padding: UiRect::left(Val::Percent(0.75)),
             flex_direction: FlexDirection::Column,
-            position_type: PositionType::Absolute,
             right: Val::Px(0.0),
             height: Val::Percent(100.0),
             width: Val::Percent(15.0),
@@ -209,7 +228,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let build_opt_txt = |txt: &str| -> (
+    let build_opt_txt = |txt: String| -> (
         Node,
         Text,
         TextFont,
@@ -235,33 +254,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let cost = |cost: i32| -> (Cost, Text, Name) {
-        (Cost, Text::new(format!("${}", cost)), Name::new("Cost"))
-    };
-
-    let cost_ctr = |cost: i32| -> (CostCtr, BackgroundColor, BorderColor, Node, Name) {
-        let cost_str = cost.to_string();
-        let offset = match cost_str.len() {
-            4 => -87.5, // 4-digit cost
-            _ => -75.5, // default for other cases
-        };
-
-        (
-            CostCtr,
-            BackgroundColor(CLR_BASE),
-            BorderColor(CLR_BORDER_1),
-            Node {
-                position_type: PositionType::Absolute,
-                top: Val::Percent(50.0),
-                border: UiRect::new(Val::Px(5.0), Val::ZERO, Val::Px(5.0), Val::Px(5.0)),
-                padding: UiRect::all(Val::Px(5.0)),
-                left: Val::Px(offset),
-                ..default()
-            },
-            Name::new("Cost Ctr"),
-        )
-    };
-
     let spawn_structure_btn =
         |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
             parent
@@ -276,9 +268,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                             should_block_lower: false,
                             ..default()
                         });
-
-                    p.spawn(cost_ctr(structure.cost()))
-                        .with_child(cost(structure.cost()));
                 });
         };
 
@@ -295,63 +284,52 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                         should_block_lower: false,
                         ..default()
                     });
-
-                p.spawn(cost_ctr(unit.cost())).with_child(cost(unit.cost()));
             });
     };
 
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
-        //  Mini Map
-        p.spawn(mini_map_ctr);
-
-        // Bank
-        p.spawn(bank_ctr);
-
-        // Structure/Units Icons
-        p.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_assets.imgs.cmd_intrfce_structures.clone()));
-            parent.spawn(icon(my_assets.imgs.cmd_intrfce_units.clone()));
+        // Info Ctr
+        p.spawn(info_ctr).with_children(|p| {
+            p.spawn(name);
+            p.spawn(cost);
         });
 
-        // Structure/Units Columns
-        p.spawn(build_columns_ctr)
-            .with_children(|p: &mut ChildBuilder<'_>| {
-                // Structures Column
-                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                    for structure in Structure::iter() {
-                        spawn_structure_btn(parent, structure, &my_assets);
-                    }
-                    for structure in Structure::iter() {
-                        spawn_structure_btn(parent, structure, &my_assets);
-                    }
-                });
+        // Command Interface Ctr
+        p.spawn(cmd_interface_ctr).with_children(|p| {
+            //  Mini Map
+            p.spawn(mini_map_ctr);
 
-                // Units Column
-                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                    for unit in UnitType::iter() {
-                        spawn_unit_btn(parent, unit, &my_assets);
-                    }
-                });
+            // Bank
+            p.spawn(bank_ctr);
 
-                // p.spawn(build_column(2.5, 5.0)).with_children(|p| {
-                // for unit in Unit::iter() {
-                // p.spawn((unit_opt_ctr(unit, &my_assets), UnitCtr));
-                // .with_child(build_opt_txt(unit_str));
-                // }
-
-                // p.spawn((unit_opt_ctr(), UnitCtr))
-                //     .with_child(build_opt_txt("Unit 1"));
-                // p.spawn((unit_opt_ctr(), UnitCtr))
-                //     .with_child(build_opt_txt("Unit 2"));
-                // p.spawn((unit_opt_ctr(), UnitCtr))
-                //     .with_child(build_opt_txt("Unit 3"));
-                // p.spawn((unit_opt_ctr(), UnitCtr))
-                //     .with_child(build_opt_txt("Unit 4"));
-                // p.spawn((unit_opt_ctr(), UnitCtr))
-                //     .with_child(build_opt_txt("Unit 5"));
-                // });
+            // Structure/Units Icons
+            p.spawn(icons_ctr).with_children(|parent| {
+                parent.spawn(icon(my_assets.imgs.cmd_intrfce_structures.clone()));
+                parent.spawn(icon(my_assets.imgs.cmd_intrfce_units.clone()));
             });
+
+            // Structure/Units Columns
+            p.spawn(build_columns_ctr)
+                .with_children(|p: &mut ChildBuilder<'_>| {
+                    // Structures Column
+                    p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                        for structure in Structure::iter() {
+                            spawn_structure_btn(parent, structure, &my_assets);
+                        }
+                        for structure in Structure::iter() {
+                            spawn_structure_btn(parent, structure, &my_assets);
+                        }
+                    });
+
+                    // Units Column
+                    p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                        for unit in UnitType::iter() {
+                            spawn_unit_btn(parent, unit, &my_assets);
+                        }
+                    });
+                });
+        });
     });
 }
 

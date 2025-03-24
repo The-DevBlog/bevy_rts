@@ -25,13 +25,13 @@ impl Structure {
         }
     }
 
-    pub fn to_string(&self) -> &str {
+    pub fn to_string(&self) -> String {
         match self {
-            Structure::Cannon => "Cannon",
-            Structure::Barracks => "Barracks",
-            Structure::VehicleDepot => "Vehicle Depot",
-            Structure::ResearchCenter => "Research Center",
-            Structure::SatelliteDish => "Satellite Dish",
+            Structure::Cannon => "Cannon".to_string(),
+            Structure::Barracks => "Barracks".to_string(),
+            Structure::VehicleDepot => "Vehicle Depot".to_string(),
+            Structure::ResearchCenter => "Research Center".to_string(),
+            Structure::SatelliteDish => "Satellite Dish".to_string(),
         }
     }
 

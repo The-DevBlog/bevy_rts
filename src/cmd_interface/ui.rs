@@ -63,6 +63,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         InfoCtr,
         BackgroundColor(Color::BLACK),
         Node {
+            flex_direction: FlexDirection::Column,
             width: Val::Px(200.0),
             height: Val::Px(150.0),
             top: Val::Percent(50.0),
@@ -288,7 +289,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
-        // Cost Ctr
+        // Info Ctr
         p.spawn(info_ctr).with_children(|p| {
             p.spawn(name);
             p.spawn(cost);

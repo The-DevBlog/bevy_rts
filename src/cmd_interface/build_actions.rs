@@ -172,8 +172,9 @@ fn place_structure(
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_state: ResMut<CursorState>,
     my_assets: Res<MyAssets>,
+    game_cmds: Res<GameCommands>,
 ) {
-    if *cursor_state != CursorState::Build {
+    if *cursor_state != CursorState::Build || game_cmds.hvr_cmd_interface {
         return;
     }
 

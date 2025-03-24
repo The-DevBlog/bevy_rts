@@ -13,6 +13,7 @@ mod mouse;
 mod resources;
 mod structures;
 mod tank;
+mod units;
 mod utils;
 
 use bank::BankPlugin;
@@ -23,6 +24,7 @@ use mouse::MousePlugin;
 use resources::ResourcesPlugin;
 use structures::StructuresPlugin;
 use tank::TankPlugin;
+use units::UnitsPlugin;
 
 const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
@@ -49,6 +51,7 @@ fn main() {
             ResourcesPlugin,
             StructuresPlugin,
             CameraPlugin,
+            UnitsPlugin,
             MapPlugin,
             MousePlugin,
             TankPlugin,

@@ -198,16 +198,16 @@ pub struct GameCommands {
     pub hvr_cmd_interface: bool,
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Debug)]
 pub struct StructuresBuilt {
-    pub barracks: bool,
-    pub cannon: bool,
-    pub vehicle_depot: bool,
-    pub research_center: bool,
-    pub satellite_dish: bool,
+    pub barracks: u32,
+    pub cannon: u32,
+    pub vehicle_depot: u32,
+    pub research_center: u32,
+    pub satellite_dish: u32,
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Debug)]
 pub struct AvailableUnits {
     pub tank_gen1: bool,
     pub tank_gen2: bool,

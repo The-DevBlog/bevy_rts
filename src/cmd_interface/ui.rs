@@ -231,54 +231,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    // let unit_opt_ctr = |unit: UnitType,
-    //                     assets: &Res<MyAssets>|
-    //  -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
-    //     (
-    //         OptCtr,
-    //         Button,
-    //         BorderColor(Color::srgb(0.8, 0.8, 0.8)),
-    //         ImageNode::from(unit.img(assets)),
-    //         Node {
-    //             width: Val::Percent(100.0),
-    //             min_width: Val::Percent(100.0),
-    //             flex_direction: FlexDirection::Column,
-    //             margin: UiRect::bottom(Val::Px(5.0)),
-    //             border: UiRect::all(Val::Px(2.5)),
-    //             aspect_ratio: Some(1.0),
-    //             ..default()
-    //         },
-    //         UnitCtr(unit),
-    //         Name::new("Unit Build Option"),
-    //     )
-    // };
-
-    // let build_opt_txt = |txt: String| -> (
-    //     Node,
-    //     Text,
-    //     TextFont,
-    //     TextLayout,
-    //     Label,
-    //     AccessibilityNode,
-    //     Name,
-    // ) {
-    //     (
-    //         Node {
-    //             margin: UiRect::top(Val::Auto),
-    //             ..default()
-    //         },
-    //         Text::new(txt),
-    //         TextFont {
-    //             font_size: 15.0,
-    //             ..default()
-    //         },
-    //         TextLayout::new_with_justify(JustifyText::Center),
-    //         Label,
-    //         AccessibilityNode(Accessible::new(Role::ListItem)),
-    //         Name::new("Build Option Txt"),
-    //     )
-    // };
-
     let spawn_structure_btn =
         |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyAssets>| {
             parent
@@ -295,22 +247,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                         });
                 });
         };
-
-    // let spawn_unit_btn = |parent: &mut ChildBuilder, unit: UnitType, assets: &Res<MyAssets>| {
-    //     parent
-    //         .spawn(unit_opt_ctr(unit, assets))
-    //         .insert(PickingBehavior {
-    //             should_block_lower: false,
-    //             ..default()
-    //         })
-    //         .with_children(|p| {
-    //             p.spawn(build_opt_txt(unit.to_string()))
-    //                 .insert(PickingBehavior {
-    //                     should_block_lower: false,
-    //                     ..default()
-    //                 });
-    //         });
-    // };
 
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
@@ -353,11 +289,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
                     // Units Column
                     p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
-                    // p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                    //     for unit in UnitType::iter() {
-                    //         spawn_unit_btn(parent, unit, &my_assets);
-                    //     }
-                    // });
                 });
         });
     });
@@ -376,44 +307,6 @@ fn spawn_unit_ctrs(
     let Ok(unit_build_column) = q_unit_build_column.get_single() else {
         return;
     };
-
-    // let unit_opt_ctr = |unit: UnitType,
-    //                     assets: &Res<MyAssets>|
-    //  -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
-    //     (
-    //         OptCtr,
-    //         Button,
-    //         BorderColor(Color::srgb(0.8, 0.8, 0.8)),
-    //         ImageNode::from(unit.img(assets)),
-    //         Node {
-    //             width: Val::Percent(100.0),
-    //             min_width: Val::Percent(100.0),
-    //             flex_direction: FlexDirection::Column,
-    //             margin: UiRect::bottom(Val::Px(5.0)),
-    //             border: UiRect::all(Val::Px(2.5)),
-    //             aspect_ratio: Some(1.0),
-    //             ..default()
-    //         },
-    //         UnitCtr(unit),
-    //         Name::new("Unit Build Option"),
-    //     )
-    // };
-
-    // let spawn_unit_btn = |parent: &mut ChildBuilder, unit: UnitType, assets: &Res<MyAssets>| {
-    //     parent
-    //         .spawn(unit_opt_ctr(unit, assets))
-    //         .insert(PickingBehavior {
-    //             should_block_lower: false,
-    //             ..default()
-    //         })
-    //         .with_children(|p| {
-    //             p.spawn(build_opt_txt(unit.to_string()))
-    //                 .insert(PickingBehavior {
-    //                     should_block_lower: false,
-    //                     ..default()
-    //                 });
-    //         });
-    // };
 
     cmds.entity(unit_build_column).with_children(|p| {
         // Rifleman

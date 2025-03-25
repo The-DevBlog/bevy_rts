@@ -11,7 +11,9 @@ mod events;
 mod map;
 mod mouse;
 mod resources;
+mod structures;
 mod tank;
+mod units;
 mod utils;
 
 use bank::BankPlugin;
@@ -20,7 +22,9 @@ use cmd_interface::CmdInterfacePlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
+use structures::StructuresPlugin;
 use tank::TankPlugin;
+use units::UnitsPlugin;
 
 const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
@@ -29,9 +33,11 @@ const MAP_WIDTH: f32 = CELL_SIZE * MAP_GRID_COLUMNS as f32;
 const MAP_DEPTH: f32 = CELL_SIZE * MAP_GRID_ROWS as f32;
 const MAP_GRID_COLUMNS: i32 = 120;
 const MAP_GRID_ROWS: i32 = 120;
-const SPEED_QUANTIFIER: f32 = 10.0;
 const TANK_COUNT: usize = 50;
-const TANK_SPEED: f32 = 50.0;
+const SPEED_QUANTIFIER: f32 = 10.0;
+const SPEED_RIFELMAN: f32 = SPEED_QUANTIFIER * 10.0;
+const SPEED_TANK_GEN_1: f32 = SPEED_QUANTIFIER * 50.0;
+const SPEED_TANK_GEN_2: f32 = SPEED_QUANTIFIER * 65.0;
 
 fn main() {
     App::new()
@@ -44,7 +50,9 @@ fn main() {
             WorldInspectorPlugin::new(),
             bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
             ResourcesPlugin,
+            StructuresPlugin,
             CameraPlugin,
+            UnitsPlugin,
             MapPlugin,
             MousePlugin,
             TankPlugin,

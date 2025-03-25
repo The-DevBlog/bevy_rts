@@ -45,7 +45,7 @@ impl Plugin for BuildActionsPlugin {
 fn cmd_interface_interaction(
     mut game_cmds: ResMut<GameCommands>,
     q_p: Query<&Interaction, With<CmdInterfaceCtr>>,
-    q_c: Query<&Interaction, Or<(With<Structure>, With<UnitCtr>)>>,
+    q_c: Query<&Interaction, Or<(With<StructureType>, With<UnitCtr>)>>,
 ) {
     let hvr_parent = q_p.iter().any(|intrct| *intrct == Interaction::Hovered);
     let hvr_child = q_c.iter().any(|intrct| *intrct == Interaction::Hovered);
@@ -57,15 +57,12 @@ fn cmd_interface_interaction(
 
 fn build_structure_btn_interaction(
     mut cmds: Commands,
-    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &Structure), With<Structure>>,
+    mut q_btn_bldg: Query<(&Interaction, &mut ImageNode, &StructureType), With<StructureType>>,
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
     mut info_ctr_data: ResMut<InfoContainerData>,
 ) {
     for (interaction, mut img, structure) in q_btn_bldg.iter_mut() {
-        let name = structure.to_string();
-        let cost = structure.cost();
-
         match interaction {
             Interaction::None => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS;
@@ -81,8 +78,12 @@ fn build_structure_btn_interaction(
             }
             Interaction::Hovered => {
                 info_ctr_data.active = true;
-                info_ctr_data.name = name.clone();
-                info_ctr_data.cost = cost;
+                info_ctr_data.name = structure.to_string();
+                info_ctr_data.cost = structure.cost();
+                info_ctr_data.build_time = structure.build_time();
+                info_ctr_data.hp = None;
+                info_ctr_data.dmg = None;
+                info_ctr_data.speed = None;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
             }
         }
@@ -96,9 +97,6 @@ fn build_unit_btn_interaction(
     mut info_ctr_data: ResMut<InfoContainerData>,
 ) {
     for (interaction, mut img, unit_ctr) in q_btn_unit.iter_mut() {
-        let cost = unit_ctr.0.cost();
-        let name = unit_ctr.0.to_string();
-
         match interaction {
             Interaction::None => {
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS;
@@ -109,8 +107,13 @@ fn build_unit_btn_interaction(
             }
             Interaction::Hovered => {
                 info_ctr_data.active = true;
-                info_ctr_data.name = name.clone();
-                info_ctr_data.cost = cost;
+                // TODO: Make this a method that will fill everything in?
+                info_ctr_data.name = unit_ctr.0.to_string();
+                info_ctr_data.cost = unit_ctr.0.cost();
+                info_ctr_data.build_time = unit_ctr.0.build_time();
+                info_ctr_data.hp = Some(unit_ctr.0.hp());
+                info_ctr_data.dmg = Some(unit_ctr.0.dmg());
+                info_ctr_data.speed = Some(unit_ctr.0.speed());
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
             }
         }
@@ -161,7 +164,7 @@ fn place_structure(
         (
             Entity,
             &StructurePlaceholder,
-            &Structure,
+            &StructureType,
             &mut RigidBody,
             &mut SceneRoot,
             &pf_comps::RtsObjSize,
@@ -272,8 +275,14 @@ fn reset_info_ctr_hvr_state(mut info_ctr_data: ResMut<InfoContainerData>) {
 fn toggle_info_ctr(
     mut q_info_ctr: Query<&mut Visibility, With<InfoCtr>>,
     info_ctr_data: Res<InfoContainerData>,
-    mut q_cost: Query<&mut Text, With<InfoCtrCost>>,
-    mut q_name: Query<&mut Text, (With<InfoCtrName>, Without<InfoCtrCost>)>,
+    mut set: ParamSet<(
+        Query<&mut Text, With<InfoCtrName>>,
+        Query<&mut Text, With<InfoCtrCost>>,
+        Query<&mut Text, With<InfoCtrBuildTime>>,
+        Query<&mut Text, With<InfoCtrHP>>,
+        Query<&mut Text, With<InfoCtrDmg>>,
+        Query<&mut Text, With<InfoCtrSpeed>>,
+    )>,
 ) {
     let Ok(mut info_ctr_vis) = q_info_ctr.get_single_mut() else {
         return;
@@ -285,14 +294,39 @@ fn toggle_info_ctr(
         *info_ctr_vis = Visibility::Hidden;
     }
 
-    let Ok(mut cost) = q_cost.get_single_mut() else {
-        return;
+    if let Ok(mut name) = set.p0().get_single_mut() {
+        name.0 = info_ctr_data.name.to_string();
     };
 
-    let Ok(mut name) = q_name.get_single_mut() else {
-        return;
+    if let Ok(mut cost) = set.p1().get_single_mut() {
+        cost.0 = format!("${}", info_ctr_data.cost);
     };
 
-    name.0 = info_ctr_data.name.to_string();
-    cost.0 = format!("${}", info_ctr_data.cost);
+    if let Ok(mut build_time) = set.p2().get_single_mut() {
+        build_time.0 = format!("Build Time: {}s", info_ctr_data.build_time);
+    };
+
+    if let Ok(mut hp) = set.p3().get_single_mut() {
+        if let Some(h) = info_ctr_data.hp {
+            hp.0 = format!("HP: {}", h);
+        } else {
+            hp.0 = String::new();
+        }
+    }
+
+    if let Ok(mut dmg) = set.p4().get_single_mut() {
+        if let Some(d) = info_ctr_data.dmg {
+            dmg.0 = format!("DPS: {}", d);
+        } else {
+            dmg.0 = String::new();
+        }
+    }
+
+    if let Ok(mut speed) = set.p5().get_single_mut() {
+        if let Some(s) = info_ctr_data.speed {
+            speed.0 = format!("Speed: {}", s);
+        } else {
+            speed.0 = String::new();
+        }
+    }
 }

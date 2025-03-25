@@ -5,19 +5,23 @@ use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
-use crate::components::structures::Structure;
+use crate::components::structures::StructureType;
 use crate::components::units::UnitType;
+use crate::resources::UnlockedUnits;
 use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
 
-const CLR_BASE: Color = Color::srgb(0.29, 0.29, 0.3);
-const CLR_BORDER_1: Color = Color::srgb(0.89, 0.89, 0.89);
-
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui)
-            .add_systems(Update, (update_minimap_aspect, update_scroll_position));
+        app.add_systems(Startup, command_center_ui).add_systems(
+            Update,
+            (
+                update_minimap_aspect,
+                update_scroll_position,
+                spawn_unit_ctrs.run_if(resource_changed::<UnlockedUnits>),
+            ),
+        );
     }
 }
 
@@ -35,6 +39,15 @@ struct BuildColumnsCtr;
 
 #[derive(Component)]
 struct IconsCtr;
+
+#[derive(Component)]
+struct TankGen1Ctr;
+
+#[derive(Component)]
+struct TankGen2Ctr;
+
+#[derive(Component)]
+struct RiflemanCtr;
 
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
     if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
@@ -65,17 +78,25 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BackgroundColor(Color::BLACK),
         Node {
             flex_direction: FlexDirection::Column,
-            width: Val::Px(200.0),
-            height: Val::Px(150.0),
+            padding: UiRect::all(Val::Px(5.0)),
+            align_self: AlignSelf::FlexStart,
             top: Val::Percent(50.0),
             right: Val::Px(10.0),
             ..default()
         },
-        Name::new("Cost Ctr"),
+        Name::new("Info Ctr"),
     );
 
     let name = (InfoCtrName, Text::new("Building Name"), Name::new("Name"));
     let cost = (InfoCtrCost, Text::new("$1000"), Name::new("Cost"));
+    let build_time = (
+        InfoCtrBuildTime,
+        Text::new("Build Time"),
+        Name::new("Build Time"),
+    );
+    let hp = (InfoCtrHP, Text::new("HP"), Name::new("HP"));
+    let speed = (InfoCtrSpeed, Text::new("Speed"), Name::new("Speed"));
+    let dmg = (InfoCtrDmg, Text::new("DPS"), Name::new("DPS"));
 
     let cmd_interface_ctr = (
         CmdInterfaceCtr,
@@ -153,6 +174,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         Node {
             padding: UiRect::top(Val::Px(5.0)),
             margin: UiRect::new(Val::Px(12.0), Val::Px(10.0), Val::ZERO, Val::ZERO),
+            min_width: Val::Px(246.0),
             overflow: Overflow::scroll_y(),
             ..default()
         },
@@ -173,7 +195,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let structure_opt_ctr = |structure: Structure,
+    let structure_opt_ctr = |structure: StructureType,
                              assets: &Res<MyAssets>|
      -> (
         OptCtr,
@@ -181,7 +203,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BorderColor,
         ImageNode,
         Node,
-        Structure,
+        StructureType,
         Name,
     ) {
         (
@@ -207,56 +229,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let unit_opt_ctr = |unit: UnitType,
-                        assets: &Res<MyAssets>|
-     -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
-        (
-            OptCtr,
-            Button,
-            BorderColor(Color::srgb(0.8, 0.8, 0.8)),
-            ImageNode::from(unit.img(assets)),
-            Node {
-                width: Val::Percent(100.0),
-                min_width: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                margin: UiRect::bottom(Val::Px(5.0)),
-                border: UiRect::all(Val::Px(2.5)),
-                aspect_ratio: Some(1.0),
-                ..default()
-            },
-            UnitCtr(unit),
-            Name::new("Unit Build Option"),
-        )
-    };
-
-    let build_opt_txt = |txt: String| -> (
-        Node,
-        Text,
-        TextFont,
-        TextLayout,
-        Label,
-        AccessibilityNode,
-        Name,
-    ) {
-        (
-            Node {
-                margin: UiRect::top(Val::Auto),
-                ..default()
-            },
-            Text::new(txt),
-            TextFont {
-                font_size: 15.0,
-                ..default()
-            },
-            TextLayout::new_with_justify(JustifyText::Center),
-            Label,
-            AccessibilityNode(Accessible::new(Role::ListItem)),
-            Name::new("Build Option Txt"),
-        )
-    };
-
     let spawn_structure_btn =
-        |parent: &mut ChildBuilder, structure: Structure, assets: &Res<MyAssets>| {
+        |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyAssets>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
                 .insert(PickingBehavior {
@@ -272,28 +246,16 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
         };
 
-    let spawn_unit_btn = |parent: &mut ChildBuilder, unit: UnitType, assets: &Res<MyAssets>| {
-        parent
-            .spawn(unit_opt_ctr(unit, assets))
-            .insert(PickingBehavior {
-                should_block_lower: false,
-                ..default()
-            })
-            .with_children(|p| {
-                p.spawn(build_opt_txt(unit.to_string()))
-                    .insert(PickingBehavior {
-                        should_block_lower: false,
-                        ..default()
-                    });
-            });
-    };
-
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
         // Info Ctr
         p.spawn(info_ctr).with_children(|p| {
             p.spawn(name);
             p.spawn(cost);
+            p.spawn(build_time);
+            p.spawn(hp);
+            p.spawn(dmg);
+            p.spawn(speed);
         });
 
         // Command Interface Ctr
@@ -315,22 +277,44 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 .with_children(|p: &mut ChildBuilder<'_>| {
                     // Structures Column
                     p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                        for structure in Structure::iter() {
+                        for structure in StructureType::iter() {
                             spawn_structure_btn(parent, structure, &my_assets);
                         }
-                        for structure in Structure::iter() {
+                        for structure in StructureType::iter() {
                             spawn_structure_btn(parent, structure, &my_assets);
                         }
                     });
 
                     // Units Column
-                    p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                        for unit in UnitType::iter() {
-                            spawn_unit_btn(parent, unit, &my_assets);
-                        }
-                    });
+                    p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
                 });
         });
+    });
+}
+
+fn spawn_unit_ctrs(
+    mut cmds: Commands,
+    q_unit_build_column: Query<Entity, With<UnitBuildColumn>>,
+    unlocked_units: Res<UnlockedUnits>,
+    my_assets: Res<MyAssets>,
+) {
+    let Ok(unit_build_column) = q_unit_build_column.get_single() else {
+        return;
+    };
+
+    cmds.entity(unit_build_column).despawn_descendants();
+
+    // Now add the unit control buttons in the desired order.
+    cmds.entity(unit_build_column).with_children(|parent| {
+        if unlocked_units.rifleman {
+            spawn_unit_btn(parent, UnitType::Rifleman, &my_assets, RiflemanCtr);
+        }
+        if unlocked_units.tank_gen1 {
+            spawn_unit_btn(parent, UnitType::TankGen1, &my_assets, TankGen1Ctr);
+        }
+        if unlocked_units.tank_gen2 {
+            spawn_unit_btn(parent, UnitType::TankGen2, &my_assets, TankGen2Ctr);
+        }
     });
 }
 
@@ -361,4 +345,77 @@ pub fn update_scroll_position(
             }
         }
     }
+}
+
+fn unit_opt_ctr(
+    unit: UnitType,
+    assets: &Res<MyAssets>,
+) -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
+    (
+        OptCtr,
+        Button,
+        BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+        ImageNode::from(unit.img(assets)),
+        Node {
+            width: Val::Percent(100.0),
+            min_width: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            margin: UiRect::bottom(Val::Px(5.0)),
+            border: UiRect::all(Val::Px(2.5)),
+            aspect_ratio: Some(1.0),
+            ..default()
+        },
+        UnitCtr(unit),
+        Name::new("Unit Build Option"),
+    )
+}
+
+fn spawn_unit_btn<T: Component>(
+    parent: &mut ChildBuilder,
+    unit: UnitType,
+    assets: &Res<MyAssets>,
+    comp: T,
+) {
+    parent
+        .spawn(unit_opt_ctr(unit, assets))
+        .insert(comp)
+        .insert(PickingBehavior {
+            should_block_lower: false,
+            ..default()
+        })
+        .with_children(|p| {
+            p.spawn(build_opt_txt(unit.to_string()))
+                .insert(PickingBehavior {
+                    should_block_lower: false,
+                    ..default()
+                });
+        });
+}
+
+fn build_opt_txt(
+    txt: String,
+) -> (
+    Node,
+    Text,
+    TextFont,
+    TextLayout,
+    Label,
+    AccessibilityNode,
+    Name,
+) {
+    (
+        Node {
+            margin: UiRect::top(Val::Auto),
+            ..default()
+        },
+        Text::new(txt),
+        TextFont {
+            font_size: 15.0,
+            ..default()
+        },
+        TextLayout::new_with_justify(JustifyText::Center),
+        Label,
+        AccessibilityNode(Accessible::new(Role::ListItem)),
+        Name::new("Build Option Txt"),
+    )
 }

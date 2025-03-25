@@ -21,13 +21,25 @@ pub struct InfoCtrName;
 pub struct InfoCtrDmg;
 
 #[derive(Component)]
+pub struct InfoCtrDmgTxt;
+
+#[derive(Component)]
 pub struct InfoCtrBuildTime;
+
+#[derive(Component)]
+pub struct InfoCtrBuildTimeTxt;
 
 #[derive(Component)]
 pub struct InfoCtrSpeed;
 
 #[derive(Component)]
-pub struct InfoCtrHP;
+pub struct InfoCtrSpeedTxt;
+
+#[derive(Component)]
+pub struct InfoCtrHp;
+
+#[derive(Component)]
+pub struct InfoCtrHpTxt;
 
 #[derive(Component)]
 pub struct UnitBuildColumn;

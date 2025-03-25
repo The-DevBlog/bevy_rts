@@ -87,16 +87,38 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         Name::new("Info Ctr"),
     );
 
+    fn create_ctr<T>(ctr: T, name: &str) -> (T, Node, Name) {
+        (
+            ctr,
+            Node {
+                padding: UiRect::new(Val::Px(5.0), Val::ZERO, Val::Px(5.0), Val::Px(5.0)),
+                ..default()
+            },
+            Name::new(name.to_string()),
+        )
+    }
+
+    let info_ctr_icon = |img: Handle<Image>, name: String| -> (ImageNode, Node, Name) {
+        (
+            ImageNode::new(img),
+            Node {
+                margin: UiRect::right(Val::Px(7.5)),
+                ..default()
+            },
+            Name::new(name),
+        )
+    };
+
     let name = (InfoCtrName, Text::new("Building Name"), Name::new("Name"));
     let cost = (InfoCtrCost, Text::new("$1000"), Name::new("Cost"));
-    let build_time = (
-        InfoCtrBuildTime,
-        Text::new("Build Time"),
-        Name::new("Build Time"),
+    let speed_txt = (InfoCtrSpeedTxt, Text::new("Speed"), Name::new("Speed"));
+    let dmg_txt = (InfoCtrDmgTxt, Text::new(""), Name::new("Dmg Txt"));
+    let hp_txt = (InfoCtrHpTxt, Text::new(""), Name::new("HP Txt"));
+    let build_time_txt = (
+        InfoCtrBuildTimeTxt,
+        Text::new(""),
+        Name::new("Build Time Txt"),
     );
-    let hp = (InfoCtrHP, Text::new("HP"), Name::new("HP"));
-    let speed = (InfoCtrSpeed, Text::new("Speed"), Name::new("Speed"));
-    let dmg = (InfoCtrDmg, Text::new("DPS"), Name::new("DPS"));
 
     let cmd_interface_ctr = (
         CmdInterfaceCtr,
@@ -252,10 +274,37 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         p.spawn(info_ctr).with_children(|p| {
             p.spawn(name);
             p.spawn(cost);
-            p.spawn(build_time);
-            p.spawn(hp);
-            p.spawn(dmg);
-            p.spawn(speed);
+            p.spawn(create_ctr(InfoCtrBuildTime, "Build Time Ctr"))
+                .with_children(|p| {
+                    p.spawn(info_ctr_icon(
+                        my_assets.imgs.info_ctr_build_time.clone(),
+                        "Build Time Icon".to_string(),
+                    ));
+                    p.spawn(build_time_txt);
+                });
+            p.spawn(create_ctr(InfoCtrHp, "HP Ctr")).with_children(|p| {
+                p.spawn(info_ctr_icon(
+                    my_assets.imgs.info_ctr_hp.clone(),
+                    "HP Icon".to_string(),
+                ));
+                p.spawn(hp_txt);
+            });
+            p.spawn(create_ctr(InfoCtrDmg, "Dmg Ctr"))
+                .with_children(|p| {
+                    p.spawn(info_ctr_icon(
+                        my_assets.imgs.info_ctr_dmg.clone(),
+                        "Dmg Icon".to_string(),
+                    ));
+                    p.spawn(dmg_txt);
+                });
+            p.spawn(create_ctr(InfoCtrSpeed, "Speed Ctr"))
+                .with_children(|p| {
+                    p.spawn(info_ctr_icon(
+                        my_assets.imgs.info_ctr_speed.clone(),
+                        "Speed Icon".to_string(),
+                    ));
+                    p.spawn(speed_txt);
+                });
         });
 
         // Command Interface Ctr

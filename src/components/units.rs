@@ -27,7 +27,7 @@ pub struct IsMoving(pub bool);
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub struct Unit;
 
-#[derive(Component, EnumIter, Clone, Copy)]
+#[derive(Component, EnumIter, Clone, Copy, PartialEq)]
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub enum UnitType {
     Rifleman,

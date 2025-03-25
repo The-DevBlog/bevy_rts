@@ -12,9 +12,6 @@ use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
 
-const CLR_BASE: Color = Color::srgb(0.29, 0.29, 0.3);
-const CLR_BORDER_1: Color = Color::srgb(0.89, 0.89, 0.89);
-
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, command_center_ui).add_systems(
@@ -22,7 +19,7 @@ impl Plugin for UiPlugin {
             (
                 update_minimap_aspect,
                 update_scroll_position,
-                spawn_unit_ctrs,
+                spawn_unit_ctrs.run_if(resource_changed::<UnlockedUnits>),
             ),
         );
     }
@@ -177,6 +174,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         Node {
             padding: UiRect::top(Val::Px(5.0)),
             margin: UiRect::new(Val::Px(12.0), Val::Px(10.0), Val::ZERO, Val::ZERO),
+            min_width: Val::Px(246.0),
             overflow: Overflow::scroll_y(),
             ..default()
         },
@@ -297,31 +295,25 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 fn spawn_unit_ctrs(
     mut cmds: Commands,
     q_unit_build_column: Query<Entity, With<UnitBuildColumn>>,
-    q_unit_ctrs: Query<&UnitCtr>,
     unlocked_units: Res<UnlockedUnits>,
-    q_rifleman_ctr: Query<&RiflemanCtr>,
-    q_tank_gen1_ctr: Query<&TankGen1Ctr>,
-    q_tank_gen2_ctr: Query<&TankGen2Ctr>,
     my_assets: Res<MyAssets>,
 ) {
     let Ok(unit_build_column) = q_unit_build_column.get_single() else {
         return;
     };
 
-    cmds.entity(unit_build_column).with_children(|p| {
-        // Rifleman
-        if unlocked_units.rifleman && q_rifleman_ctr.is_empty() {
-            spawn_unit_btn(p, UnitType::Rifleman, &my_assets, RiflemanCtr);
-        }
+    cmds.entity(unit_build_column).despawn_descendants();
 
-        // Tank Gen 1
-        if unlocked_units.tank_gen1 && q_tank_gen1_ctr.is_empty() {
-            spawn_unit_btn(p, UnitType::TankGen1, &my_assets, TankGen1Ctr);
+    // Now add the unit control buttons in the desired order.
+    cmds.entity(unit_build_column).with_children(|parent| {
+        if unlocked_units.rifleman {
+            spawn_unit_btn(parent, UnitType::Rifleman, &my_assets, RiflemanCtr);
         }
-
-        // Tank Gen 2
-        if unlocked_units.tank_gen2 && q_tank_gen2_ctr.is_empty() {
-            spawn_unit_btn(p, UnitType::TankGen2, &my_assets, TankGen2Ctr);
+        if unlocked_units.tank_gen1 {
+            spawn_unit_btn(parent, UnitType::TankGen1, &my_assets, TankGen1Ctr);
+        }
+        if unlocked_units.tank_gen2 {
+            spawn_unit_btn(parent, UnitType::TankGen2, &my_assets, TankGen2Ctr);
         }
     });
 }

@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
 
-use crate::{resources::MyAssets, TANK_GEN1_SPEED, TANK_GEN2_SPEED};
+use crate::{resources::MyAssets, SPEED_RIFELMAN, SPEED_TANK_GEN_1, SPEED_TANK_GEN_2};
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder(pub Entity);
@@ -30,6 +30,7 @@ pub struct Unit;
 #[derive(Component, EnumIter, Clone, Copy)]
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub enum UnitType {
+    Rifleman,
     TankGen1,
     TankGen2,
 }
@@ -37,6 +38,7 @@ pub enum UnitType {
 impl UnitType {
     pub fn hp(&self) -> i32 {
         match self {
+            UnitType::Rifleman => 20,
             UnitType::TankGen1 => 100,
             UnitType::TankGen2 => 200,
         }
@@ -44,13 +46,15 @@ impl UnitType {
 
     pub fn speed(&self) -> f32 {
         match self {
-            UnitType::TankGen1 => TANK_GEN1_SPEED,
-            UnitType::TankGen2 => TANK_GEN2_SPEED,
+            UnitType::Rifleman => SPEED_RIFELMAN,
+            UnitType::TankGen1 => SPEED_TANK_GEN_1,
+            UnitType::TankGen2 => SPEED_TANK_GEN_2,
         }
     }
 
     pub fn dmg(&self) -> i32 {
         match self {
+            UnitType::Rifleman => 1,
             UnitType::TankGen1 => 10,
             UnitType::TankGen2 => 20,
         }
@@ -58,6 +62,7 @@ impl UnitType {
 
     pub fn build_time(&self) -> i32 {
         match self {
+            UnitType::Rifleman => 1,
             UnitType::TankGen1 => 5,
             UnitType::TankGen2 => 10,
         }
@@ -65,6 +70,7 @@ impl UnitType {
 
     pub fn cost(&self) -> i32 {
         match self {
+            UnitType::Rifleman => 50,
             UnitType::TankGen1 => 500,
             UnitType::TankGen2 => 800,
         }
@@ -72,6 +78,7 @@ impl UnitType {
 
     pub fn to_string(&self) -> String {
         match self {
+            UnitType::Rifleman => "Rifleman".to_string(),
             UnitType::TankGen1 => "Tank Gen I".to_string(),
             UnitType::TankGen2 => "Tank Gen II".to_string(),
         }
@@ -79,6 +86,7 @@ impl UnitType {
 
     pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
         match self {
+            UnitType::Rifleman => my_assets.imgs.unit_rifleman.clone(),
             UnitType::TankGen1 => my_assets.imgs.unit_tank_gen1.clone(),
             UnitType::TankGen2 => my_assets.imgs.unit_tank_gen2.clone(),
         }

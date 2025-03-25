@@ -20,7 +20,7 @@ impl Plugin for ResourcesPlugin {
             .init_resource::<GameCommands>()
             .init_resource::<MyAssets>()
             .init_resource::<CursorState>()
-            .init_resource::<AvailableUnits>()
+            .init_resource::<UnlockedUnits>()
             .init_resource::<StructuresBuilt>()
             .insert_resource(DbgOptions {
                 print_statements: debug_flag,
@@ -80,6 +80,7 @@ pub struct Images {
     pub structure_satellite_dish: Handle<Image>,
     pub unit_tank_gen1: Handle<Image>,
     pub unit_tank_gen2: Handle<Image>,
+    pub unit_rifleman: Handle<Image>,
 }
 
 #[derive(Default)]
@@ -208,9 +209,10 @@ pub struct StructuresBuilt {
 }
 
 #[derive(Resource, Default, Debug)]
-pub struct AvailableUnits {
-    pub tank_gen1: bool,
-    pub tank_gen2: bool,
+pub struct UnlockedUnits {
+    pub rifleman: bool,  // barracks built
+    pub tank_gen1: bool, // vehicle depot built
+    pub tank_gen2: bool, // vehicle depot build, (eventually research as well)
 }
 
 fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
@@ -284,6 +286,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.imgs.structure_satellite_dish = assets.load("imgs/structures/satellite_dish.png");
     my_assets.imgs.unit_tank_gen1 = assets.load("imgs/units/tank_gen1.png");
     my_assets.imgs.unit_tank_gen2 = assets.load("imgs/units/tank_gen2.png");
+    my_assets.imgs.unit_rifleman = assets.load("imgs/units/rifleman.png");
 
     // units
     my_assets.models.tank_gen1 = assets.load("models/units/tank_gen1/tank.gltf#Scene0");

@@ -19,7 +19,7 @@ impl Plugin for StructuresPlugin {
 }
 
 // modifies the 'StructuresBuilt' resource, whenever a structure is placed or removed (destroyed)
-fn mark_structure_built(
+pub fn mark_structure_built(
     mut structures_built: ResMut<StructuresBuilt>,
     q_structure_added: Query<&StructureType, Added<Structure>>,
 ) {

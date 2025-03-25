@@ -7,6 +7,7 @@ use strum::IntoEnumIterator;
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::components::structures::StructureType;
 use crate::components::units::UnitType;
+use crate::resources::UnlockedUnits;
 use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;
@@ -16,8 +17,14 @@ const CLR_BORDER_1: Color = Color::srgb(0.89, 0.89, 0.89);
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, command_center_ui)
-            .add_systems(Update, (update_minimap_aspect, update_scroll_position));
+        app.add_systems(Startup, command_center_ui).add_systems(
+            Update,
+            (
+                update_minimap_aspect,
+                update_scroll_position,
+                spawn_unit_ctrs,
+            ),
+        );
     }
 }
 
@@ -35,6 +42,15 @@ struct BuildColumnsCtr;
 
 #[derive(Component)]
 struct IconsCtr;
+
+#[derive(Component)]
+struct TankGen1Ctr;
+
+#[derive(Component)]
+struct TankGen2Ctr;
+
+#[derive(Component)]
+struct RiflemanCtr;
 
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
     if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
@@ -215,53 +231,53 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
-    let unit_opt_ctr = |unit: UnitType,
-                        assets: &Res<MyAssets>|
-     -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
-        (
-            OptCtr,
-            Button,
-            BorderColor(Color::srgb(0.8, 0.8, 0.8)),
-            ImageNode::from(unit.img(assets)),
-            Node {
-                width: Val::Percent(100.0),
-                min_width: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                margin: UiRect::bottom(Val::Px(5.0)),
-                border: UiRect::all(Val::Px(2.5)),
-                aspect_ratio: Some(1.0),
-                ..default()
-            },
-            UnitCtr(unit),
-            Name::new("Unit Build Option"),
-        )
-    };
+    // let unit_opt_ctr = |unit: UnitType,
+    //                     assets: &Res<MyAssets>|
+    //  -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
+    //     (
+    //         OptCtr,
+    //         Button,
+    //         BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+    //         ImageNode::from(unit.img(assets)),
+    //         Node {
+    //             width: Val::Percent(100.0),
+    //             min_width: Val::Percent(100.0),
+    //             flex_direction: FlexDirection::Column,
+    //             margin: UiRect::bottom(Val::Px(5.0)),
+    //             border: UiRect::all(Val::Px(2.5)),
+    //             aspect_ratio: Some(1.0),
+    //             ..default()
+    //         },
+    //         UnitCtr(unit),
+    //         Name::new("Unit Build Option"),
+    //     )
+    // };
 
-    let build_opt_txt = |txt: String| -> (
-        Node,
-        Text,
-        TextFont,
-        TextLayout,
-        Label,
-        AccessibilityNode,
-        Name,
-    ) {
-        (
-            Node {
-                margin: UiRect::top(Val::Auto),
-                ..default()
-            },
-            Text::new(txt),
-            TextFont {
-                font_size: 15.0,
-                ..default()
-            },
-            TextLayout::new_with_justify(JustifyText::Center),
-            Label,
-            AccessibilityNode(Accessible::new(Role::ListItem)),
-            Name::new("Build Option Txt"),
-        )
-    };
+    // let build_opt_txt = |txt: String| -> (
+    //     Node,
+    //     Text,
+    //     TextFont,
+    //     TextLayout,
+    //     Label,
+    //     AccessibilityNode,
+    //     Name,
+    // ) {
+    //     (
+    //         Node {
+    //             margin: UiRect::top(Val::Auto),
+    //             ..default()
+    //         },
+    //         Text::new(txt),
+    //         TextFont {
+    //             font_size: 15.0,
+    //             ..default()
+    //         },
+    //         TextLayout::new_with_justify(JustifyText::Center),
+    //         Label,
+    //         AccessibilityNode(Accessible::new(Role::ListItem)),
+    //         Name::new("Build Option Txt"),
+    //     )
+    // };
 
     let spawn_structure_btn =
         |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyAssets>| {
@@ -280,21 +296,21 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
         };
 
-    let spawn_unit_btn = |parent: &mut ChildBuilder, unit: UnitType, assets: &Res<MyAssets>| {
-        parent
-            .spawn(unit_opt_ctr(unit, assets))
-            .insert(PickingBehavior {
-                should_block_lower: false,
-                ..default()
-            })
-            .with_children(|p| {
-                p.spawn(build_opt_txt(unit.to_string()))
-                    .insert(PickingBehavior {
-                        should_block_lower: false,
-                        ..default()
-                    });
-            });
-    };
+    // let spawn_unit_btn = |parent: &mut ChildBuilder, unit: UnitType, assets: &Res<MyAssets>| {
+    //     parent
+    //         .spawn(unit_opt_ctr(unit, assets))
+    //         .insert(PickingBehavior {
+    //             should_block_lower: false,
+    //             ..default()
+    //         })
+    //         .with_children(|p| {
+    //             p.spawn(build_opt_txt(unit.to_string()))
+    //                 .insert(PickingBehavior {
+    //                     should_block_lower: false,
+    //                     ..default()
+    //                 });
+    //         });
+    // };
 
     // Root Container
     cmds.spawn(root_ctr).with_children(|p| {
@@ -347,6 +363,76 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     });
 }
 
+fn spawn_unit_ctrs(
+    mut cmds: Commands,
+    q_unit_build_column: Query<Entity, With<UnitBuildColumn>>,
+    q_unit_ctrs: Query<&UnitCtr>,
+    unlocked_units: Res<UnlockedUnits>,
+    q_rifleman_ctr: Query<&RiflemanCtr>,
+    q_tank_gen1_ctr: Query<&TankGen1Ctr>,
+    q_tank_gen2_ctr: Query<&TankGen2Ctr>,
+    my_assets: Res<MyAssets>,
+) {
+    let Ok(unit_build_column) = q_unit_build_column.get_single() else {
+        return;
+    };
+
+    // let unit_opt_ctr = |unit: UnitType,
+    //                     assets: &Res<MyAssets>|
+    //  -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
+    //     (
+    //         OptCtr,
+    //         Button,
+    //         BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+    //         ImageNode::from(unit.img(assets)),
+    //         Node {
+    //             width: Val::Percent(100.0),
+    //             min_width: Val::Percent(100.0),
+    //             flex_direction: FlexDirection::Column,
+    //             margin: UiRect::bottom(Val::Px(5.0)),
+    //             border: UiRect::all(Val::Px(2.5)),
+    //             aspect_ratio: Some(1.0),
+    //             ..default()
+    //         },
+    //         UnitCtr(unit),
+    //         Name::new("Unit Build Option"),
+    //     )
+    // };
+
+    // let spawn_unit_btn = |parent: &mut ChildBuilder, unit: UnitType, assets: &Res<MyAssets>| {
+    //     parent
+    //         .spawn(unit_opt_ctr(unit, assets))
+    //         .insert(PickingBehavior {
+    //             should_block_lower: false,
+    //             ..default()
+    //         })
+    //         .with_children(|p| {
+    //             p.spawn(build_opt_txt(unit.to_string()))
+    //                 .insert(PickingBehavior {
+    //                     should_block_lower: false,
+    //                     ..default()
+    //                 });
+    //         });
+    // };
+
+    cmds.entity(unit_build_column).with_children(|p| {
+        // Rifleman
+        if unlocked_units.rifleman && q_rifleman_ctr.is_empty() {
+            spawn_unit_btn(p, UnitType::Rifleman, &my_assets, RiflemanCtr);
+        }
+
+        // Tank Gen 1
+        if unlocked_units.tank_gen1 && q_tank_gen1_ctr.is_empty() {
+            spawn_unit_btn(p, UnitType::TankGen1, &my_assets, TankGen1Ctr);
+        }
+
+        // Tank Gen 2
+        if unlocked_units.tank_gen2 && q_tank_gen2_ctr.is_empty() {
+            spawn_unit_btn(p, UnitType::TankGen2, &my_assets, TankGen2Ctr);
+        }
+    });
+}
+
 pub fn update_scroll_position(
     mut mouse_wheel_events: EventReader<MouseWheel>,
     hover_map: Res<HoverMap>,
@@ -374,4 +460,77 @@ pub fn update_scroll_position(
             }
         }
     }
+}
+
+fn unit_opt_ctr(
+    unit: UnitType,
+    assets: &Res<MyAssets>,
+) -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
+    (
+        OptCtr,
+        Button,
+        BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+        ImageNode::from(unit.img(assets)),
+        Node {
+            width: Val::Percent(100.0),
+            min_width: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            margin: UiRect::bottom(Val::Px(5.0)),
+            border: UiRect::all(Val::Px(2.5)),
+            aspect_ratio: Some(1.0),
+            ..default()
+        },
+        UnitCtr(unit),
+        Name::new("Unit Build Option"),
+    )
+}
+
+fn spawn_unit_btn<T: Component>(
+    parent: &mut ChildBuilder,
+    unit: UnitType,
+    assets: &Res<MyAssets>,
+    comp: T,
+) {
+    parent
+        .spawn(unit_opt_ctr(unit, assets))
+        .insert(comp)
+        .insert(PickingBehavior {
+            should_block_lower: false,
+            ..default()
+        })
+        .with_children(|p| {
+            p.spawn(build_opt_txt(unit.to_string()))
+                .insert(PickingBehavior {
+                    should_block_lower: false,
+                    ..default()
+                });
+        });
+}
+
+fn build_opt_txt(
+    txt: String,
+) -> (
+    Node,
+    Text,
+    TextFont,
+    TextLayout,
+    Label,
+    AccessibilityNode,
+    Name,
+) {
+    (
+        Node {
+            margin: UiRect::top(Val::Auto),
+            ..default()
+        },
+        Text::new(txt),
+        TextFont {
+            font_size: 15.0,
+            ..default()
+        },
+        TextLayout::new_with_justify(JustifyText::Center),
+        Label,
+        AccessibilityNode(Accessible::new(Role::ListItem)),
+        Name::new("Build Option Txt"),
+    )
 }

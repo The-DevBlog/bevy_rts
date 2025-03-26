@@ -273,7 +273,8 @@ fn reset_info_ctr_hvr_state(mut info_ctr_data: ResMut<InfoContainerData>) {
 }
 
 fn toggle_info_ctr(
-    mut q_info_ctr: Query<&mut Visibility, With<InfoCtr>>,
+    q_cmd_interface: Query<&ComputedNode, With<CmdInterfaceCtr>>,
+    // mut q_info_ctr: Query<(&mut Visibility, &mut Node), With<InfoCtr>>,
     info_ctr_data: Res<InfoContainerData>,
     mut set: ParamSet<(
         Query<&mut Text, With<InfoCtrDmgTxt>>,
@@ -287,16 +288,23 @@ fn toggle_info_ctr(
         Query<&mut Node, With<InfoCtrDmg>>,
         Query<&mut Node, With<InfoCtrSpeed>>,
         Query<&mut Node, With<InfoCtrHp>>,
+        Query<(&mut Node, &mut Visibility), With<InfoCtr>>,
     )>,
 ) {
-    let Ok(mut info_ctr_vis) = q_info_ctr.get_single_mut() else {
+    let Ok(cmd_interface_node) = q_cmd_interface.get_single() else {
         return;
     };
 
-    if info_ctr_data.active {
-        *info_ctr_vis = Visibility::Visible;
-    } else {
-        *info_ctr_vis = Visibility::Hidden;
+    let cmd_interface_width = cmd_interface_node.size().x;
+    let info_ctr_x = cmd_interface_width + 10.0; // +10 for added margin
+
+    if let Ok((mut info_ctr_node, mut info_ctr_vis)) = ctr_set.p3().get_single_mut() {
+        if info_ctr_data.active {
+            *info_ctr_vis = Visibility::Visible;
+            info_ctr_node.right = Val::Px(info_ctr_x);
+        } else {
+            *info_ctr_vis = Visibility::Hidden;
+        }
     }
 
     // Name

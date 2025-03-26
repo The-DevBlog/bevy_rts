@@ -273,60 +273,88 @@ fn reset_info_ctr_hvr_state(mut info_ctr_data: ResMut<InfoContainerData>) {
 }
 
 fn toggle_info_ctr(
-    mut q_info_ctr: Query<&mut Visibility, With<InfoCtr>>,
+    q_cmd_interface: Query<&ComputedNode, With<CmdInterfaceCtr>>,
+    // mut q_info_ctr: Query<(&mut Visibility, &mut Node), With<InfoCtr>>,
     info_ctr_data: Res<InfoContainerData>,
     mut set: ParamSet<(
+        Query<&mut Text, With<InfoCtrDmgTxt>>,
+        Query<&mut Text, With<InfoCtrSpeedTxt>>,
+        Query<&mut Text, With<InfoCtrHpTxt>>,
+        Query<&mut Text, With<InfoCtrBuildTimeTxt>>,
         Query<&mut Text, With<InfoCtrName>>,
         Query<&mut Text, With<InfoCtrCost>>,
-        Query<&mut Text, With<InfoCtrBuildTime>>,
-        Query<&mut Text, With<InfoCtrHP>>,
-        Query<&mut Text, With<InfoCtrDmg>>,
-        Query<&mut Text, With<InfoCtrSpeed>>,
+    )>,
+    mut ctr_set: ParamSet<(
+        Query<&mut Node, With<InfoCtrDmg>>,
+        Query<&mut Node, With<InfoCtrSpeed>>,
+        Query<&mut Node, With<InfoCtrHp>>,
+        Query<(&mut Node, &mut Visibility), With<InfoCtr>>,
     )>,
 ) {
-    let Ok(mut info_ctr_vis) = q_info_ctr.get_single_mut() else {
+    let Ok(cmd_interface_node) = q_cmd_interface.get_single() else {
         return;
     };
 
-    if info_ctr_data.active {
-        *info_ctr_vis = Visibility::Visible;
-    } else {
-        *info_ctr_vis = Visibility::Hidden;
+    let cmd_interface_width = cmd_interface_node.size().x;
+    let info_ctr_x = cmd_interface_width + 10.0; // +10 for added margin
+
+    if let Ok((mut info_ctr_node, mut info_ctr_vis)) = ctr_set.p3().get_single_mut() {
+        if info_ctr_data.active {
+            *info_ctr_vis = Visibility::Visible;
+            info_ctr_node.right = Val::Px(info_ctr_x);
+        } else {
+            *info_ctr_vis = Visibility::Hidden;
+        }
     }
 
-    if let Ok(mut name) = set.p0().get_single_mut() {
+    // Name
+    if let Ok(mut name) = set.p4().get_single_mut() {
         name.0 = info_ctr_data.name.to_string();
     };
 
-    if let Ok(mut cost) = set.p1().get_single_mut() {
+    // Cost
+    if let Ok(mut cost) = set.p5().get_single_mut() {
         cost.0 = format!("${}", info_ctr_data.cost);
     };
 
-    if let Ok(mut build_time) = set.p2().get_single_mut() {
-        build_time.0 = format!("Build Time: {}s", info_ctr_data.build_time);
-    };
+    // Build Time
+    if let Ok(mut build_time_txt) = set.p3().get_single_mut() {
+        build_time_txt.0 = info_ctr_data.build_time.to_string();
+    }
 
-    if let Ok(mut hp) = set.p3().get_single_mut() {
-        if let Some(h) = info_ctr_data.hp {
-            hp.0 = format!("HP: {}", h);
-        } else {
-            hp.0 = String::new();
+    // Damage
+    if let Ok(mut dmg_txt) = set.p0().get_single_mut() {
+        if let Ok(mut dmg_ctr) = ctr_set.p0().get_single_mut() {
+            if let Some(dmg) = info_ctr_data.dmg {
+                dmg_ctr.display = Display::Flex;
+                dmg_txt.0 = dmg.to_string();
+            } else {
+                dmg_ctr.display = Display::None;
+            }
         }
     }
 
-    if let Ok(mut dmg) = set.p4().get_single_mut() {
-        if let Some(d) = info_ctr_data.dmg {
-            dmg.0 = format!("DPS: {}", d);
-        } else {
-            dmg.0 = String::new();
+    // Speed
+    if let Ok(mut speed_txt) = set.p1().get_single_mut() {
+        if let Ok(mut speed_ctr) = ctr_set.p1().get_single_mut() {
+            if let Some(speed) = info_ctr_data.speed {
+                speed_ctr.display = Display::Flex;
+                speed_txt.0 = speed.to_string();
+            } else {
+                speed_ctr.display = Display::None;
+            }
         }
     }
 
-    if let Ok(mut speed) = set.p5().get_single_mut() {
-        if let Some(s) = info_ctr_data.speed {
-            speed.0 = format!("Speed: {}", s);
-        } else {
-            speed.0 = String::new();
+    // HP
+    if let Ok(mut hp_txt) = set.p2().get_single_mut() {
+        if let Ok(mut hp_ctr) = ctr_set.p2().get_single_mut() {
+            if let Some(hp) = info_ctr_data.hp {
+                hp_ctr.display = Display::Flex;
+                hp_txt.0 = hp.to_string();
+            } else {
+                hp_ctr.display = Display::None;
+            }
         }
     }
 }

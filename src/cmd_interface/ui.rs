@@ -63,51 +63,67 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
 }
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
-    let root_ctr = (
-        Node {
-            height: Val::Percent(100.0),
-            margin: UiRect::left(Val::Auto),
-            ..default()
-        },
-        Name::new("Root Ctr"),
-        ZIndex(100),
-    );
-
     let info_ctr = (
         InfoCtr,
-        BackgroundColor(Color::BLACK),
+        ImageNode::new(my_assets.imgs.info_ctr.clone()),
         Node {
             flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(5.0)),
+            position_type: PositionType::Absolute,
+            padding: UiRect::all(Val::Px(10.0)),
             align_self: AlignSelf::FlexStart,
+            width: Val::Px(200.0),
+            height: Val::Px(200.0),
             top: Val::Percent(50.0),
-            right: Val::Px(10.0),
             ..default()
         },
+        ZIndex(105),
         Name::new("Info Ctr"),
     );
 
+    fn create_ctr<T>(ctr: T, name: &str) -> (T, Node, Name) {
+        (
+            ctr,
+            Node {
+                padding: UiRect::new(Val::Px(5.0), Val::ZERO, Val::Px(5.0), Val::Px(5.0)),
+                ..default()
+            },
+            Name::new(name.to_string()),
+        )
+    }
+
+    let info_ctr_icon = |img: Handle<Image>, name: String| -> (ImageNode, Node, Name) {
+        (
+            ImageNode::new(img),
+            Node {
+                margin: UiRect::right(Val::Px(7.5)),
+                ..default()
+            },
+            Name::new(name),
+        )
+    };
+
+    // Info Ctr Data
     let name = (InfoCtrName, Text::new("Building Name"), Name::new("Name"));
     let cost = (InfoCtrCost, Text::new("$1000"), Name::new("Cost"));
-    let build_time = (
-        InfoCtrBuildTime,
-        Text::new("Build Time"),
-        Name::new("Build Time"),
+    let speed_txt = (InfoCtrSpeedTxt, Text::new(""), Name::new("Speed"));
+    let dmg_txt = (InfoCtrDmgTxt, Text::new(""), Name::new("Dmg Txt"));
+    let hp_txt = (InfoCtrHpTxt, Text::new(""), Name::new("HP Txt"));
+    let build_time_txt = (
+        InfoCtrBuildTimeTxt,
+        Text::new(""),
+        Name::new("Build Time Txt"),
     );
-    let hp = (InfoCtrHP, Text::new("HP"), Name::new("HP"));
-    let speed = (InfoCtrSpeed, Text::new("Speed"), Name::new("Speed"));
-    let dmg = (InfoCtrDmg, Text::new("DPS"), Name::new("DPS"));
 
     let cmd_interface_ctr = (
         CmdInterfaceCtr,
         Button,
         ImageNode::new(my_assets.imgs.cmd_intrfce_background.clone()),
         Node {
-            padding: UiRect::left(Val::Percent(0.75)),
+            margin: UiRect::left(Val::Auto),
             flex_direction: FlexDirection::Column,
-            right: Val::Px(0.0),
             height: Val::Percent(100.0),
-            width: Val::Percent(15.0),
+            width: Val::Percent(100.0),
+            align_items: AlignItems::Center,
             max_width: Val::Px(394.0),
             min_width: Val::Px(200.0),
             ..default()
@@ -121,9 +137,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             min_height: Val::Percent(25.0),
             max_height: Val::Px(341.0),
             max_width: Val::Px(341.0),
+            width: Val::Percent(100.0),
             margin: UiRect::bottom(Val::Px(41.0)),
             top: Val::Px(22.1),
-            left: Val::Percent(2.0),
+            // left: Val::Percent(2.0),
             ..default()
         },
         Text::new("Mini Map"),
@@ -151,6 +168,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         IconsCtr,
         Node {
             margin: UiRect::all(Val::Px(5.0)),
+            width: Val::Percent(90.0),
+            // height: Val::Px(61.0),
             justify_content: JustifyContent::SpaceAround,
             ..default()
         },
@@ -170,11 +189,15 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
     let build_columns_ctr = (
         BuildColumnsCtr,
-        BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
+        // BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
+        BackgroundColor(Color::BLACK),
         Node {
             padding: UiRect::top(Val::Px(5.0)),
-            margin: UiRect::new(Val::Px(12.0), Val::Px(10.0), Val::ZERO, Val::ZERO),
+            // margin: UiRect::new(Val::Auto, Val::Auto, Val::ZERO, Val::ZERO),
             min_width: Val::Px(246.0),
+            max_width: Val::Px(358.0),
+            width: Val::Percent(100.0),
+            // max_width: Val::Px(341.0),
             overflow: Overflow::scroll_y(),
             ..default()
         },
@@ -246,49 +269,73 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 });
         };
 
-    // Root Container
-    cmds.spawn(root_ctr).with_children(|p| {
-        // Info Ctr
-        p.spawn(info_ctr).with_children(|p| {
-            p.spawn(name);
-            p.spawn(cost);
-            p.spawn(build_time);
-            p.spawn(hp);
-            p.spawn(dmg);
-            p.spawn(speed);
-        });
-
-        // Command Interface Ctr
-        p.spawn(cmd_interface_ctr).with_children(|p| {
-            //  Mini Map
-            p.spawn(mini_map_ctr);
-
-            // Bank
-            p.spawn(bank_ctr);
-
-            // Structure/Units Icons
-            p.spawn(icons_ctr).with_children(|parent| {
-                parent.spawn(icon(my_assets.imgs.cmd_intrfce_structures.clone()));
-                parent.spawn(icon(my_assets.imgs.cmd_intrfce_units.clone()));
+    // Info Ctr
+    cmds.spawn(info_ctr).with_children(|p| {
+        p.spawn(name);
+        p.spawn(cost);
+        p.spawn(create_ctr(InfoCtrBuildTime, "Build Time Ctr"))
+            .with_children(|p| {
+                p.spawn(info_ctr_icon(
+                    my_assets.imgs.info_ctr_build_time.clone(),
+                    "Build Time Icon".to_string(),
+                ));
+                p.spawn(build_time_txt);
             });
-
-            // Structure/Units Columns
-            p.spawn(build_columns_ctr)
-                .with_children(|p: &mut ChildBuilder<'_>| {
-                    // Structures Column
-                    p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                        for structure in StructureType::iter() {
-                            spawn_structure_btn(parent, structure, &my_assets);
-                        }
-                        for structure in StructureType::iter() {
-                            spawn_structure_btn(parent, structure, &my_assets);
-                        }
-                    });
-
-                    // Units Column
-                    p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
-                });
+        p.spawn(create_ctr(InfoCtrHp, "HP Ctr")).with_children(|p| {
+            p.spawn(info_ctr_icon(
+                my_assets.imgs.info_ctr_hp.clone(),
+                "HP Icon".to_string(),
+            ));
+            p.spawn(hp_txt);
         });
+        p.spawn(create_ctr(InfoCtrDmg, "Dmg Ctr"))
+            .with_children(|p| {
+                p.spawn(info_ctr_icon(
+                    my_assets.imgs.info_ctr_dmg.clone(),
+                    "Dmg Icon".to_string(),
+                ));
+                p.spawn(dmg_txt);
+            });
+        p.spawn(create_ctr(InfoCtrSpeed, "Speed Ctr"))
+            .with_children(|p| {
+                p.spawn(info_ctr_icon(
+                    my_assets.imgs.info_ctr_speed.clone(),
+                    "Speed Icon".to_string(),
+                ));
+                p.spawn(speed_txt);
+            });
+    });
+
+    // Command Interface Ctr
+    cmds.spawn(cmd_interface_ctr).with_children(|p| {
+        //  Mini Map
+        p.spawn(mini_map_ctr);
+
+        // Bank
+        p.spawn(bank_ctr);
+
+        // Structure/Units Icons
+        p.spawn(icons_ctr).with_children(|parent| {
+            parent.spawn(icon(my_assets.imgs.cmd_intrfce_structures.clone()));
+            parent.spawn(icon(my_assets.imgs.cmd_intrfce_units.clone()));
+        });
+
+        // Structure/Units Columns
+        p.spawn(build_columns_ctr)
+            .with_children(|p: &mut ChildBuilder<'_>| {
+                // Structures Column
+                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                    for structure in StructureType::iter() {
+                        spawn_structure_btn(parent, structure, &my_assets);
+                    }
+                    for structure in StructureType::iter() {
+                        spawn_structure_btn(parent, structure, &my_assets);
+                    }
+                });
+
+                // Units Column
+                p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
+            });
     });
 }
 

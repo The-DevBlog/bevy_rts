@@ -63,20 +63,9 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
 }
 
 fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
-    // let root_ctr = (
-    //     Node {
-    //         height: Val::Percent(100.0),
-    //         min_width: Val::Percent(15.0),
-    //         margin: UiRect::left(Val::Auto),
-    //         ..default()
-    //     },
-    //     Name::new("Root Ctr"),
-    //     ZIndex(100),
-    // );
-
     let info_ctr = (
         InfoCtr,
-        BackgroundColor(Color::BLACK),
+        ImageNode::new(my_assets.imgs.info_ctr.clone()),
         Node {
             flex_direction: FlexDirection::Column,
             position_type: PositionType::Absolute,
@@ -85,7 +74,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             width: Val::Px(200.0),
             height: Val::Px(200.0),
             top: Val::Percent(50.0),
-            // right: Val::Px(10.0),
             ..default()
         },
         ZIndex(105),
@@ -132,11 +120,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         ImageNode::new(my_assets.imgs.cmd_intrfce_background.clone()),
         Node {
             margin: UiRect::left(Val::Auto),
-            padding: UiRect::left(Val::Percent(0.75)),
             flex_direction: FlexDirection::Column,
-            right: Val::Px(0.0),
             height: Val::Percent(100.0),
             width: Val::Percent(100.0),
+            align_items: AlignItems::Center,
             max_width: Val::Px(394.0),
             min_width: Val::Px(200.0),
             ..default()
@@ -150,9 +137,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             min_height: Val::Percent(25.0),
             max_height: Val::Px(341.0),
             max_width: Val::Px(341.0),
+            width: Val::Percent(100.0),
             margin: UiRect::bottom(Val::Px(41.0)),
             top: Val::Px(22.1),
-            left: Val::Percent(2.0),
+            // left: Val::Percent(2.0),
             ..default()
         },
         Text::new("Mini Map"),
@@ -180,7 +168,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         IconsCtr,
         Node {
             margin: UiRect::all(Val::Px(5.0)),
-            height: Val::Px(61.0),
+            width: Val::Percent(90.0),
+            // height: Val::Px(61.0),
             justify_content: JustifyContent::SpaceAround,
             ..default()
         },
@@ -200,12 +189,15 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
     let build_columns_ctr = (
         BuildColumnsCtr,
-        BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
+        // BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
+        BackgroundColor(Color::BLACK),
         Node {
             padding: UiRect::top(Val::Px(5.0)),
-            margin: UiRect::new(Val::Px(12.0), Val::Px(10.0), Val::ZERO, Val::ZERO),
+            // margin: UiRect::new(Val::Auto, Val::Auto, Val::ZERO, Val::ZERO),
             min_width: Val::Px(246.0),
-            max_width: Val::Px(341.0),
+            max_width: Val::Px(358.0),
+            width: Val::Percent(100.0),
+            // max_width: Val::Px(341.0),
             overflow: Overflow::scroll_y(),
             ..default()
         },

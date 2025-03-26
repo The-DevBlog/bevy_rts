@@ -73,6 +73,7 @@ pub struct Images {
     pub cmd_intrfce_structures: Handle<Image>,
     pub cmd_intrfce_units: Handle<Image>,
     pub cmd_intrfce_background: Handle<Image>,
+    pub info_ctr: Handle<Image>,
     pub info_ctr_dmg: Handle<Image>,
     pub info_ctr_speed: Handle<Image>,
     pub info_ctr_build_time: Handle<Image>,
@@ -291,6 +292,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.imgs.unit_tank_gen1 = assets.load("imgs/units/tank_gen1.png");
     my_assets.imgs.unit_tank_gen2 = assets.load("imgs/units/tank_gen2.png");
     my_assets.imgs.unit_rifleman = assets.load("imgs/units/rifleman.png");
+    my_assets.imgs.info_ctr = assets.load("imgs/cmd_interface/info_ctr.png");
     my_assets.imgs.info_ctr_dmg = assets.load("imgs/info_ctr/dmg.png");
     my_assets.imgs.info_ctr_speed = assets.load("imgs/info_ctr/speed.png");
     my_assets.imgs.info_ctr_build_time = assets.load("imgs/info_ctr/build_time.png");

@@ -78,7 +78,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         BackgroundColor(Color::BLACK),
         Node {
             flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(5.0)),
+            padding: UiRect::all(Val::Px(10.0)),
             align_self: AlignSelf::FlexStart,
             top: Val::Percent(50.0),
             right: Val::Px(10.0),
@@ -109,9 +109,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         )
     };
 
+    // Info Ctr Data
     let name = (InfoCtrName, Text::new("Building Name"), Name::new("Name"));
     let cost = (InfoCtrCost, Text::new("$1000"), Name::new("Cost"));
-    let speed_txt = (InfoCtrSpeedTxt, Text::new("Speed"), Name::new("Speed"));
+    let speed_txt = (InfoCtrSpeedTxt, Text::new(""), Name::new("Speed"));
     let dmg_txt = (InfoCtrDmgTxt, Text::new(""), Name::new("Dmg Txt"));
     let hp_txt = (InfoCtrHpTxt, Text::new(""), Name::new("HP Txt"));
     let build_time_txt = (

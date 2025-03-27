@@ -19,10 +19,10 @@ fn mark_available_units(
     structures_built: Res<StructuresBuilt>,
     mut available_units: ResMut<UnlockedUnits>,
 ) {
-    for structure in q_structures.iter() {
+    for _structure in q_structures.iter() {
         if structures_built.vehicle_depot > 0 {
             available_units.tank_gen1 = true;
-            available_units.tank_gen2 = true; // TODO: requrie research eventually
+            available_units.tank_gen2 = true; // TODO: require research eventually
         }
 
         if structures_built.barracks > 0 {

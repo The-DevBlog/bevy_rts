@@ -140,7 +140,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             width: Val::Percent(100.0),
             margin: UiRect::bottom(Val::Px(41.0)),
             top: Val::Px(22.1),
-            // left: Val::Percent(2.0),
             ..default()
         },
         Text::new("Mini Map"),
@@ -169,7 +168,6 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         Node {
             margin: UiRect::all(Val::Px(5.0)),
             width: Val::Percent(90.0),
-            // height: Val::Px(61.0),
             justify_content: JustifyContent::SpaceAround,
             ..default()
         },
@@ -189,15 +187,12 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
     let build_columns_ctr = (
         BuildColumnsCtr,
-        // BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         BackgroundColor(Color::BLACK),
         Node {
             padding: UiRect::top(Val::Px(5.0)),
-            // margin: UiRect::new(Val::Auto, Val::Auto, Val::ZERO, Val::ZERO),
             min_width: Val::Px(246.0),
             max_width: Val::Px(358.0),
             width: Val::Percent(100.0),
-            // max_width: Val::Px(341.0),
             overflow: Overflow::scroll_y(),
             ..default()
         },

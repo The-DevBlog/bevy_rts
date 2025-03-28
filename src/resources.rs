@@ -300,7 +300,7 @@ fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
 
     // units
     my_assets.models.tank_gen1 = assets.load("models/units/tank_gen1/tank.gltf#Scene0");
-    my_assets.models.tank_gen2 = assets.load("models/units/tank_gen2/tank_gen2.gltf#Scene0");
+    my_assets.models.tank_gen2 = assets.load("models/units/tank_gen2/tank_gen_2.gltf#Scene0");
 
     // structures
     my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");

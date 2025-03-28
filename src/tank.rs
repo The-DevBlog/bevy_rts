@@ -1,5 +1,9 @@
 use bevy::math::f32;
+use bevy::pbr::ExtendedMaterial;
+use bevy::pbr::OpaqueRendererMethod;
 use bevy::time::common_conditions::once_after_delay;
+use bevy_mod_outline::OutlineMode;
+use bevy_mod_outline::OutlineVolume;
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rapier3d::prelude::ExternalImpulse;
 use bevy_rts_pathfinding::components as pf_comps;
@@ -34,13 +38,7 @@ impl Plugin for TankPlugin {
     }
 }
 
-pub fn spawn_tank(
-    mut cmds: Commands,
-    // assets: Res<AssetServer>,
-    my_assets: Res<MyAssets>,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    // mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+pub fn spawn_tank(mut cmds: Commands, my_assets: Res<MyAssets>, mut meshes: ResMut<Assets<Mesh>>) {
     // GEN I
     cmds.spawn((UnitBundle::new(
         BORDER_SIZE,
@@ -66,7 +64,7 @@ pub fn spawn_tank(
     ),));
 
     // GEN II
-    cmds.spawn((UnitBundle::new(
+    cmds.spawn(UnitBundle::new(
         BORDER_SIZE,
         "Tank".to_string(),
         my_assets.models.tank_gen2.clone(),
@@ -75,7 +73,7 @@ pub fn spawn_tank(
         // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
         Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
         UnitType::TankGen2,
-    ),));
+    ));
 }
 
 pub fn spawn_tanks(
@@ -144,7 +142,7 @@ pub fn spawn_tanks(
             if count >= TANK_COUNT {
                 break;
             }
-            cmds.spawn(create_right_tank(row, col));
+            // cmds.spawn(create_right_tank(row, col));
             count += 1;
         }
     }

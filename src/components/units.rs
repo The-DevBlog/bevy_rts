@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_mod_outline::{AsyncSceneInheritOutline, OutlineMode, OutlineVolume};
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
@@ -110,8 +111,10 @@ pub struct UnitBundle {
     pub transform_global: GlobalTransform,
     pub unit_type: UnitType,
     pub unit: Unit,
-    // pub mesh: Mesh3d,
-    // pub material: MeshMaterial3d<StandardMaterial>, // TODO: remove
+    pub outline_volume: OutlineVolume,
+    pub outline_mode: OutlineMode,
+    pub e: AsyncSceneInheritOutline, // pub mesh: Mesh3d,
+                                     // pub material: MeshMaterial3d<OutlineMaterial>, // TODO: remove
 }
 
 impl UnitBundle {
@@ -121,9 +124,9 @@ impl UnitBundle {
         scene: Handle<Scene>,
         size: Vec3,
         // mesh: Mesh3d,                               // TODO: remove
-        // material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         transform: Transform,
         unit_type: UnitType,
+        // material: MeshMaterial3d<OutlineMaterial>, // TODO: remove
     ) -> Self {
         // let scale = 1.55;
         Self {
@@ -155,6 +158,13 @@ impl UnitBundle {
             transform_global: GlobalTransform::default(),
             unit_type: unit_type,
             unit: Unit,
+            outline_volume: OutlineVolume {
+                visible: true,
+                colour: Color::BLACK,
+                width: 5.0,
+            },
+            outline_mode: OutlineMode::FloodFlat,
+            e: AsyncSceneInheritOutline::default(),
             // mesh,     // TODO: remove
             // material, // TODO: remove
         }

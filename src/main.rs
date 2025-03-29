@@ -3,6 +3,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding;
 
+mod asset_manager;
 mod bank;
 mod camera;
 mod cmd_interface;
@@ -16,6 +17,7 @@ mod tank;
 mod units;
 mod utils;
 
+use asset_manager::AssetManagerPlugin;
 use bank::BankPlugin;
 use camera::CameraPlugin;
 use cmd_interface::CmdInterfacePlugin;
@@ -44,6 +46,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             CmdInterfacePlugin,
+            AssetManagerPlugin,
             BankPlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
             // RapierDebugRenderPlugin::default(),

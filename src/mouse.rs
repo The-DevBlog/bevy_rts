@@ -5,7 +5,6 @@ use bevy_rts_camera::RtsCamera;
 use core::f32;
 use std::f32::consts::FRAC_PI_2;
 
-use crate::cmd_interface::components::CmdInterfaceCtr;
 use crate::components::units::*;
 use crate::events::*;
 use crate::resources::*;
@@ -155,6 +154,8 @@ fn mouse_input(
             } else if hit_ent_option.is_none() {
                 cmds.trigger(SetUnitDestinationEv);
             }
+        } else {
+            cmds.trigger(SelectMultipleUnitEv);
         }
 
         return;
@@ -459,7 +460,7 @@ pub fn single_select(
         return;
     }
 
-    let ent = trigger.0;
+    let unit_ent = trigger.0;
 
     // Closure that creates a new border for a given unit.
     let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
@@ -472,8 +473,8 @@ pub fn single_select(
         )
     };
 
-    cmds.entity(ent).insert(Selected);
-    cmds.spawn(border(ent));
+    cmds.entity(unit_ent).insert(Selected);
+    cmds.spawn(border(unit_ent));
 }
 
 pub fn deselect_all(

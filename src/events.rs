@@ -22,4 +22,7 @@ pub struct SetUnitDestinationEv;
 pub struct SelectSingleUnitEv(pub Entity);
 
 #[derive(Event)]
+pub struct SelectMultipleUnitEv;
+
+#[derive(Event)]
 pub struct DeselectAllEv;

@@ -4,7 +4,8 @@ pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<MyAudio>();
+        app.init_resource::<MyAudio>()
+            .add_systems(Startup, load_assets);
     }
 }
 
@@ -26,6 +27,6 @@ pub struct AudioUnitCmds {
     pub select: Vec<Handle<AudioSource>>,
 }
 
-fn add_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>) {
+fn load_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>) {
     my_audio.place_structure = assets.load("audio/place_structure.ogg");
 }

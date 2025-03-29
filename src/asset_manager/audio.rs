@@ -110,29 +110,6 @@ fn load_audio_from_folder(folder: &str, assets: &AssetServer) -> Vec<Handle<Audi
     handles
 }
 
-// fn load_audio_from_folder(folder: &str, assets: &AssetServer) -> Vec<Handle<AudioSource>> {
-//     let mut handles: Vec<Handle<AudioSource>> = Vec::new();
-//     if let Ok(entries) = fs::read_dir(folder) {
-//         for entry in entries.filter_map(Result::ok) {
-//             let path = entry.path();
-//             if path.extension().and_then(|s| s.to_str()) == Some("ogg") {
-//                 if let Some(relative_path) = path.to_str() {
-//                     let relative_path = relative_path
-//                         .strip_prefix("../../assets/")
-//                         .unwrap_or(relative_path);
-
-//                     // Load the asset using its relative path.
-//                     let handle: Handle<AudioSource> = assets.load(relative_path);
-//                     handles.push(handle);
-//                 }
-//             }
-//         }
-//     } else {
-//         error!("Could not read directory: {}", folder);
-//     }
-//     handles
-// }
-
 fn unit_audio(trigger: Trigger<UnitAudioEv>, mut cmds: Commands, my_audio: Res<MyAudio>) {
     let unit_type = &trigger.event().unit;
     let unit_cmd = &trigger.event().cmd;

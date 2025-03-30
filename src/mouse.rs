@@ -415,7 +415,6 @@ pub fn update_cursor_img(
         utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if hit.is_some()
-        // && !game_cmds.is_any_selected
         && !game_cmds.drag_select
         && *cursor_state != CursorState::Build
         && !game_cmds.hvr_cmd_interface

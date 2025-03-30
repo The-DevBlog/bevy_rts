@@ -26,7 +26,7 @@ impl Plugin for StructuresPlugin {
                 (
                     mark_structure_built,
                     sync_placeholder,
-                    deselect_if_unit_selected,
+                    deselect_if_any_unit_is_selected,
                     validate_structure_placement,
                     place_structure.after(validate_structure_placement),
                 ),
@@ -198,14 +198,12 @@ fn sync_placeholder(
     }
 }
 
-fn deselect_if_unit_selected(
+fn deselect_if_any_unit_is_selected(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     q_structure_border: Query<Entity, With<SelectedStructure>>,
     q_border: Query<(Entity, &SelectBorder)>,
 ) {
-    println!("Selected structures: {}", q_structure_border.iter().count());
-
     if !game_cmds.is_any_unit_selected {
         return;
     }

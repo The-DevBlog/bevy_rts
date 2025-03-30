@@ -10,6 +10,10 @@ use super::BorderSize;
 #[derive(Component)]
 pub struct SelectedStructure;
 
+// Hack. This is used to prevent a newly placed structure from automatically being selected
+#[derive(Component)]
+pub struct NewlyPlacedStructure;
+
 #[derive(Component)]
 pub struct Structure;
 
@@ -98,6 +102,7 @@ impl StructureType {
         cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
         cmds.entity(placeholder_ent).insert(Structure);
         cmds.entity(placeholder_ent).insert(self.select_border());
+        cmds.entity(placeholder_ent).insert(NewlyPlacedStructure);
         cmds.entity(placeholder_ent)
             .insert(Name::new(self.to_string()));
     }

@@ -6,7 +6,7 @@ use vehicle_depot::VehicleDepotPlugin;
 
 use crate::{
     components::{
-        structures::{SelectedStructure, Structure, StructureType},
+        structures::{NewlyPlacedStructure, SelectedStructure, Structure, StructureType},
         SelectBorder,
     },
     events::SelectStructureEv,
@@ -45,7 +45,14 @@ fn select_structure(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     my_assets: Res<MyAssets>,
+    mut q: Query<Entity, With<NewlyPlacedStructure>>,
 ) {
+    // Hack. This is used to prevent a newly placed structure from automatically being selected
+    if let Ok(ent) = q.get_single_mut() {
+        cmds.entity(ent).remove::<NewlyPlacedStructure>();
+        return;
+    }
+
     dbg.print("Structure selected");
 
     if game_cmds.hvr_cmd_interface {
@@ -54,7 +61,6 @@ fn select_structure(
 
     let structure_ent = trigger.0;
 
-    // Closure that creates a new border for a given unit.
     let border = |ent: Entity| -> (SelectBorder, ImageNode) {
         (
             SelectBorder(ent),

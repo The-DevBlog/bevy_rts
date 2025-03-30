@@ -152,7 +152,7 @@ fn mouse_input(
                 }
             }
 
-            if !game_cmds.is_any_selected || hit_unit.is_some() || hit_structure.is_some() {
+            if !game_cmds.is_any_unit_selected || hit_unit.is_some() || hit_structure.is_some() {
                 cmds.trigger(DeselectAllEv);
 
                 if let Some(hit_ent) = hit_unit {
@@ -424,7 +424,7 @@ pub fn update_cursor_img(
                 *cursor_state = CursorState::Select;
             }
         }
-    } else if game_cmds.is_any_selected && !game_cmds.drag_select {
+    } else if game_cmds.is_any_unit_selected && !game_cmds.drag_select {
         *cursor_state = CursorState::Relocate;
     } else if !game_cmds.drag_select && *cursor_state != CursorState::Build {
         *cursor_state = CursorState::Standard;
@@ -505,5 +505,5 @@ pub fn deselect_all(
 }
 
 fn set_is_any_selected(q_selected: Query<&SelectedUnit>, mut game_cmds: ResMut<GameCommands>) {
-    game_cmds.is_any_selected = q_selected.iter().next().is_some();
+    game_cmds.is_any_unit_selected = q_selected.iter().next().is_some();
 }

@@ -194,7 +194,7 @@ impl Default for CursorState {
 #[derive(Resource, Default, Debug)]
 pub struct GameCommands {
     pub drag_select: bool,
-    pub is_any_selected: bool,
+    pub is_any_unit_selected: bool,
     pub hvr_cmd_interface: bool,
 }
 

@@ -5,6 +5,11 @@ use strum_macros::EnumIter;
 
 use crate::resources::MyAssets;
 
+use super::BorderSize;
+
+#[derive(Component)]
+pub struct SelectedStructure;
+
 #[derive(Component)]
 pub struct Structure;
 
@@ -18,6 +23,16 @@ pub enum StructureType {
 }
 
 impl StructureType {
+    pub fn select_border(&self) -> BorderSize {
+        match self {
+            StructureType::Cannon => BorderSize(Vec2::new(40.0, 40.0)),
+            StructureType::Barracks => BorderSize(Vec2::new(75.0, 75.0)),
+            StructureType::VehicleDepot => BorderSize(Vec2::new(140.0, 100.0)),
+            StructureType::ResearchCenter => BorderSize(Vec2::new(100.0, 100.0)),
+            StructureType::SatelliteDish => BorderSize(Vec2::new(75.0, 90.0)),
+        }
+    }
+
     pub fn build_time(&self) -> i32 {
         match self {
             StructureType::Cannon => 5,
@@ -82,6 +97,9 @@ impl StructureType {
         cmds.entity(placeholder_ent).remove::<Sensor>();
         cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
         cmds.entity(placeholder_ent).insert(Structure);
+        cmds.entity(placeholder_ent).insert(self.select_border());
+        cmds.entity(placeholder_ent)
+            .insert(Name::new(self.to_string()));
     }
 
     pub fn invalid_placement(&self, assets: &MyAssets, scene: &mut SceneRoot) {

@@ -4,7 +4,7 @@ use std::fs;
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
-    components::units::{Selected, UnitType},
+    components::units::{SelectedUnit, UnitType},
     events::{SelectMultipleUnitEv, SelectSingleUnitEv, SetUnitDestinationEv},
 };
 
@@ -142,7 +142,7 @@ fn unit_audio(trigger: Trigger<UnitAudioEv>, mut cmds: Commands, my_audio: Res<M
 fn multiple_select(
     _trigger: Trigger<SelectMultipleUnitEv>,
     mut cmds: Commands,
-    q_units: Query<(Entity, &UnitType), With<Selected>>,
+    q_units: Query<(Entity, &UnitType), With<SelectedUnit>>,
 ) {
     // Use a HashMap to count occurrences of each UnitType.
     let mut counts: HashMap<UnitType, u32> = HashMap::new();
@@ -179,7 +179,7 @@ fn single_select(
 fn relocate(
     _trigger: Trigger<SetUnitDestinationEv>,
     mut cmds: Commands,
-    q_units: Query<(Entity, &UnitType), With<Selected>>,
+    q_units: Query<(Entity, &UnitType), With<SelectedUnit>>,
 ) {
     // Use a HashMap to count occurrences of each UnitType.
     let mut counts: HashMap<UnitType, u32> = HashMap::new();

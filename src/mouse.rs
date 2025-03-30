@@ -5,7 +5,8 @@ use bevy_rts_camera::RtsCamera;
 use core::f32;
 use std::f32::consts::FRAC_PI_2;
 
-use crate::components::units::*;
+use crate::components::structures::{SelectedStructure, Structure};
+use crate::components::{units::*, BorderSize, SelectBorder};
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;
@@ -31,7 +32,7 @@ impl Plugin for MousePlugin {
                     .chain(),
             )
             .add_observer(deselect_all)
-            .add_observer(single_select)
+            .add_observer(single_select_unit)
             .add_observer(handle_drag_select)
             .add_observer(set_start_drag_select_box_coords)
             .add_observer(set_drag_select_box_coords)
@@ -40,8 +41,8 @@ impl Plugin for MousePlugin {
 }
 
 fn sync_select_border_with_unit(
-    mut q_border: Query<(&mut Node, &UnitSelectBorder)>,
-    q_unit_transform: Query<(&Transform, &BorderSize), With<UnitType>>,
+    mut q_border: Query<(&mut Node, &SelectBorder)>,
+    q_unit_transform: Query<(&Transform, &BorderSize), Or<(With<UnitType>, With<Structure>)>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
     window_q: Query<&Window, With<PrimaryWindow>>,
 ) {
@@ -104,7 +105,8 @@ fn mouse_input(
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     mouse_coords: Res<MouseCoords>,
-    q_unit: Query<Entity, With<UnitType>>,
+    q_unit: Query<Entity, With<Unit>>,
+    q_structure: Query<Entity, With<Structure>>,
 ) {
     if game_cmds.hvr_cmd_interface {
         return;
@@ -138,20 +140,29 @@ fn mouse_input(
             let (cam, cam_trans) = q_cam.single();
             let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
-            let mut hit_ent_option = None;
+            let mut hit_unit = None;
+            let mut hit_structure = None;
             if let Some((hit_ent, _)) = hit {
                 if let Ok(_) = q_unit.get(hit_ent) {
-                    hit_ent_option = Some(hit_ent);
+                    hit_unit = Some(hit_ent);
+                }
+
+                if let Ok(_) = q_structure.get(hit_ent) {
+                    hit_structure = Some(hit_ent);
                 }
             }
 
-            if !game_cmds.is_any_selected || hit_ent_option.is_some() {
+            if !game_cmds.is_any_selected || hit_unit.is_some() || hit_structure.is_some() {
                 cmds.trigger(DeselectAllEv);
 
-                if let Some(hit_ent) = hit_ent_option {
+                if let Some(hit_ent) = hit_unit {
                     cmds.trigger(SelectSingleUnitEv(hit_ent));
                 }
-            } else if hit_ent_option.is_none() {
+
+                if let Some(structure_ent) = hit_structure {
+                    cmds.trigger(SelectStructureEv(structure_ent));
+                }
+            } else if hit_structure.is_none() {
                 cmds.trigger(SetUnitDestinationEv);
             }
         } else {
@@ -298,9 +309,9 @@ pub fn handle_drag_select(
     mut cmds: Commands,
     mut unit_q: Query<(Entity, &Transform), With<UnitType>>,
     box_coords: Res<SelectBox>,
-    q_selected: Query<&Selected>,
+    q_selected: Query<&SelectedUnit>,
     my_assets: Res<MyAssets>,
-    q_border: Query<(Entity, &UnitSelectBorder)>,
+    q_border: Query<(Entity, &SelectBorder)>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
         v1.x * v2.z - v1.z * v2.x
@@ -312,9 +323,9 @@ pub fn handle_drag_select(
     let c = box_coords.world.end_2;
     let d = box_coords.world.end_1;
 
-    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode, Name) {
+    let border = |ent: Entity| -> (SelectBorder, ImageNode, Name) {
         (
-            UnitSelectBorder(ent),
+            SelectBorder(ent),
             ImageNode::new(my_assets.imgs.select_border.clone()),
             Name::new("Unit Select Border"),
         )
@@ -349,7 +360,7 @@ pub fn handle_drag_select(
         // Set the selection status
         if in_box_bounds {
             if q_selected.get(friendly_ent).is_err() {
-                cmds.entity(friendly_ent).insert(Selected);
+                cmds.entity(friendly_ent).insert(SelectedUnit);
                 cmds.spawn(border(friendly_ent));
             }
         } else {
@@ -370,7 +381,7 @@ pub fn handle_drag_select(
                 cmds.entity(border_entity).despawn_recursive();
             }
 
-            cmds.entity(friendly_ent).remove::<Selected>();
+            cmds.entity(friendly_ent).remove::<SelectedUnit>();
         }
     }
 }
@@ -450,7 +461,7 @@ pub fn update_cursor_img(
     });
 }
 
-pub fn single_select(
+pub fn single_select_unit(
     trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
@@ -463,9 +474,9 @@ pub fn single_select(
     let unit_ent = trigger.0;
 
     // Closure that creates a new border for a given unit.
-    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
+    let border = |ent: Entity| -> (SelectBorder, ImageNode) {
         (
-            UnitSelectBorder(ent),
+            SelectBorder(ent),
             ImageNode {
                 image: my_assets.imgs.select_border.clone(),
                 ..default()
@@ -473,18 +484,19 @@ pub fn single_select(
         )
     };
 
-    cmds.entity(unit_ent).insert(Selected);
+    cmds.entity(unit_ent).insert(SelectedUnit);
     cmds.spawn(border(unit_ent));
 }
 
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
-    mut select_q: Query<Entity, With<Selected>>,
-    mut q_border: Query<Entity, With<UnitSelectBorder>>,
+    mut select_q: Query<Entity, Or<(With<SelectedUnit>, With<SelectedStructure>)>>,
+    mut q_border: Query<Entity, With<SelectBorder>>,
 ) {
     for entity in select_q.iter_mut() {
-        cmds.entity(entity).remove::<Selected>();
+        cmds.entity(entity).remove::<SelectedUnit>();
+        cmds.entity(entity).remove::<SelectedStructure>();
     }
 
     for border_ent in q_border.iter_mut() {
@@ -492,6 +504,6 @@ pub fn deselect_all(
     }
 }
 
-fn set_is_any_selected(q_selected: Query<&Selected>, mut game_cmds: ResMut<GameCommands>) {
+fn set_is_any_selected(q_selected: Query<&SelectedUnit>, mut game_cmds: ResMut<GameCommands>) {
     game_cmds.is_any_selected = q_selected.iter().next().is_some();
 }

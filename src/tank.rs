@@ -153,7 +153,7 @@ pub fn spawn_tanks(
 pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
-    mut q_unit: Query<Entity, With<Selected>>,
+    mut q_unit: Query<Entity, With<SelectedUnit>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     mut cmds: Commands,

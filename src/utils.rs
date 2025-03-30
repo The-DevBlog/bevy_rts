@@ -11,13 +11,8 @@ pub fn cast_ray(
         return None;
     };
 
-    let hit = rapier.cast_ray(
-        ray.origin,
-        ray.direction.into(),
-        f32::MAX,
-        true,
-        QueryFilter::only_dynamic(),
-    );
+    let filter = QueryFilter::default().exclude_sensors();
+    let hit = rapier.cast_ray(ray.origin, ray.direction.into(), f32::MAX, true, filter);
 
     return hit;
 }

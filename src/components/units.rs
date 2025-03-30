@@ -5,17 +5,13 @@ use strum_macros::EnumIter;
 
 use crate::{resources::MyAssets, SPEED_RIFELMAN, SPEED_TANK_GEN_1, SPEED_TANK_GEN_2};
 
-#[derive(Component, Clone)]
-pub struct UnitSelectBorder(pub Entity);
-
-#[derive(Component)]
-pub struct BorderSize(pub Vec2);
+use super::BorderSize;
 
 #[derive(Component)]
 pub struct Speed(pub f32);
 
 #[derive(Component)]
-pub struct Selected;
+pub struct SelectedUnit;
 
 #[derive(Component)]
 pub struct SelectionBox;

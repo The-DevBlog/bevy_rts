@@ -393,7 +393,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    q_unit: Query<&UnitType>,
+    q_obj: Query<Entity, Or<(With<Unit>, With<Structure>)>>,
     mut q_cursor: Query<&mut CursorIcon>,
     mut q_window: Query<&mut Window, With<PrimaryWindow>>,
 ) {
@@ -411,7 +411,8 @@ pub fn update_cursor_img(
 
     let (cam, cam_trans) = q_cam.single();
 
-    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+    let hit: Option<(Entity, f32)> =
+        utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if hit.is_some()
         // && !game_cmds.is_any_selected
@@ -420,7 +421,7 @@ pub fn update_cursor_img(
         && !game_cmds.hvr_cmd_interface
     {
         if let Some((hit_ent, _)) = hit {
-            if let Ok(_) = q_unit.get(hit_ent) {
+            if let Ok(_) = q_obj.get(hit_ent) {
                 *cursor_state = CursorState::Select;
             }
         }

@@ -10,6 +10,7 @@ use crate::bank::*;
 use crate::components::structures::*;
 use crate::components::*;
 use crate::events::*;
+use crate::resources::structures::StructuresBuilt;
 use crate::resources::*;
 use crate::utils;
 

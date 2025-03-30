@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::components::structures::*;
+use crate::resources::structures::StructuresBuilt;
 use crate::resources::*;
 use crate::structures::*;
 

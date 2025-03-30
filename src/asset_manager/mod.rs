@@ -12,11 +12,11 @@ pub struct AssetManagerPlugin;
 impl Plugin for AssetManagerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(AudioPlugin)
-            .add_systems(PreStartup, add_assets);
+            .add_systems(PreStartup, load_assets);
     }
 }
 
-fn add_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
+fn load_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     // textures
     my_assets.textures.grass_clr =
         assets.load_with_settings("textures/grass/color.png", |s: &mut _| {

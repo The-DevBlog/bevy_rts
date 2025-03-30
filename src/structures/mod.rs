@@ -8,6 +8,7 @@ use vehicle_depot::VehicleDepotPlugin;
 use crate::asset_manager::audio::*;
 use crate::bank::*;
 use crate::components::structures::*;
+use crate::components::units::SelectedUnit;
 use crate::components::*;
 use crate::events::*;
 use crate::resources::*;
@@ -25,6 +26,7 @@ impl Plugin for StructuresPlugin {
                 (
                     mark_structure_built,
                     sync_placeholder,
+                    deselect_if_unit_selected,
                     validate_structure_placement,
                     place_structure.after(validate_structure_placement),
                 ),
@@ -193,5 +195,29 @@ fn sync_placeholder(
     if let Some(coords) = coords {
         transform.translation = coords;
         transform.translation.y = size.0.y / 2.0;
+    }
+}
+
+fn deselect_if_unit_selected(
+    mut cmds: Commands,
+    game_cmds: Res<GameCommands>,
+    q_structure_border: Query<Entity, With<SelectedStructure>>,
+    q_border: Query<(Entity, &SelectBorder)>,
+) {
+    println!("Selected structures: {}", q_structure_border.iter().count());
+
+    if !game_cmds.is_any_unit_selected {
+        return;
+    }
+
+    for structure_ent in q_structure_border.iter() {
+        cmds.entity(structure_ent).remove::<SelectedStructure>();
+
+        for (border_ent, border_comp) in q_border.iter() {
+            if border_comp.0 == structure_ent {
+                cmds.entity(border_ent).despawn_recursive();
+                return;
+            }
+        }
     }
 }

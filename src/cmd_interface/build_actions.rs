@@ -7,6 +7,7 @@ use bevy_rapier3d::prelude::*;
 use super::components::*;
 use super::events::*;
 use super::resources::InfoContainerData;
+use crate::asset_manager::audio::MyAudio;
 use crate::bank::AdjustFundsEv;
 use crate::bank::Bank;
 use crate::components::structures::*;
@@ -175,6 +176,7 @@ fn place_structure(
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_state: ResMut<CursorState>,
     my_assets: Res<MyAssets>,
+    my_audio: Res<MyAudio>,
     game_cmds: Res<GameCommands>,
 ) {
     if *cursor_state != CursorState::Build || game_cmds.hvr_cmd_interface {
@@ -195,7 +197,7 @@ fn place_structure(
         cmds.trigger(AdjustFundsEv(-structure.cost()));
 
         // place structure audio
-        let audio = AudioPlayer::new(my_assets.audio.place_structure.clone());
+        let audio = AudioPlayer::new(my_audio.place_structure.clone());
         cmds.spawn(audio);
 
         dbg.print("Build Structure");

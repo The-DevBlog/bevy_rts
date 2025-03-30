@@ -21,7 +21,6 @@ impl Plugin for ResourcesPlugin {
             .init_resource::<MyAssets>()
             .init_resource::<CursorState>()
             .init_resource::<UnlockedUnits>()
-            .init_resource::<StructuresBuilt>()
             .insert_resource(DbgOptions {
                 print_statements: debug_flag,
             })
@@ -196,15 +195,6 @@ pub struct GameCommands {
     pub drag_select: bool,
     pub is_any_unit_selected: bool,
     pub hvr_cmd_interface: bool,
-}
-
-#[derive(Resource, Default, Debug)]
-pub struct StructuresBuilt {
-    pub barracks: u32,
-    pub cannon: u32,
-    pub vehicle_depot: u32,
-    pub research_center: u32,
-    pub satellite_dish: u32,
 }
 
 #[derive(Resource, Default, Debug)]

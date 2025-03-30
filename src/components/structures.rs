@@ -7,6 +7,23 @@ use crate::resources::MyAssets;
 
 use super::BorderSize;
 
+pub struct ResourcesPlugin;
+
+impl Plugin for ResourcesPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<StructuresBuilt>();
+    }
+}
+
+#[derive(Resource, Default, Debug)]
+pub struct StructuresBuilt {
+    pub barracks: u32,
+    pub cannon: u32,
+    pub vehicle_depot: u32,
+    pub research_center: u32,
+    pub satellite_dish: u32,
+}
+
 #[derive(Component)]
 pub struct SelectedStructure;
 
@@ -16,6 +33,9 @@ pub struct NewlyPlacedStructure;
 
 #[derive(Component)]
 pub struct Structure;
+
+#[derive(Component)]
+pub struct PrimaryStructure;
 
 #[derive(Component, Clone, Copy, EnumIter)]
 pub enum StructureType {
@@ -96,15 +116,16 @@ impl StructureType {
         }
 
         cmds.entity(placeholder_ent)
-            .remove::<StructurePlaceholder>();
-        cmds.entity(placeholder_ent).remove::<ActiveEvents>();
-        cmds.entity(placeholder_ent).remove::<Sensor>();
-        cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
-        cmds.entity(placeholder_ent).insert(Structure);
-        cmds.entity(placeholder_ent).insert(self.select_border());
-        cmds.entity(placeholder_ent).insert(NewlyPlacedStructure);
-        cmds.entity(placeholder_ent)
-            .insert(Name::new(self.to_string()));
+            .remove::<ActiveEvents>()
+            .remove::<Sensor>()
+            .remove::<StructurePlaceholder>()
+            .insert((
+                pf_comps::RtsObj,
+                Structure,
+                self.select_border(),
+                NewlyPlacedStructure,
+                Name::new(self.to_string()),
+            ));
     }
 
     pub fn invalid_placement(&self, assets: &MyAssets, scene: &mut SceneRoot) {

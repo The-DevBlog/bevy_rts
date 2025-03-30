@@ -8,7 +8,6 @@ use vehicle_depot::VehicleDepotPlugin;
 use crate::asset_manager::audio::*;
 use crate::bank::*;
 use crate::components::structures::*;
-use crate::components::units::SelectedUnit;
 use crate::components::*;
 use crate::events::*;
 use crate::resources::*;

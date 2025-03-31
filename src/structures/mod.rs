@@ -31,8 +31,9 @@ impl Plugin for StructuresPlugin {
             .add_systems(
                 Update,
                 (
+                    mark_primary_structure,
                     primary_structure_txt,
-                    mark_structure_built,
+                    count_structures,
                     sync_placeholder,
                     deselect_if_any_unit_is_selected,
                     validate_structure_placement,
@@ -45,7 +46,7 @@ impl Plugin for StructuresPlugin {
 }
 
 // modifies the 'StructuresBuilt' resource, whenever a structure is placed or removed (destroyed)
-pub fn mark_structure_built(
+pub fn count_structures(
     mut structures_built: ResMut<StructuresBuilt>,
     q_structure_added: Query<&StructureType, Added<Structure>>,
 ) {
@@ -287,5 +288,27 @@ fn primary_structure_txt(
         );
 
         cmds.spawn(txt_ctr);
+    }
+}
+
+fn mark_primary_structure(
+    mut cmds: Commands,
+    mut structures_built: ResMut<StructuresBuilt>,
+    q_structures: Query<(Entity, &StructureType), Added<Structure>>,
+) {
+    for (structure_ent, structure_type) in q_structures.iter() {
+        match structure_type {
+            StructureType::Barracks => {
+                if structures_built.barracks == 1 {
+                    cmds.entity(structure_ent).insert(PrimaryStructure);
+                }
+            }
+            StructureType::VehicleDepot => {
+                if structures_built.vehicle_depot == 1 {
+                    cmds.entity(structure_ent).insert(PrimaryStructure);
+                }
+            }
+            (_) => (),
+        }
     }
 }

@@ -9,7 +9,7 @@ pub struct UnitsPlugin;
 
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, mark_available_units.after(mark_structure_built));
+        app.add_systems(Update, mark_available_units.after(count_structures));
     }
 }
 

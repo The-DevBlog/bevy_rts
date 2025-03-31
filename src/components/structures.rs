@@ -106,7 +106,6 @@ impl StructureType {
                 self.select_border(),
                 NewlyPlacedStructure,
                 Name::new(self.to_string()),
-                PrimaryStructure,
             ));
     }
 

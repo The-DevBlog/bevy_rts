@@ -5,7 +5,7 @@ use strum_macros::EnumIter;
 
 use crate::{resources::MyAssets, SPEED_RIFELMAN, SPEED_TANK_GEN_1, SPEED_TANK_GEN_2};
 
-use super::BorderSize;
+use super::{structures::StructureType, BorderSize};
 
 #[derive(Component)]
 pub struct Speed(pub f32);
@@ -32,6 +32,14 @@ pub enum UnitType {
 }
 
 impl UnitType {
+    pub fn source(&self) -> StructureType {
+        match self {
+            UnitType::Rifleman => StructureType::Barracks,
+            UnitType::TankGen1 => StructureType::VehicleDepot,
+            UnitType::TankGen2 => StructureType::VehicleDepot,
+        }
+    }
+
     pub fn hp(&self) -> i32 {
         match self {
             UnitType::Rifleman => 20,

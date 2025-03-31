@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use events::{BuildSoldier, BuildVehicle};
 
 use crate::cmd_interface::events::BuildUnitEv;
 use crate::components::structures::*;
@@ -6,6 +7,8 @@ use crate::resources::structures::StructuresBuilt;
 use crate::resources::units::UnlockedUnits;
 use crate::resources::DbgOptions;
 use crate::structures::*;
+
+pub mod events;
 
 pub struct UnitsPlugin;
 
@@ -34,8 +37,14 @@ fn mark_available_units(
 }
 
 // this consumes the BuildUnitEv, and determines which units to build (from vehicle depot or barracks)
-fn handle_build_unit(trigger: Trigger<BuildUnitEv>, dbg: Res<DbgOptions>) {
+fn handle_build_unit(trigger: Trigger<BuildUnitEv>, mut cmds: Commands, dbg: Res<DbgOptions>) {
     let unit_type = trigger.0;
 
     dbg.print(&format!("Building unit: {}", unit_type.to_string()));
+
+    match unit_type.source() {
+        StructureType::Barracks => cmds.trigger(BuildSoldier(unit_type)),
+        StructureType::VehicleDepot => cmds.trigger(BuildVehicle(unit_type)),
+        _ => (),
+    }
 }

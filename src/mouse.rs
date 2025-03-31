@@ -491,12 +491,11 @@ pub fn single_select_unit(
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
-    mut select_q: Query<Entity, Or<(With<SelectedUnit>, With<SelectedStructure>)>>,
+    mut select_q: Query<Entity, With<SelectedUnit>>,
     mut q_border: Query<Entity, With<SelectBorder>>,
 ) {
     for entity in select_q.iter_mut() {
         cmds.entity(entity).remove::<SelectedUnit>();
-        cmds.entity(entity).remove::<SelectedStructure>();
     }
 
     for border_ent in q_border.iter_mut() {

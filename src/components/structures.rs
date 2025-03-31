@@ -99,9 +99,7 @@ impl StructureType {
         }
 
         cmds.entity(placeholder_ent)
-            .remove::<ActiveEvents>()
-            .remove::<Sensor>()
-            .remove::<StructurePlaceholder>()
+            .remove::<(ActiveEvents, Sensor, StructurePlaceholder)>()
             .insert((
                 pf_comps::RtsObj,
                 Structure,

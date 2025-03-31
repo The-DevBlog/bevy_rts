@@ -1,6 +1,9 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use bevy_mod_outline::AsyncSceneInheritOutline;
+use bevy_mod_outline::OutlineMode;
+use bevy_mod_outline::OutlineVolume;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 use vehicle_depot::VehicleDepotPlugin;
@@ -8,7 +11,6 @@ use vehicle_depot::VehicleDepotPlugin;
 use crate::asset_manager::audio::*;
 use crate::bank::*;
 use crate::components::structures::*;
-use crate::components::*;
 use crate::events::*;
 use crate::resources::structures::StructuresBuilt;
 use crate::resources::*;
@@ -31,7 +33,8 @@ impl Plugin for StructuresPlugin {
                     place_structure.after(validate_structure_placement),
                 ),
             )
-            .add_observer(select_structure);
+            .add_observer(select_structure)
+            .add_observer(deselect);
     }
 }
 
@@ -56,7 +59,6 @@ fn select_structure(
     dbg: Res<DbgOptions>,
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
-    my_assets: Res<MyAssets>,
     mut q: Query<Entity, With<NewlyPlacedStructure>>,
 ) {
     // Hack. This is used to prevent a newly placed structure from automatically being selected
@@ -73,18 +75,18 @@ fn select_structure(
 
     let structure_ent = trigger.0;
 
-    let border = |ent: Entity| -> (SelectBorder, ImageNode) {
-        (
-            SelectBorder(ent),
-            ImageNode {
-                image: my_assets.imgs.select_border.clone(),
-                ..default()
-            },
-        )
-    };
+    let outline = (
+        OutlineVolume {
+            visible: true,
+            colour: Color::WHITE,
+            width: 3.0,
+        },
+        OutlineMode::FloodFlat,
+        AsyncSceneInheritOutline::default(),
+    );
 
-    cmds.entity(structure_ent).insert(SelectedStructure);
-    cmds.spawn(border(structure_ent));
+    cmds.entity(structure_ent)
+        .insert((SelectedStructure, outline));
 }
 
 fn place_structure(
@@ -201,21 +203,33 @@ fn sync_placeholder(
 fn deselect_if_any_unit_is_selected(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
-    q_structure_border: Query<Entity, With<SelectedStructure>>,
-    q_border: Query<(Entity, &SelectBorder)>,
+    q_selected_structure: Query<Entity, With<SelectedStructure>>,
 ) {
     if !game_cmds.is_any_unit_selected {
         return;
     }
 
-    for structure_ent in q_structure_border.iter() {
-        cmds.entity(structure_ent).remove::<SelectedStructure>();
+    for structure_ent in q_selected_structure.iter() {
+        cmds.entity(structure_ent).remove::<(
+            SelectedStructure,
+            OutlineVolume,
+            OutlineMode,
+            AsyncSceneInheritOutline,
+        )>();
+    }
+}
 
-        for (border_ent, border_comp) in q_border.iter() {
-            if border_comp.0 == structure_ent {
-                cmds.entity(border_ent).despawn_recursive();
-                return;
-            }
-        }
+pub fn deselect(
+    _trigger: Trigger<DeselectAllEv>,
+    mut cmds: Commands,
+    mut q_selected_structure: Query<Entity, With<SelectedStructure>>,
+) {
+    for structure_ent in q_selected_structure.iter_mut() {
+        cmds.entity(structure_ent).remove::<(
+            SelectedStructure,
+            OutlineVolume,
+            OutlineMode,
+            AsyncSceneInheritOutline,
+        )>();
     }
 }

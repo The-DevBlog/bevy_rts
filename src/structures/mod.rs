@@ -209,6 +209,7 @@ fn deselect_if_any_unit_is_selected(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     q_selected_structure: Query<Entity, With<SelectedStructure>>,
+    mut q_primary_structure_txt: Query<Entity, With<PrimaryStructureTxt>>,
 ) {
     if !game_cmds.is_any_unit_selected {
         return;
@@ -222,12 +223,17 @@ fn deselect_if_any_unit_is_selected(
             AsyncSceneInheritOutline,
         )>();
     }
+
+    for txt_ent in q_primary_structure_txt.iter_mut() {
+        cmds.entity(txt_ent).despawn_recursive();
+    }
 }
 
 fn deselect(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
     mut q_selected_structure: Query<Entity, With<SelectedStructure>>,
+    mut q_primary_structure_txt: Query<Entity, With<PrimaryStructureTxt>>,
 ) {
     for structure_ent in q_selected_structure.iter_mut() {
         cmds.entity(structure_ent).remove::<(
@@ -236,6 +242,10 @@ fn deselect(
             OutlineMode,
             AsyncSceneInheritOutline,
         )>();
+    }
+
+    for txt_ent in q_primary_structure_txt.iter_mut() {
+        cmds.entity(txt_ent).despawn_recursive();
     }
 }
 
@@ -252,7 +262,12 @@ fn primary_structure_txt(
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
     window_q: Query<&Window, With<PrimaryWindow>>,
 ) {
+    if q_selected_structure.is_empty() {
+        return;
+    }
+
     if let Ok(mut style) = q_primary_structure_txt.get_single_mut() {
+        println!("updating txt container location");
         let (cam, cam_trans) = cam_q.single();
         let window = window_q.single();
 
@@ -276,8 +291,9 @@ fn primary_structure_txt(
         let scale = (window_height / 2.0) / (distance * (FRAC_PI_2 / 2.0).tan());
 
         // Compute the screen-space width and height of the unit.
-        let screen_width = obj_size.0.x * scale;
-        let screen_height = obj_size.0.y * scale;
+        let min_size = 20.0; // pixels, adjust as needed
+        let screen_width = (obj_size.0.x * scale).max(min_size);
+        let screen_height = (obj_size.0.y * scale).max(min_size);
 
         // Position the border so that its center aligns with the unit's screen center.
         style.left = Val::Px(center_screen.x - screen_width / 2.0);
@@ -290,6 +306,7 @@ fn primary_structure_txt(
             PrimaryStructureTxt,
             Text::new("Active"),
             Node::default(),
+            ZIndex(10),
             Name::new("Primary Structure Container"),
         );
 

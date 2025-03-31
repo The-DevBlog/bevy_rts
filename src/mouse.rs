@@ -73,8 +73,9 @@ fn sync_select_border_with_unit(
         let scale = (window_height / 2.0) / (distance * (fov_y / 2.0).tan());
 
         // Compute the screen-space width and height of the unit.
-        let screen_width = border_size.0.x * scale;
-        let screen_height = border_size.0.y * scale;
+        let min_size = 13.0; // pixels, adjust as needed
+        let screen_width = (border_size.0.x * scale).max(min_size);
+        let screen_height = (border_size.0.y * scale).max(min_size);
 
         // Position the border so that its center aligns with the unit's screen center.
         style.left = Val::Px(center_screen.x - screen_width / 2.0);

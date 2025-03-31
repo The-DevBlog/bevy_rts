@@ -219,7 +219,7 @@ fn deselect_if_any_unit_is_selected(
     }
 }
 
-pub fn deselect(
+fn deselect(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
     mut q_selected_structure: Query<Entity, With<SelectedStructure>>,
@@ -232,4 +232,11 @@ pub fn deselect(
             AsyncSceneInheritOutline,
         )>();
     }
+}
+
+fn primary_structure_txt(
+    mut cmds: Commands,
+    q_selected_structure: Query<Entity, With<SelectedStructure>>,
+) {
+    let ctr = (Text::new("Active"), Name::new("Primary Structure Txt"));
 }

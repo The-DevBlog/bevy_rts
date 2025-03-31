@@ -42,7 +42,7 @@ impl Plugin for MousePlugin {
 
 fn sync_select_border_with_unit(
     mut q_border: Query<(&mut Node, &SelectBorder)>,
-    q_unit_transform: Query<(&Transform, &BorderSize), Or<(With<UnitType>, With<Structure>)>>,
+    q_unit: Query<(&Transform, &BorderSize), With<Unit>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
     window_q: Query<&Window, With<PrimaryWindow>>,
 ) {
@@ -54,7 +54,7 @@ fn sync_select_border_with_unit(
     let fov_y = FRAC_PI_2;
 
     for (mut style, border) in q_border.iter_mut() {
-        let Ok((unit_transform, border_size)) = q_unit_transform.get(border.0) else {
+        let Ok((unit_transform, border_size)) = q_unit.get(border.0) else {
             continue;
         };
 

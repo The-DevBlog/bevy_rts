@@ -5,10 +5,22 @@ use strum_macros::EnumIter;
 
 use crate::resources::MyAssets;
 
+use super::BorderSize;
+
+#[derive(Component)]
+pub struct SelectedStructure;
+
+// Hack. This is used to prevent a newly placed structure from automatically being selected
+#[derive(Component)]
+pub struct NewlyPlacedStructure;
+
 #[derive(Component)]
 pub struct Structure;
 
-#[derive(Component, Clone, Copy, EnumIter)]
+#[derive(Component)]
+pub struct PrimaryStructure;
+
+#[derive(Component, Clone, Copy, EnumIter, PartialEq)]
 pub enum StructureType {
     Cannon,
     Barracks,
@@ -18,6 +30,16 @@ pub enum StructureType {
 }
 
 impl StructureType {
+    pub fn select_border(&self) -> BorderSize {
+        match self {
+            StructureType::Cannon => BorderSize(Vec2::new(40.0, 40.0)),
+            StructureType::Barracks => BorderSize(Vec2::new(75.0, 75.0)),
+            StructureType::VehicleDepot => BorderSize(Vec2::new(140.0, 100.0)),
+            StructureType::ResearchCenter => BorderSize(Vec2::new(100.0, 100.0)),
+            StructureType::SatelliteDish => BorderSize(Vec2::new(75.0, 90.0)),
+        }
+    }
+
     pub fn build_time(&self) -> i32 {
         match self {
             StructureType::Cannon => 5,
@@ -58,6 +80,16 @@ impl StructureType {
         }
     }
 
+    fn model(&self, my_assets: &MyAssets) -> Handle<Scene> {
+        match self {
+            StructureType::Cannon => my_assets.models.cannon.clone(),
+            StructureType::Barracks => my_assets.models.barracks.clone(),
+            StructureType::VehicleDepot => my_assets.models.vehicle_depot.clone(),
+            StructureType::ResearchCenter => my_assets.models.research_center.clone(),
+            StructureType::SatelliteDish => my_assets.models.satellite_dish.clone(),
+        }
+    }
+
     pub fn place(
         &self,
         placeholder_ent: Entity,
@@ -68,20 +100,17 @@ impl StructureType {
     ) {
         *rb = RigidBody::Fixed;
 
-        match self {
-            StructureType::Cannon => scene.0 = my_assets.models.cannon.clone(),
-            StructureType::Barracks => scene.0 = my_assets.models.barracks.clone(),
-            StructureType::VehicleDepot => scene.0 = my_assets.models.vehicle_depot.clone(),
-            StructureType::ResearchCenter => scene.0 = my_assets.models.research_center.clone(),
-            StructureType::SatelliteDish => scene.0 = my_assets.models.satellite_dish.clone(),
-        }
+        scene.0 = self.model(my_assets);
 
         cmds.entity(placeholder_ent)
-            .remove::<StructurePlaceholder>();
-        cmds.entity(placeholder_ent).remove::<ActiveEvents>();
-        cmds.entity(placeholder_ent).remove::<Sensor>();
-        cmds.entity(placeholder_ent).insert(pf_comps::RtsObj);
-        cmds.entity(placeholder_ent).insert(Structure);
+            .remove::<(ActiveEvents, Sensor, StructurePlaceholder)>()
+            .insert((
+                pf_comps::RtsObj,
+                Structure,
+                self.select_border(),
+                NewlyPlacedStructure,
+                Name::new(self.to_string()),
+            ));
     }
 
     pub fn invalid_placement(&self, assets: &MyAssets, scene: &mut SceneRoot) {

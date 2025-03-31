@@ -5,10 +5,11 @@ use bevy_rts_camera::RtsCamera;
 use core::f32;
 use std::f32::consts::FRAC_PI_2;
 
-use crate::components::units::*;
+use crate::components::structures::{SelectedStructure, Structure};
+use crate::components::{units::*, BorderSize, UnitSelectBorder};
 use crate::events::*;
 use crate::resources::*;
-use crate::utils;
+use crate::utils::{self, billboard_sync};
 use crate::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
@@ -31,7 +32,7 @@ impl Plugin for MousePlugin {
                     .chain(),
             )
             .add_observer(deselect_all)
-            .add_observer(single_select)
+            .add_observer(single_select_unit)
             .add_observer(handle_drag_select)
             .add_observer(set_start_drag_select_box_coords)
             .add_observer(set_drag_select_box_coords)
@@ -41,7 +42,7 @@ impl Plugin for MousePlugin {
 
 fn sync_select_border_with_unit(
     mut q_border: Query<(&mut Node, &UnitSelectBorder)>,
-    q_unit_transform: Query<(&Transform, &BorderSize), With<UnitType>>,
+    q_unit: Query<(&Transform, &BorderSize), With<Unit>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
     window_q: Query<&Window, With<PrimaryWindow>>,
 ) {
@@ -53,33 +54,12 @@ fn sync_select_border_with_unit(
     let fov_y = FRAC_PI_2;
 
     for (mut style, border) in q_border.iter_mut() {
-        let Ok((unit_transform, border_size)) = q_unit_transform.get(border.0) else {
+        let Ok((trans, border_size)) = q_unit.get(border.0) else {
             continue;
         };
 
-        // Get the unit's center in screen space.
-        let center_screen = match cam.world_to_viewport(cam_trans, unit_transform.translation) {
-            Ok(pos) => pos,
-            Err(_) => continue,
-        };
-
-        // Compute the distance from the camera to the unit.
-        let distance = cam_trans.translation().distance(unit_transform.translation);
-
-        // Use the formula:
-        // scale = (window_height/2) / (distance * tan(fov_y/2))
-        let window_height = window.physical_height() as f32;
-        let scale = (window_height / 2.0) / (distance * (fov_y / 2.0).tan());
-
-        // Compute the screen-space width and height of the unit.
-        let screen_width = border_size.0.x * scale;
-        let screen_height = border_size.0.y * scale;
-
-        // Position the border so that its center aligns with the unit's screen center.
-        style.left = Val::Px(center_screen.x - screen_width / 2.0);
-        style.top = Val::Px(center_screen.y - screen_height / 2.0);
-        style.width = Val::Px(screen_width);
-        style.height = Val::Px(screen_height);
+        let size = border_size.0;
+        billboard_sync(cam, cam_trans, window, trans, size, &mut style, 13.0);
     }
 }
 
@@ -104,7 +84,8 @@ fn mouse_input(
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     mouse_coords: Res<MouseCoords>,
-    q_unit: Query<Entity, With<UnitType>>,
+    q_unit: Query<Entity, With<Unit>>,
+    q_structure: Query<Entity, With<Structure>>,
 ) {
     if game_cmds.hvr_cmd_interface {
         return;
@@ -138,20 +119,29 @@ fn mouse_input(
             let (cam, cam_trans) = q_cam.single();
             let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
-            let mut hit_ent_option = None;
+            let mut hit_unit = None;
+            let mut hit_structure = None;
             if let Some((hit_ent, _)) = hit {
                 if let Ok(_) = q_unit.get(hit_ent) {
-                    hit_ent_option = Some(hit_ent);
+                    hit_unit = Some(hit_ent);
+                }
+
+                if let Ok(_) = q_structure.get(hit_ent) {
+                    hit_structure = Some(hit_ent);
                 }
             }
 
-            if !game_cmds.is_any_selected || hit_ent_option.is_some() {
+            if !game_cmds.is_any_unit_selected || hit_unit.is_some() || hit_structure.is_some() {
                 cmds.trigger(DeselectAllEv);
 
-                if let Some(hit_ent) = hit_ent_option {
+                if let Some(hit_ent) = hit_unit {
                     cmds.trigger(SelectSingleUnitEv(hit_ent));
                 }
-            } else if hit_ent_option.is_none() {
+
+                if let Some(structure_ent) = hit_structure {
+                    cmds.trigger(SelectStructureEv(structure_ent));
+                }
+            } else if hit_structure.is_none() {
                 cmds.trigger(SetUnitDestinationEv);
             }
         } else {
@@ -298,7 +288,7 @@ pub fn handle_drag_select(
     mut cmds: Commands,
     mut unit_q: Query<(Entity, &Transform), With<UnitType>>,
     box_coords: Res<SelectBox>,
-    q_selected: Query<&Selected>,
+    q_selected: Query<&SelectedUnit>,
     my_assets: Res<MyAssets>,
     q_border: Query<(Entity, &UnitSelectBorder)>,
 ) {
@@ -349,7 +339,7 @@ pub fn handle_drag_select(
         // Set the selection status
         if in_box_bounds {
             if q_selected.get(friendly_ent).is_err() {
-                cmds.entity(friendly_ent).insert(Selected);
+                cmds.entity(friendly_ent).insert(SelectedUnit);
                 cmds.spawn(border(friendly_ent));
             }
         } else {
@@ -370,7 +360,7 @@ pub fn handle_drag_select(
                 cmds.entity(border_entity).despawn_recursive();
             }
 
-            cmds.entity(friendly_ent).remove::<Selected>();
+            cmds.entity(friendly_ent).remove::<SelectedUnit>();
         }
     }
 }
@@ -382,7 +372,7 @@ pub fn update_cursor_img(
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    q_unit: Query<&UnitType>,
+    q_obj: Query<Entity, Or<(With<Unit>, With<Structure>)>>,
     mut q_cursor: Query<&mut CursorIcon>,
     mut q_window: Query<&mut Window, With<PrimaryWindow>>,
 ) {
@@ -400,20 +390,20 @@ pub fn update_cursor_img(
 
     let (cam, cam_trans) = q_cam.single();
 
-    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+    let hit: Option<(Entity, f32)> =
+        utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if hit.is_some()
-        // && !game_cmds.is_any_selected
         && !game_cmds.drag_select
         && *cursor_state != CursorState::Build
         && !game_cmds.hvr_cmd_interface
     {
         if let Some((hit_ent, _)) = hit {
-            if let Ok(_) = q_unit.get(hit_ent) {
+            if let Ok(_) = q_obj.get(hit_ent) {
                 *cursor_state = CursorState::Select;
             }
         }
-    } else if game_cmds.is_any_selected && !game_cmds.drag_select {
+    } else if game_cmds.is_any_unit_selected && !game_cmds.drag_select {
         *cursor_state = CursorState::Relocate;
     } else if !game_cmds.drag_select && *cursor_state != CursorState::Build {
         *cursor_state = CursorState::Standard;
@@ -450,7 +440,7 @@ pub fn update_cursor_img(
     });
 }
 
-pub fn single_select(
+pub fn single_select_unit(
     trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
@@ -473,18 +463,18 @@ pub fn single_select(
         )
     };
 
-    cmds.entity(unit_ent).insert(Selected);
+    cmds.entity(unit_ent).insert(SelectedUnit);
     cmds.spawn(border(unit_ent));
 }
 
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
-    mut select_q: Query<Entity, With<Selected>>,
+    mut select_q: Query<Entity, With<SelectedUnit>>,
     mut q_border: Query<Entity, With<UnitSelectBorder>>,
 ) {
     for entity in select_q.iter_mut() {
-        cmds.entity(entity).remove::<Selected>();
+        cmds.entity(entity).remove::<SelectedUnit>();
     }
 
     for border_ent in q_border.iter_mut() {
@@ -492,6 +482,6 @@ pub fn deselect_all(
     }
 }
 
-fn set_is_any_selected(q_selected: Query<&Selected>, mut game_cmds: ResMut<GameCommands>) {
-    game_cmds.is_any_selected = q_selected.iter().next().is_some();
+fn set_is_any_selected(q_selected: Query<&SelectedUnit>, mut game_cmds: ResMut<GameCommands>) {
+    game_cmds.is_any_unit_selected = q_selected.iter().next().is_some();
 }

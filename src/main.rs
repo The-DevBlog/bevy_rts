@@ -1,5 +1,6 @@
 use bevy::{color::palettes::css::*, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_mod_outline::OutlinePlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding;
 
@@ -50,6 +51,7 @@ fn main() {
             BankPlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
             // RapierDebugRenderPlugin::default(),
+            OutlinePlugin,
             WorldInspectorPlugin::new(),
             bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
             ResourcesPlugin,

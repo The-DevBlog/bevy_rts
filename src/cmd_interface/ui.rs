@@ -7,7 +7,7 @@ use strum::IntoEnumIterator;
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::components::structures::StructureType;
 use crate::components::units::UnitType;
-use crate::resources::UnlockedUnits;
+use crate::resources::units::UnlockedUnits;
 use crate::{bank::Bank, resources::MyAssets};
 
 pub struct UiPlugin;

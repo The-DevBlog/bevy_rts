@@ -13,7 +13,7 @@ use events::SetUnitDestinationEv;
 
 const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
 const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
-const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
+pub const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
 
 pub struct TankPlugin;
 
@@ -153,7 +153,7 @@ pub fn spawn_tanks(
 pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
-    mut q_unit: Query<Entity, With<Selected>>,
+    mut q_unit: Query<Entity, With<SelectedUnit>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     mut cmds: Commands,

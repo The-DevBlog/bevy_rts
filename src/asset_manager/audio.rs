@@ -3,8 +3,9 @@ use rand::seq::IndexedRandom;
 use std::fs;
 use std::{collections::HashMap, path::PathBuf};
 
+use crate::resources::DbgOptions;
 use crate::{
-    components::units::{Selected, UnitType},
+    components::units::{SelectedUnit, UnitType},
     events::{SelectMultipleUnitEv, SelectSingleUnitEv, SetUnitDestinationEv},
 };
 
@@ -57,31 +58,35 @@ pub struct AudioUnitCmds {
     pub select: Vec<Handle<AudioSource>>,
 }
 
-fn load_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>) {
+fn load_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>, dbg: Res<DbgOptions>) {
     my_audio.place_structure = assets.load("audio/place_structure.ogg");
 
     // tank gen 1 - select
     let folder = "audio/unit_cmds/tank_gen_1/select";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_1.select.extend(handles);
 
     // tank gen 1 - move
     let folder = "audio/unit_cmds/tank_gen_1/move";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_1.relocate.extend(handles);
 
     // tank gen 2 - select
     let folder = "audio/unit_cmds/tank_gen_2/select";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_2.select.extend(handles);
 
     // tank gen 2 - move
     let folder = "audio/unit_cmds/tank_gen_2/move";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_2.relocate.extend(handles);
 }
 
-fn load_audio_from_folder(folder: &str, assets: &AssetServer) -> Vec<Handle<AudioSource>> {
+fn load_audio_from_folder(
+    folder: &str,
+    assets: &AssetServer,
+    dbg: &DbgOptions,
+) -> Vec<Handle<AudioSource>> {
     // Get the project root (where Cargo.toml is located)
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     // Construct the full path to the assets folder.
@@ -97,8 +102,10 @@ fn load_audio_from_folder(folder: &str, assets: &AssetServer) -> Vec<Handle<Audi
                     // Create an asset path relative to the assets folder.
                     // For example: if folder is "audio/unit_cmds/tank_gen_1/select"
                     // the asset path will be "audio/unit_cmds/tank_gen_1/select/file.ogg".
+
                     let asset_path = format!("{}/{}", folder, file_name);
-                    println!("Loading asset: {}", asset_path);
+                    dbg.print(&format!("Loading asset: {}", asset_path));
+
                     let handle: Handle<AudioSource> = assets.load(&asset_path);
                     handles.push(handle);
                 }
@@ -142,7 +149,7 @@ fn unit_audio(trigger: Trigger<UnitAudioEv>, mut cmds: Commands, my_audio: Res<M
 fn multiple_select(
     _trigger: Trigger<SelectMultipleUnitEv>,
     mut cmds: Commands,
-    q_units: Query<(Entity, &UnitType), With<Selected>>,
+    q_units: Query<(Entity, &UnitType), With<SelectedUnit>>,
 ) {
     // Use a HashMap to count occurrences of each UnitType.
     let mut counts: HashMap<UnitType, u32> = HashMap::new();
@@ -179,7 +186,7 @@ fn single_select(
 fn relocate(
     _trigger: Trigger<SetUnitDestinationEv>,
     mut cmds: Commands,
-    q_units: Query<(Entity, &UnitType), With<Selected>>,
+    q_units: Query<(Entity, &UnitType), With<SelectedUnit>>,
 ) {
     // Use a HashMap to count occurrences of each UnitType.
     let mut counts: HashMap<UnitType, u32> = HashMap::new();

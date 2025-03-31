@@ -3,19 +3,19 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
 
-use crate::{resources::MyAssets, SPEED_RIFELMAN, SPEED_TANK_GEN_1, SPEED_TANK_GEN_2};
+use super::{structures::StructureType, BorderSize};
+use crate::{
+    resources::MyAssets, tank::BORDER_SIZE, SPEED_RIFELMAN, SPEED_TANK_GEN_1, SPEED_TANK_GEN_2,
+};
 
-#[derive(Component, Clone)]
-pub struct UnitSelectBorder(pub Entity);
-
-#[derive(Component)]
-pub struct BorderSize(pub Vec2);
+const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
+const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
 
 #[derive(Component)]
 pub struct Speed(pub f32);
 
 #[derive(Component)]
-pub struct Selected;
+pub struct SelectedUnit;
 
 #[derive(Component)]
 pub struct SelectionBox;
@@ -36,6 +36,14 @@ pub enum UnitType {
 }
 
 impl UnitType {
+    pub fn source(&self) -> StructureType {
+        match self {
+            UnitType::Rifleman => StructureType::Barracks,
+            UnitType::TankGen1 => StructureType::VehicleDepot,
+            UnitType::TankGen2 => StructureType::VehicleDepot,
+        }
+    }
+
     pub fn hp(&self) -> i32 {
         match self {
             UnitType::Rifleman => 20,
@@ -90,6 +98,35 @@ impl UnitType {
             UnitType::TankGen1 => my_assets.imgs.unit_tank_gen1.clone(),
             UnitType::TankGen2 => my_assets.imgs.unit_tank_gen2.clone(),
         }
+    }
+
+    fn model(&self, my_assets: &MyAssets) -> Handle<Scene> {
+        match self {
+            UnitType::Rifleman => my_assets.models.rifleman.clone(),
+            UnitType::TankGen1 => my_assets.models.tank_gen1.clone(),
+            UnitType::TankGen2 => my_assets.models.tank_gen2.clone(),
+        }
+    }
+
+    fn size(&self) -> Vec3 {
+        match self {
+            UnitType::Rifleman => Vec3::new(2.0, 2.0, 2.0),
+            UnitType::TankGen1 => TANK_GEN1_SIZE,
+            UnitType::TankGen2 => TANK_GEN2_SIZE,
+        }
+    }
+
+    pub fn build(&self, transform: Transform, my_assets: &Res<MyAssets>) -> UnitBundle {
+        let unit_bundle = UnitBundle::new(
+            BORDER_SIZE,
+            self.to_string(),
+            self.model(&my_assets),
+            self.size(),
+            transform,
+            *self,
+        );
+
+        unit_bundle
     }
 }
 

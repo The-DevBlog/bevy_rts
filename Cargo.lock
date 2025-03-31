@@ -992,6 +992,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_mod_outline"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8be81a7b5640918fbf627a34e0df4b80ddfb6d8c6fdc65829d1c43918ebb0a9"
+dependencies = [
+ "bevy",
+ "bitfield",
+ "interpolation",
+ "nonmax",
+ "thiserror",
+ "wgpu-types",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1492,6 +1506,12 @@ name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc827186963e592360843fb5ba4b973e145841266c1357f7180c43526f2e5b61"
+
+[[package]]
+name = "bitfield"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c821a6e124197eb56d907ccc2188eab1038fb919c914f47976e64dd8dbc855d1"
 
 [[package]]
 name = "bitflags"
@@ -2845,6 +2865,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "interpolation"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9c13ae9d91148fcb4aab6654c4c2a7d02a15395ea9e23f65170f175f8b269ce"
 
 [[package]]
 name = "io-kit-sys"
@@ -4317,6 +4343,7 @@ dependencies = [
  "accesskit",
  "bevy",
  "bevy-inspector-egui",
+ "bevy_mod_outline",
  "bevy_rapier3d",
  "bevy_rts_camera",
  "bevy_rts_pathfinding",

@@ -95,6 +95,7 @@ fn load_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.imgs.info_ctr_hp = assets.load("imgs/info_ctr/hp.png");
 
     // units
+    my_assets.models.rifleman = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0"); // TODO: Temporary
     my_assets.models.tank_gen1 = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0");
     my_assets.models.tank_gen2 = assets.load("models/units/tank_gen_2/tank_gen_2.gltf#Scene0");
 

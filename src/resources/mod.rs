@@ -83,6 +83,7 @@ pub struct Models {
     pub barracks: Handle<Scene>,
     pub tank_gen1: Handle<Scene>,
     pub tank_gen2: Handle<Scene>,
+    pub rifleman: Handle<Scene>,
     pub cannon: Handle<Scene>,
     pub vehicle_depot: Handle<Scene>,
     pub research_center: Handle<Scene>,

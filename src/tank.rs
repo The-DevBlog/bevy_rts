@@ -13,7 +13,7 @@ use events::SetUnitDestinationEv;
 
 const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
 const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
-const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
+pub const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
 
 pub struct TankPlugin;
 

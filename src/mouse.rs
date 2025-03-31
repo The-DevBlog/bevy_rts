@@ -9,7 +9,7 @@ use crate::components::structures::{SelectedStructure, Structure};
 use crate::components::{units::*, BorderSize, UnitSelectBorder};
 use crate::events::*;
 use crate::resources::*;
-use crate::utils;
+use crate::utils::{self, billboard_sync};
 use crate::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 
@@ -54,34 +54,12 @@ fn sync_select_border_with_unit(
     let fov_y = FRAC_PI_2;
 
     for (mut style, border) in q_border.iter_mut() {
-        let Ok((unit_transform, border_size)) = q_unit.get(border.0) else {
+        let Ok((trans, border_size)) = q_unit.get(border.0) else {
             continue;
         };
 
-        // Get the unit's center in screen space.
-        let center_screen = match cam.world_to_viewport(cam_trans, unit_transform.translation) {
-            Ok(pos) => pos,
-            Err(_) => continue,
-        };
-
-        // Compute the distance from the camera to the unit.
-        let distance = cam_trans.translation().distance(unit_transform.translation);
-
-        // Use the formula:
-        // scale = (window_height/2) / (distance * tan(fov_y/2))
-        let window_height = window.physical_height() as f32;
-        let scale = (window_height / 2.0) / (distance * (fov_y / 2.0).tan());
-
-        // Compute the screen-space width and height of the unit.
-        let min_size = 13.0; // pixels, adjust as needed
-        let screen_width = (border_size.0.x * scale).max(min_size);
-        let screen_height = (border_size.0.y * scale).max(min_size);
-
-        // Position the border so that its center aligns with the unit's screen center.
-        style.left = Val::Px(center_screen.x - screen_width / 2.0);
-        style.top = Val::Px(center_screen.y - screen_height / 2.0);
-        style.width = Val::Px(screen_width);
-        style.height = Val::Px(screen_height);
+        let size = border_size.0;
+        billboard_sync(cam, cam_trans, window, trans, size, &mut style, 13.0);
     }
 }
 

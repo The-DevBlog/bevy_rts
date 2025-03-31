@@ -19,6 +19,7 @@ use crate::events::*;
 use crate::resources::structures::StructuresBuilt;
 use crate::resources::*;
 use crate::utils;
+use crate::utils::billboard_sync;
 
 mod vehicle_depot;
 
@@ -267,41 +268,16 @@ fn primary_structure_txt(
     }
 
     if let Ok(mut style) = q_primary_structure_txt.get_single_mut() {
-        println!("updating txt container location");
         let (cam, cam_trans) = cam_q.single();
         let window = window_q.single();
 
-        let Ok((transform, obj_size, _primary_structure)) = q_selected_structure.get_single()
-        else {
+        let Ok((trans, obj_size, _primary_structure)) = q_selected_structure.get_single() else {
             return;
         };
 
-        // Get the unit's center in screen space.
-        let center_screen = match cam.world_to_viewport(cam_trans, transform.translation) {
-            Ok(pos) => pos,
-            Err(_) => return,
-        };
-
-        // Compute the distance from the camera to the unit.
-        let distance = cam_trans.translation().distance(transform.translation);
-
-        // Use the formula:
-        // scale = (window_height/2) / (distance * tan(fov_y/2))
-        let window_height = window.physical_height() as f32;
-        let scale = (window_height / 2.0) / (distance * (FRAC_PI_2 / 2.0).tan());
-
-        // Compute the screen-space width and height of the unit.
-        let min_size = 20.0; // pixels, adjust as needed
-        let screen_width = (obj_size.0.x * scale).max(min_size);
-        let screen_height = (obj_size.0.y * scale).max(min_size);
-
-        // Position the border so that its center aligns with the unit's screen center.
-        style.left = Val::Px(center_screen.x - screen_width / 2.0);
-        style.top = Val::Px(center_screen.y - screen_height / 2.0);
-        style.width = Val::Px(screen_width);
-        style.height = Val::Px(screen_height);
+        let size = obj_size.0.xy();
+        billboard_sync(cam, cam_trans, window, trans, size, &mut style, 20.0);
     } else {
-        println!("spawnings txt container");
         let txt_ctr = (
             PrimaryStructureTxt,
             Text::new("Active"),

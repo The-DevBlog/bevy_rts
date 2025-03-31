@@ -308,7 +308,7 @@ fn mark_primary_structure(
                     cmds.entity(structure_ent).insert(PrimaryStructure);
                 }
             }
-            (_) => (),
+            _ => (),
         }
     }
 }

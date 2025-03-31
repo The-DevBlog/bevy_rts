@@ -79,10 +79,12 @@ fn build_structure_btn_interaction(
 }
 
 fn build_unit_btn_interaction(
+    mut cmds: Commands,
     mut q_btn_unit: Query<(&Interaction, &mut ImageNode, &UnitCtr), With<UnitCtr>>,
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
     mut info_ctr_data: ResMut<InfoContainerData>,
+    input: Res<ButtonInput<MouseButton>>,
 ) {
     for (interaction, mut img, unit_ctr) in q_btn_unit.iter_mut() {
         match interaction {
@@ -92,6 +94,10 @@ fn build_unit_btn_interaction(
             Interaction::Pressed => {
                 info_ctr_data.active = true;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
+
+                if input.just_pressed(MouseButton::Left) {
+                    cmds.trigger(BuildUnitEv);
+                }
             }
             Interaction::Hovered => {
                 info_ctr_data.active = true;

@@ -20,7 +20,7 @@ pub struct Structure;
 #[derive(Component)]
 pub struct PrimaryStructure;
 
-#[derive(Component, Clone, Copy, EnumIter)]
+#[derive(Component, Clone, Copy, EnumIter, PartialEq)]
 pub enum StructureType {
     Cannon,
     Barracks,

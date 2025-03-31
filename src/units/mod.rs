@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::cmd_interface::events::BuildUnitEv;
 use crate::components::structures::*;
 use crate::resources::structures::StructuresBuilt;
 use crate::resources::units::UnlockedUnits;
@@ -9,7 +10,8 @@ pub struct UnitsPlugin;
 
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, mark_available_units.after(count_structures));
+        app.add_systems(Update, mark_available_units.after(count_structures))
+            .add_observer(handle_build_unit);
     }
 }
 
@@ -28,4 +30,9 @@ fn mark_available_units(
             available_units.rifleman = true;
         }
     }
+}
+
+// this consumes the BuildUnitEv, and determines which units to build (from vehicle depot or barracks)
+fn handle_build_unit(trigger: Trigger<BuildUnitEv>) {
+    println!("Handle Build Unit!!!");
 }

@@ -80,6 +80,16 @@ impl StructureType {
         }
     }
 
+    fn model(&self, my_assets: &MyAssets) -> Handle<Scene> {
+        match self {
+            StructureType::Cannon => my_assets.models.cannon.clone(),
+            StructureType::Barracks => my_assets.models.barracks.clone(),
+            StructureType::VehicleDepot => my_assets.models.vehicle_depot.clone(),
+            StructureType::ResearchCenter => my_assets.models.research_center.clone(),
+            StructureType::SatelliteDish => my_assets.models.satellite_dish.clone(),
+        }
+    }
+
     pub fn place(
         &self,
         placeholder_ent: Entity,
@@ -90,13 +100,7 @@ impl StructureType {
     ) {
         *rb = RigidBody::Fixed;
 
-        match self {
-            StructureType::Cannon => scene.0 = my_assets.models.cannon.clone(),
-            StructureType::Barracks => scene.0 = my_assets.models.barracks.clone(),
-            StructureType::VehicleDepot => scene.0 = my_assets.models.vehicle_depot.clone(),
-            StructureType::ResearchCenter => scene.0 = my_assets.models.research_center.clone(),
-            StructureType::SatelliteDish => scene.0 = my_assets.models.satellite_dish.clone(),
-        }
+        scene.0 = self.model(my_assets);
 
         cmds.entity(placeholder_ent)
             .remove::<(ActiveEvents, Sensor, StructurePlaceholder)>()

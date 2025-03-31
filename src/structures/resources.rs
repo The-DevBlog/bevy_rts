@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-pub struct StructuresPlugin;
+pub struct ResourcesPlugin;
 
-impl Plugin for StructuresPlugin {
+impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<StructuresBuilt>();
     }

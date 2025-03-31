@@ -10,24 +10,27 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::RtsCamera;
 use bevy_rts_pathfinding::components::RtsObjSize;
 use bevy_rts_pathfinding::components::{self as pf_comps};
+use resources::StructuresBuilt;
 use vehicle_depot::VehicleDepotPlugin;
 
 use crate::asset_manager::audio::*;
 use crate::bank::*;
 use crate::components::structures::*;
 use crate::events::*;
-use crate::resources::structures::StructuresBuilt;
 use crate::resources::*;
 use crate::utils;
 use crate::utils::billboard_sync;
 
+pub mod resources;
 mod vehicle_depot;
+
+use resources::ResourcesPlugin;
 
 pub struct StructuresPlugin;
 
 impl Plugin for StructuresPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(VehicleDepotPlugin)
+        app.add_plugins((VehicleDepotPlugin, ResourcesPlugin))
             .add_systems(
                 Update,
                 (

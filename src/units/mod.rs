@@ -3,9 +3,9 @@ use events::{BuildSoldier, BuildVehicle};
 
 use crate::cmd_interface::events::BuildUnitEv;
 use crate::components::structures::*;
-use crate::resources::structures::StructuresBuilt;
 use crate::resources::units::UnlockedUnits;
 use crate::resources::DbgOptions;
+use crate::structures::resources::StructuresBuilt;
 use crate::structures::*;
 
 pub mod events;

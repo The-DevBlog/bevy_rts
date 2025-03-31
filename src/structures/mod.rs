@@ -1,3 +1,5 @@
+use std::f32::consts::FRAC_PI_2;
+
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -5,6 +7,8 @@ use bevy_mod_outline::AsyncSceneInheritOutline;
 use bevy_mod_outline::OutlineMode;
 use bevy_mod_outline::OutlineVolume;
 use bevy_rapier3d::prelude::*;
+use bevy_rts_camera::RtsCamera;
+use bevy_rts_pathfinding::components::RtsObjSize;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 use vehicle_depot::VehicleDepotPlugin;
 
@@ -26,6 +30,7 @@ impl Plugin for StructuresPlugin {
             .add_systems(
                 Update,
                 (
+                    primary_structure_txt,
                     mark_structure_built,
                     sync_placeholder,
                     deselect_if_any_unit_is_selected,
@@ -234,9 +239,60 @@ fn deselect(
     }
 }
 
+#[derive(Component)]
+pub struct PrimaryStructureTxt;
+
 fn primary_structure_txt(
     mut cmds: Commands,
-    q_selected_structure: Query<Entity, With<SelectedStructure>>,
+    q_selected_structure: Query<
+        (&Transform, &RtsObjSize, &PrimaryStructure),
+        With<SelectedStructure>,
+    >,
+    mut q_primary_structure_txt: Query<&mut Node, With<PrimaryStructureTxt>>,
+    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
+    window_q: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let ctr = (Text::new("Active"), Name::new("Primary Structure Txt"));
+    if let Ok(mut style) = q_primary_structure_txt.get_single_mut() {
+        let (cam, cam_trans) = cam_q.single();
+        let window = window_q.single();
+
+        let Ok((transform, obj_size, _primary_structure)) = q_selected_structure.get_single()
+        else {
+            return;
+        };
+
+        // Get the unit's center in screen space.
+        let center_screen = match cam.world_to_viewport(cam_trans, transform.translation) {
+            Ok(pos) => pos,
+            Err(_) => return,
+        };
+
+        // Compute the distance from the camera to the unit.
+        let distance = cam_trans.translation().distance(transform.translation);
+
+        // Use the formula:
+        // scale = (window_height/2) / (distance * tan(fov_y/2))
+        let window_height = window.physical_height() as f32;
+        let scale = (window_height / 2.0) / (distance * (FRAC_PI_2 / 2.0).tan());
+
+        // Compute the screen-space width and height of the unit.
+        let screen_width = obj_size.0.x * scale;
+        let screen_height = obj_size.0.y * scale;
+
+        // Position the border so that its center aligns with the unit's screen center.
+        style.left = Val::Px(center_screen.x - screen_width / 2.0);
+        style.top = Val::Px(center_screen.y - screen_height / 2.0);
+        style.width = Val::Px(screen_width);
+        style.height = Val::Px(screen_height);
+    } else {
+        println!("spawnings txt container");
+        let txt_ctr = (
+            PrimaryStructureTxt,
+            Text::new("Active"),
+            Node::default(),
+            Name::new("Primary Structure Container"),
+        );
+
+        cmds.spawn(txt_ctr);
+    }
 }

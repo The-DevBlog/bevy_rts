@@ -6,7 +6,7 @@ use core::f32;
 use std::f32::consts::FRAC_PI_2;
 
 use crate::components::structures::{SelectedStructure, Structure};
-use crate::components::{units::*, BorderSize, SelectBorder};
+use crate::components::{units::*, BorderSize, UnitSelectBorder};
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;
@@ -41,7 +41,7 @@ impl Plugin for MousePlugin {
 }
 
 fn sync_select_border_with_unit(
-    mut q_border: Query<(&mut Node, &SelectBorder)>,
+    mut q_border: Query<(&mut Node, &UnitSelectBorder)>,
     q_unit: Query<(&Transform, &BorderSize), With<Unit>>,
     cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
     window_q: Query<&Window, With<PrimaryWindow>>,
@@ -311,7 +311,7 @@ pub fn handle_drag_select(
     box_coords: Res<SelectBox>,
     q_selected: Query<&SelectedUnit>,
     my_assets: Res<MyAssets>,
-    q_border: Query<(Entity, &SelectBorder)>,
+    q_border: Query<(Entity, &UnitSelectBorder)>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
         v1.x * v2.z - v1.z * v2.x
@@ -323,9 +323,9 @@ pub fn handle_drag_select(
     let c = box_coords.world.end_2;
     let d = box_coords.world.end_1;
 
-    let border = |ent: Entity| -> (SelectBorder, ImageNode, Name) {
+    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode, Name) {
         (
-            SelectBorder(ent),
+            UnitSelectBorder(ent),
             ImageNode::new(my_assets.imgs.select_border.clone()),
             Name::new("Unit Select Border"),
         )
@@ -474,9 +474,9 @@ pub fn single_select_unit(
     let unit_ent = trigger.0;
 
     // Closure that creates a new border for a given unit.
-    let border = |ent: Entity| -> (SelectBorder, ImageNode) {
+    let border = |ent: Entity| -> (UnitSelectBorder, ImageNode) {
         (
-            SelectBorder(ent),
+            UnitSelectBorder(ent),
             ImageNode {
                 image: my_assets.imgs.select_border.clone(),
                 ..default()
@@ -492,7 +492,7 @@ pub fn deselect_all(
     _trigger: Trigger<DeselectAllEv>,
     mut cmds: Commands,
     mut select_q: Query<Entity, With<SelectedUnit>>,
-    mut q_border: Query<Entity, With<SelectBorder>>,
+    mut q_border: Query<Entity, With<UnitSelectBorder>>,
 ) {
     for entity in select_q.iter_mut() {
         cmds.entity(entity).remove::<SelectedUnit>();

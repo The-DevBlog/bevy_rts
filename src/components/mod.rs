@@ -4,7 +4,7 @@ pub mod structures;
 pub mod units;
 
 #[derive(Component, Clone)]
-pub struct SelectBorder(pub Entity);
+pub struct UnitSelectBorder(pub Entity);
 
 #[derive(Component)]
 pub struct BorderSize(pub Vec2);

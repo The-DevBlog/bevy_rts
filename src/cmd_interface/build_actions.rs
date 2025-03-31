@@ -96,7 +96,7 @@ fn build_unit_btn_interaction(
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
 
                 if input.just_pressed(MouseButton::Left) {
-                    cmds.trigger(BuildUnitEv);
+                    cmds.trigger(BuildUnitEv(unit_ctr.0));
                 }
             }
             Interaction::Hovered => {

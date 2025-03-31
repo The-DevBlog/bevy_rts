@@ -4,6 +4,7 @@ use crate::cmd_interface::events::BuildUnitEv;
 use crate::components::structures::*;
 use crate::resources::structures::StructuresBuilt;
 use crate::resources::units::UnlockedUnits;
+use crate::resources::DbgOptions;
 use crate::structures::*;
 
 pub struct UnitsPlugin;
@@ -33,6 +34,8 @@ fn mark_available_units(
 }
 
 // this consumes the BuildUnitEv, and determines which units to build (from vehicle depot or barracks)
-fn handle_build_unit(trigger: Trigger<BuildUnitEv>) {
-    println!("Handle Build Unit!!!");
+fn handle_build_unit(trigger: Trigger<BuildUnitEv>, dbg: Res<DbgOptions>) {
+    let unit_type = trigger.0;
+
+    dbg.print(&format!("Building unit: {}", unit_type.to_string()));
 }

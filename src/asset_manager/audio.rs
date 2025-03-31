@@ -3,6 +3,7 @@ use rand::seq::IndexedRandom;
 use std::fs;
 use std::{collections::HashMap, path::PathBuf};
 
+use crate::resources::DbgOptions;
 use crate::{
     components::units::{SelectedUnit, UnitType},
     events::{SelectMultipleUnitEv, SelectSingleUnitEv, SetUnitDestinationEv},
@@ -57,31 +58,35 @@ pub struct AudioUnitCmds {
     pub select: Vec<Handle<AudioSource>>,
 }
 
-fn load_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>) {
+fn load_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>, dbg: Res<DbgOptions>) {
     my_audio.place_structure = assets.load("audio/place_structure.ogg");
 
     // tank gen 1 - select
     let folder = "audio/unit_cmds/tank_gen_1/select";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_1.select.extend(handles);
 
     // tank gen 1 - move
     let folder = "audio/unit_cmds/tank_gen_1/move";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_1.relocate.extend(handles);
 
     // tank gen 2 - select
     let folder = "audio/unit_cmds/tank_gen_2/select";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_2.select.extend(handles);
 
     // tank gen 2 - move
     let folder = "audio/unit_cmds/tank_gen_2/move";
-    let handles = load_audio_from_folder(folder, &assets);
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_2.relocate.extend(handles);
 }
 
-fn load_audio_from_folder(folder: &str, assets: &AssetServer) -> Vec<Handle<AudioSource>> {
+fn load_audio_from_folder(
+    folder: &str,
+    assets: &AssetServer,
+    dbg: &DbgOptions,
+) -> Vec<Handle<AudioSource>> {
     // Get the project root (where Cargo.toml is located)
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     // Construct the full path to the assets folder.
@@ -97,8 +102,10 @@ fn load_audio_from_folder(folder: &str, assets: &AssetServer) -> Vec<Handle<Audi
                     // Create an asset path relative to the assets folder.
                     // For example: if folder is "audio/unit_cmds/tank_gen_1/select"
                     // the asset path will be "audio/unit_cmds/tank_gen_1/select/file.ogg".
+
                     let asset_path = format!("{}/{}", folder, file_name);
-                    println!("Loading asset: {}", asset_path);
+                    dbg.print(&format!("Loading asset: {}", asset_path));
+
                     let handle: Handle<AudioSource> = assets.load(&asset_path);
                     handles.push(handle);
                 }

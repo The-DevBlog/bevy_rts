@@ -116,13 +116,13 @@ impl UnitType {
         }
     }
 
-    pub fn build(&self, translation: Vec3, my_assets: &Res<MyAssets>) -> UnitBundle {
+    pub fn build(&self, transform: Transform, my_assets: &Res<MyAssets>) -> UnitBundle {
         let unit_bundle = UnitBundle::new(
             BORDER_SIZE,
             self.to_string(),
             self.model(&my_assets),
             self.size(),
-            Transform::from_translation(translation),
+            transform,
             *self,
         );
 

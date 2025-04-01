@@ -1,5 +1,3 @@
-use std::f32::consts::FRAC_PI_2;
-
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -296,7 +294,7 @@ fn primary_structure_txt(
 
 fn mark_primary_structure(
     mut cmds: Commands,
-    mut structures_built: ResMut<StructuresBuilt>,
+    structures_built: ResMut<StructuresBuilt>,
     q_structures: Query<(Entity, &StructureType), Added<Structure>>,
 ) {
     for (structure_ent, structure_type) in q_structures.iter() {

@@ -7,6 +7,7 @@ use bevy_rts_pathfinding::events as pf_events;
 use bevy_rts_pathfinding::flowfield::FlowField;
 use std::time::Duration;
 
+use crate::asset_manager::audio::MyAudio;
 use crate::components::units::*;
 use crate::{resources::*, *};
 use events::SetUnitDestinationEv;
@@ -38,50 +39,61 @@ pub fn spawn_tank(
     mut cmds: Commands,
     // assets: Res<AssetServer>,
     my_assets: Res<MyAssets>,
+    audio: Res<bevy_kira_audio::Audio>,
+    my_audio: Res<MyAudio>,
     // mut meshes: ResMut<Assets<Mesh>>,
     // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // GEN I
-    cmds.spawn((UnitBundle::new(
-        BORDER_SIZE,
-        "Tank".to_string(),
-        my_assets.models.tank_gen1.clone(),
-        TANK_GEN1_SIZE,
-        // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
-        // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
-        Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
-        UnitType::TankGen1,
-    ),));
+    let transform = Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0));
+    cmds.spawn(UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio));
+
+    // cmds.spawn((UnitBundle::new(
+    //     BORDER_SIZE,
+    //     "Tank".to_string(),
+    //     my_assets.models.tank_gen1.clone(),
+    //     TANK_GEN1_SIZE,
+    //     // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+    //     // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
+    //     Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0)),
+    //     UnitType::TankGen1,
+    // ),));
 
     // GEN II
-    cmds.spawn((UnitBundle::new(
-        BORDER_SIZE,
-        "Tank".to_string(),
-        my_assets.models.tank_gen2.clone(),
-        TANK_GEN2_SIZE,
-        // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
-        // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
-        Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0)),
-        UnitType::TankGen2,
-    ),));
+    let transform = Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_assets, &audio, &my_audio));
+    // cmds.spawn((UnitBundle::new(
+    //     BORDER_SIZE,
+    //     "Tank".to_string(),
+    //     my_assets.models.tank_gen2.clone(),
+    //     TANK_GEN2_SIZE,
+    //     // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+    //     // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
+    //     Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0)),
+    //     UnitType::TankGen2,
+    // ),));
 
     // GEN II
-    cmds.spawn((UnitBundle::new(
-        BORDER_SIZE,
-        "Tank".to_string(),
-        my_assets.models.tank_gen2.clone(),
-        TANK_GEN2_SIZE,
-        // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
-        // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
-        Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
-        UnitType::TankGen2,
-    ),));
+    let transform = Transform::from_translation(Vec3::new(0.0, 2.0, 0.0));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_assets, &audio, &my_audio));
+    // cmds.spawn((UnitBundle::new(
+    //     BORDER_SIZE,
+    //     "Tank".to_string(),
+    //     my_assets.models.tank_gen2.clone(),
+    //     TANK_GEN2_SIZE,
+    //     // Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z))), // TODO: remove
+    //     // MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),              // TODO: remove
+    //     Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
+    //     UnitType::TankGen2,
+    // ),));
 }
 
 pub fn spawn_tanks(
     mut cmds: Commands,
     // assets: Res<AssetServer>,
     my_assets: Res<MyAssets>,
+    audio: Res<bevy_kira_audio::Audio>,
+    my_audio: Res<MyAudio>,
     // mut meshes: ResMut<Assets<Mesh>>,
     // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -96,33 +108,37 @@ pub fn spawn_tanks(
     // Create tank on the left side facing right
     let create_left_tank = |row: usize, col: usize| {
         let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
-        (UnitBundle::new(
-            BORDER_SIZE,
-            "Tank".to_string(),
-            // assets.load("tank_tan.glb#Scene0"),
-            my_assets.models.tank_gen1.clone(),
-            TANK_GEN1_SIZE,
-            // mesh.clone(),     // TODO: remove
-            // material.clone(), // TODO: remove
-            Transform::from_translation(pos),
-            UnitType::TankGen1,
-        ),)
+        let transform = Transform::from_translation(pos);
+        UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio)
+        // (UnitBundle::new(
+        //     BORDER_SIZE,
+        //     "Tank".to_string(),
+        //     // assets.load("tank_tan.glb#Scene0"),
+        //     my_assets.models.tank_gen1.clone(),
+        //     TANK_GEN1_SIZE,
+        //     // mesh.clone(),     // TODO: remove
+        //     // material.clone(), // TODO: remove
+        //     Transform::from_translation(pos),
+        //     UnitType::TankGen1,
+        // ),)
     };
 
     // Create tank on the right side facing left
     let create_right_tank = |row: usize, col: usize| {
         let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
-        (UnitBundle::new(
-            BORDER_SIZE,
-            "Tank".to_string(),
-            // assets.load("tank_tan.glb#Scene0"),
-            my_assets.models.tank_gen1.clone(),
-            TANK_GEN1_SIZE,
-            // mesh.clone(),     // TODO: remove
-            // material.clone(), // TODO: remove
-            Transform::from_translation(pos),
-            UnitType::TankGen1,
-        ),)
+        let transform = Transform::from_translation(pos);
+        UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio)
+        // (UnitBundle::new(
+        //     BORDER_SIZE,
+        //     "Tank".to_string(),
+        //     // assets.load("tank_tan.glb#Scene0"),
+        //     my_assets.models.tank_gen1.clone(),
+        //     TANK_GEN1_SIZE,
+        //     // mesh.clone(),     // TODO: remove
+        //     // material.clone(), // TODO: remove
+        //     Transform::from_translation(pos),
+        //     UnitType::TankGen1,
+        // ),)
     };
 
     // Spawn Left Group (facing right)

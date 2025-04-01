@@ -1,11 +1,13 @@
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
 
 use super::{structures::StructureType, BorderSize};
 use crate::{
-    resources::MyAssets, tank::BORDER_SIZE, SPEED_RIFELMAN, SPEED_TANK_GEN_1, SPEED_TANK_GEN_2,
+    asset_manager::audio::MyAudio, resources::MyAssets, tank::BORDER_SIZE, SPEED_RIFELMAN,
+    SPEED_TANK_GEN_1, SPEED_TANK_GEN_2,
 };
 
 const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
@@ -84,7 +86,7 @@ impl UnitType {
         }
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn name(&self) -> String {
         match self {
             UnitType::Rifleman => "Rifleman".to_string(),
             UnitType::TankGen1 => "Tank Gen I".to_string(),
@@ -116,14 +118,46 @@ impl UnitType {
         }
     }
 
-    pub fn build(&self, transform: Transform, my_assets: &Res<MyAssets>) -> UnitBundle {
+    fn spatial_audio_emitter(
+        &self,
+        audio: &bevy_kira_audio::Audio,
+        my_audio: &MyAudio,
+    ) -> SpatialAudioEmitter {
+        let audio_handles = match self {
+            UnitType::Rifleman => {
+                let handle = my_audio.sfx.moving_rifleman.source.clone();
+                vec![audio.play(handle).looped().handle()]
+            }
+            UnitType::TankGen1 => {
+                let handle = my_audio.sfx.moving_tank_gen_1.source.clone();
+                vec![audio.play(handle).looped().handle()]
+            }
+            UnitType::TankGen2 => {
+                let handle = my_audio.sfx.moving_tank_gen_2.source.clone();
+                vec![audio.play(handle).looped().handle()]
+            }
+        };
+
+        SpatialAudioEmitter {
+            instances: audio_handles,
+        }
+    }
+
+    pub fn build(
+        &self,
+        transform: Transform,
+        my_assets: &Res<MyAssets>,
+        audio: &bevy_kira_audio::Audio,
+        my_audio: &MyAudio,
+    ) -> UnitBundle {
         let unit_bundle = UnitBundle::new(
             BORDER_SIZE,
-            self.to_string(),
+            self.name(),
             self.model(&my_assets),
             self.size(),
             transform,
             *self,
+            self.spatial_audio_emitter(&audio, &my_audio),
         );
 
         unit_bundle
@@ -140,15 +174,14 @@ pub struct UnitBundle {
     pub mass_properties: ColliderMassProperties, // TODO: remove
     pub name: Name,
     pub rigid_body: RigidBody,
-    pub scene_root: SceneRoot, // TODO: uncomment
+    pub scene_root: SceneRoot,
     pub size: pf_comps::RtsObjSize,
     pub speed: Speed,
     pub transform: Transform,
     pub transform_global: GlobalTransform,
     pub unit_type: UnitType,
     pub unit: Unit,
-    // pub mesh: Mesh3d,
-    // pub material: MeshMaterial3d<StandardMaterial>, // TODO: remove
+    pub audio_emitter: SpatialAudioEmitter,
 }
 
 impl UnitBundle {
@@ -157,18 +190,13 @@ impl UnitBundle {
         name: String,
         scene: Handle<Scene>,
         size: Vec3,
-        // mesh: Mesh3d,                               // TODO: remove
-        // material: MeshMaterial3d<StandardMaterial>, // TODO: remove
         transform: Transform,
         unit_type: UnitType,
+        audio_emitter: SpatialAudioEmitter,
     ) -> Self {
-        // let scale = 1.55;
         Self {
             border_size: BorderSize(border_size),
-            collider: Collider::cuboid(size.x, size.y, size.z), // TODO: uncomment
-            // collider: Collider::cuboid(size.x * scale, size.y * scale, size.z * scale), // TODO: uncomment
-
-            // collider: Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0), // TODO: remove
+            collider: Collider::cuboid(size.x, size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,
                 angular_damping: 20.0,
@@ -185,15 +213,16 @@ impl UnitBundle {
                 ..default()
             }),
             rigid_body: RigidBody::Dynamic,
-            scene_root: SceneRoot(scene), // TODO: uncomment
-            size: pf_comps::RtsObjSize(Vec3::new(size.x * 2.0, size.y * 2.0, size.z * 2.0)), // TODO: uncomment
+            scene_root: SceneRoot(scene),
+            size: pf_comps::RtsObjSize(Vec3::new(size.x * 2.0, size.y * 2.0, size.z * 2.0)),
             speed: Speed(unit_type.speed()),
             transform,
             transform_global: GlobalTransform::default(),
             unit_type: unit_type,
             unit: Unit,
-            // mesh,     // TODO: remove
-            // material, // TODO: remove
+            audio_emitter, // audio: SpatialAudioEmitter {
+                           //     instances: Vec::new(),
+                           // },
         }
     }
 }

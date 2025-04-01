@@ -20,6 +20,7 @@ fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
         pf_comps::GameCamera,
+        SpatialListener::default(),
         RtsCamera {
             bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),
             min_angle: 60.0f32.to_radians(),

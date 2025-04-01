@@ -1,8 +1,10 @@
 use bevy::prelude::*;
+use bevy_kira_audio::*;
 use rand::seq::IndexedRandom;
 use std::fs;
 use std::{collections::HashMap, path::PathBuf};
 
+use crate::components::units::Unit;
 use crate::resources::DbgOptions;
 use crate::{
     components::units::{SelectedUnit, UnitType},
@@ -18,7 +20,7 @@ impl Plugin for AudioPlugin {
             .add_observer(unit_audio)
             .add_observer(multiple_select)
             .add_observer(single_select)
-            .add_observer(relocate);
+            .add_observer(relocate_cmd);
     }
 }
 
@@ -42,8 +44,9 @@ pub enum AudioCmd {
 
 #[derive(Resource, Default)]
 pub struct MyAudio {
-    pub place_structure: Handle<AudioSource>,
+    pub place_structure: Handle<bevy::prelude::AudioSource>,
     pub unit_cmds: AudioUnits,
+    pub sfx: Sfx,
 }
 
 #[derive(Default)]
@@ -54,29 +57,50 @@ pub struct AudioUnits {
 
 #[derive(Default)]
 pub struct AudioUnitCmds {
-    pub relocate: Vec<Handle<AudioSource>>,
-    pub select: Vec<Handle<AudioSource>>,
+    pub relocate: Vec<Handle<bevy::prelude::AudioSource>>,
+    pub select: Vec<Handle<bevy::prelude::AudioSource>>,
+}
+
+#[derive(Default)]
+pub struct Sfx {
+    pub moving_rifleman: SfxOptions,
+    pub moving_tank_gen_1: SfxOptions,
+    pub moving_tank_gen_2: SfxOptions,
+    // pub moving_rifleman: Handle<bevy_kira_audio::AudioSource>,
+    // pub moving_tank_gen_1: Handle<bevy_kira_audio::AudioSource>,
+    // pub moving_tank_gen_2: Handle<bevy_kira_audio::AudioSource>,
+}
+
+#[derive(Default)]
+pub struct SfxOptions {
+    pub source: Handle<bevy_kira_audio::AudioSource>,
+    pub instance: Handle<bevy_kira_audio::AudioInstance>,
 }
 
 fn load_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>, dbg: Res<DbgOptions>) {
     my_audio.place_structure = assets.load("audio/place_structure.ogg");
 
-    // tank gen 1 - select
+    // unit moving
+    my_audio.sfx.moving_rifleman.source = assets.load("audio/sfx/rifleman/moving.ogg");
+    my_audio.sfx.moving_tank_gen_1.source = assets.load("audio/sfx/tank_gen_1/moving.ogg");
+    my_audio.sfx.moving_tank_gen_2.source = assets.load("audio/sfx/tank_gen_2/moving.ogg");
+
+    // tank gen 1 - cmd select
     let folder = "audio/unit_cmds/tank_gen_1/select";
     let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_1.select.extend(handles);
 
-    // tank gen 1 - move
+    // tank gen 1 - cmd move
     let folder = "audio/unit_cmds/tank_gen_1/move";
     let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_1.relocate.extend(handles);
 
-    // tank gen 2 - select
+    // tank gen 2 - cmd select
     let folder = "audio/unit_cmds/tank_gen_2/select";
     let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_2.select.extend(handles);
 
-    // tank gen 2 - move
+    // tank gen 2 - cmd move
     let folder = "audio/unit_cmds/tank_gen_2/move";
     let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_2.relocate.extend(handles);
@@ -86,7 +110,7 @@ fn load_audio_from_folder(
     folder: &str,
     assets: &AssetServer,
     dbg: &DbgOptions,
-) -> Vec<Handle<AudioSource>> {
+) -> Vec<Handle<bevy::prelude::AudioSource>> {
     // Get the project root (where Cargo.toml is located)
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     // Construct the full path to the assets folder.
@@ -106,7 +130,7 @@ fn load_audio_from_folder(
                     let asset_path = format!("{}/{}", folder, file_name);
                     dbg.print(&format!("Loading asset: {}", asset_path));
 
-                    let handle: Handle<AudioSource> = assets.load(&asset_path);
+                    let handle: Handle<bevy::prelude::AudioSource> = assets.load(&asset_path);
                     handles.push(handle);
                 }
             }
@@ -183,7 +207,7 @@ fn single_select(
     cmds.trigger(UnitAudioEv::new(AudioCmd::Select, *unit_type));
 }
 
-fn relocate(
+fn relocate_cmd(
     _trigger: Trigger<SetUnitDestinationEv>,
     mut cmds: Commands,
     q_units: Query<(Entity, &UnitType), With<SelectedUnit>>,
@@ -204,4 +228,13 @@ fn relocate(
     if let Some((&most_common_unit, _)) = counts.iter().max_by_key(|entry| entry.1) {
         cmds.trigger(UnitAudioEv::new(AudioCmd::Relocate, most_common_unit));
     }
+}
+
+fn add_audio_to_units(
+    mut cmds: Commands,
+    mut q_units: Query<Entity, Added<Unit>>,
+    audio: Res<Audio>,
+    my_audio: Res<MyAudio>,
+) {
+    for mut unit_ent in q_units.iter_mut() {}
 }

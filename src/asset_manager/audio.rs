@@ -77,13 +77,26 @@ pub struct SfxOptions {
     pub instance: Handle<bevy_kira_audio::AudioInstance>,
 }
 
-fn load_assets(mut my_audio: ResMut<MyAudio>, assets: Res<AssetServer>, dbg: Res<DbgOptions>) {
+fn load_assets(
+    audio: Res<bevy_kira_audio::Audio>,
+    mut my_audio: ResMut<MyAudio>,
+    assets: Res<AssetServer>,
+    dbg: Res<DbgOptions>,
+) {
     my_audio.place_structure = assets.load("audio/place_structure.ogg");
 
-    // unit moving
-    my_audio.sfx.moving_rifleman.source = assets.load("audio/sfx/rifleman/moving.ogg");
-    my_audio.sfx.moving_tank_gen_1.source = assets.load("audio/sfx/tank_gen_1/moving.ogg");
-    my_audio.sfx.moving_tank_gen_2.source = assets.load("audio/sfx/tank_gen_2/moving.ogg");
+    // unit moving (spatial)
+    let handle = assets.load("audio/sfx/rifleman/moving.ogg");
+    my_audio.sfx.moving_rifleman.source = handle.clone();
+    my_audio.sfx.moving_rifleman.instance = audio.play(handle).looped().paused().handle();
+
+    let handle = assets.load("audio/sfx/tank_gen_1/moving.ogg");
+    my_audio.sfx.moving_tank_gen_1.source = handle.clone();
+    my_audio.sfx.moving_tank_gen_1.instance = audio.play(handle).looped().paused().handle();
+
+    let handle = assets.load("audio/sfx/tank_gen_2/moving.ogg");
+    my_audio.sfx.moving_tank_gen_2.source = handle.clone();
+    my_audio.sfx.moving_tank_gen_2.instance = audio.play(handle).looped().paused().handle();
 
     // tank gen 1 - cmd select
     let folder = "audio/unit_cmds/tank_gen_1/select";

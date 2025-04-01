@@ -118,7 +118,7 @@ impl UnitType {
         }
     }
 
-    fn spatial_audio_emitter(
+    fn audio_emitter(
         &self,
         audio: &bevy_kira_audio::Audio,
         my_audio: &MyAudio,
@@ -126,15 +126,15 @@ impl UnitType {
         let audio_handles = match self {
             UnitType::Rifleman => {
                 let handle = my_audio.sfx.moving_rifleman.source.clone();
-                vec![audio.play(handle).looped().handle()]
+                vec![audio.play(handle).looped().paused().handle()]
             }
             UnitType::TankGen1 => {
                 let handle = my_audio.sfx.moving_tank_gen_1.source.clone();
-                vec![audio.play(handle).looped().handle()]
+                vec![audio.play(handle).looped().paused().handle()]
             }
             UnitType::TankGen2 => {
                 let handle = my_audio.sfx.moving_tank_gen_2.source.clone();
-                vec![audio.play(handle).looped().handle()]
+                vec![audio.play(handle).looped().paused().handle()]
             }
         };
 
@@ -157,7 +157,7 @@ impl UnitType {
             self.size(),
             transform,
             *self,
-            self.spatial_audio_emitter(&audio, &my_audio),
+            self.audio_emitter(&audio, &my_audio),
         );
 
         unit_bundle
@@ -220,9 +220,7 @@ impl UnitBundle {
             transform_global: GlobalTransform::default(),
             unit_type: unit_type,
             unit: Unit,
-            audio_emitter, // audio: SpatialAudioEmitter {
-                           //     instances: Vec::new(),
-                           // },
+            audio_emitter,
         }
     }
 }

@@ -102,7 +102,7 @@ fn build_unit_btn_interaction(
             Interaction::Hovered => {
                 info_ctr_data.active = true;
                 // TODO: Make this a method that will fill everything in?
-                info_ctr_data.name = unit_ctr.0.to_string();
+                info_ctr_data.name = unit_ctr.0.name();
                 info_ctr_data.cost = unit_ctr.0.cost();
                 info_ctr_data.build_time = unit_ctr.0.build_time();
                 info_ctr_data.hp = Some(unit_ctr.0.hp());

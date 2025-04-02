@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    asset_manager::audio::MyAudio,
     components::structures::{PrimaryStructure, StructureType},
     resources::MyAssets,
     units::events::BuildVehicle,
@@ -19,6 +20,8 @@ fn build_vehicle(
     mut cmds: Commands,
     q_structure: Query<(&Transform, &StructureType), With<PrimaryStructure>>,
     my_assets: Res<MyAssets>,
+    audio: Res<bevy_kira_audio::Audio>,
+    my_audio: Res<MyAudio>,
 ) {
     // Set spawn offsets.
     let offset_distance = -50.0; // Distance in front of the depot (assumes front is -Z)
@@ -45,7 +48,9 @@ fn build_vehicle(
         };
 
         // Build the unit and spawn it.
-        let unit = trigger.0.build(vehicle_transform, &my_assets);
+        let unit = trigger
+            .0
+            .build(vehicle_transform, &my_assets, &audio, &my_audio);
         cmds.spawn(unit);
 
         return;

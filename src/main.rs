@@ -1,5 +1,6 @@
 use bevy::{color::palettes::css::*, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_kira_audio::{AudioPlugin, SpatialAudioPlugin};
 use bevy_mod_outline::OutlinePlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding;
@@ -62,5 +63,6 @@ fn main() {
             MousePlugin,
             TankPlugin,
         ))
+        .add_plugins((AudioPlugin, SpatialAudioPlugin))
         .run();
 }

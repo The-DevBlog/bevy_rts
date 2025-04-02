@@ -40,7 +40,7 @@ fn mark_available_units(
 fn handle_build_unit(trigger: Trigger<BuildUnitEv>, mut cmds: Commands, dbg: Res<DbgOptions>) {
     let unit_type = trigger.0;
 
-    dbg.print(&format!("Building unit: {}", unit_type.to_string()));
+    dbg.print(&format!("Building unit: {}", unit_type.name()));
 
     match unit_type.source() {
         StructureType::Barracks => cmds.trigger(BuildSoldier(unit_type)),

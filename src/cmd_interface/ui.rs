@@ -431,11 +431,10 @@ fn spawn_unit_btn<T: Component>(
             ..default()
         })
         .with_children(|p| {
-            p.spawn(build_opt_txt(unit.to_string()))
-                .insert(PickingBehavior {
-                    should_block_lower: false,
-                    ..default()
-                });
+            p.spawn(build_opt_txt(unit.name())).insert(PickingBehavior {
+                should_block_lower: false,
+                ..default()
+            });
         });
 }
 

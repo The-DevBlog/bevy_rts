@@ -222,7 +222,7 @@ impl UnitBundle {
             unit_type: unit_type,
             unit: Unit,
             audio_emitter,
-            spatial_audio_radius: SpatialRadius { radius: 150.0 }, // TODO For some reason anything above 150 and I cant hear anything at all
+            spatial_audio_radius: SpatialRadius { radius: 180.0 }, // TODO For some reason anything above 150 and I cant hear anything at all
         }
     }
 }

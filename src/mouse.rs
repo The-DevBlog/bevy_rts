@@ -5,9 +5,9 @@ use bevy_rts_camera::RtsCamera;
 use core::f32;
 
 use crate::asset_manager::imgs::MyImgs;
-use crate::components::structures::Structure;
 use crate::events::*;
 use crate::resources::*;
+use crate::structures::components::Structure;
 use crate::units::components::*;
 use crate::utils::{self, billboard_sync};
 use crate::*;

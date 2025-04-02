@@ -2,9 +2,10 @@ use bevy::prelude::*;
 
 use crate::{
     asset_manager::{audio::MyAudio, models::MyModels},
-    components::structures::{PrimaryStructure, StructureType},
     units::events::BuildVehicle,
 };
+
+use super::components::*;
 
 pub struct VehicleDepotPlugin;
 

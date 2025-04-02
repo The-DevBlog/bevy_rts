@@ -5,9 +5,9 @@ use super::events::*;
 use super::resources::InfoContainerData;
 use crate::asset_manager::models::MyModels;
 use crate::bank::Bank;
-use crate::components::structures::*;
 use crate::events::DeselectAllEv;
 use crate::resources::*;
+use crate::structures::components::*;
 
 pub const CLR_STRUCTURE_BUILD_ACTIONS: Color = Color::srgb(0.87, 0.87, 1.0);
 const CLR_STRUCTURE_BUILD_ACTIONS_HVR: Color = Color::srgb(1.0, 1.0, 1.0);

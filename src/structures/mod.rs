@@ -14,15 +14,16 @@ use vehicle_depot::VehicleDepotPlugin;
 use crate::asset_manager::audio::*;
 use crate::asset_manager::models::MyModels;
 use crate::bank::*;
-use crate::components::structures::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;
 use crate::utils::billboard_sync;
 
+pub mod components;
 pub mod resources;
 mod vehicle_depot;
 
+use components::*;
 use resources::ResourcesPlugin;
 
 pub struct StructuresPlugin;

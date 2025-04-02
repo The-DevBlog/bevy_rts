@@ -7,7 +7,7 @@ use strum_macros::EnumIter;
 use crate::asset_manager::audio::*;
 use crate::asset_manager::imgs::MyImgs;
 use crate::asset_manager::models::MyModels;
-use crate::components::structures::StructureType;
+use crate::structures::components::StructureType;
 use crate::tank::*;
 use crate::*;
 

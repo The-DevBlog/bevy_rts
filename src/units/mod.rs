@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use events::{BuildSoldier, BuildVehicle};
 
 use crate::cmd_interface::events::BuildUnitEv;
-use crate::components::structures::*;
 use crate::resources::DbgOptions;
+use crate::structures::components::*;
 use crate::structures::resources::StructuresBuilt;
 use crate::structures::*;
 

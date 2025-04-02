@@ -41,16 +41,16 @@ impl DbgOptions {
 
 #[derive(Resource, Default)]
 pub struct MyImgs {
-    pub textures: Textures,
+    // pub textures: Textures,
 }
 
-#[derive(Default)]
-pub struct Textures {
-    pub grass_clr: Handle<Image>,
-    pub grass_normal: Handle<Image>,
-    pub grass_roughness: Handle<Image>,
-    pub grass_occlusion: Handle<Image>,
-}
+// #[derive(Default)]
+// pub struct Textures {
+//     pub grass_clr: Handle<Image>,
+//     pub grass_normal: Handle<Image>,
+//     pub grass_roughness: Handle<Image>,
+//     pub grass_occlusion: Handle<Image>,
+// }
 
 #[derive(Resource, Default, Debug)]
 pub struct MouseCoords {

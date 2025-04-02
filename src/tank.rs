@@ -56,20 +56,14 @@ pub fn spawn_tank(
 
 pub fn spawn_tanks(
     mut cmds: Commands,
-    // assets: Res<AssetServer>,
     my_assets: Res<MyAssets>,
     audio: Res<bevy_kira_audio::Audio>,
     my_audio: Res<MyAudio>,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
     let initial_pos_right = Vec3::new(500.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
-
-    // let mesh = Mesh3d(meshes.add(Cuboid::new(TANK_SIZE.x, TANK_SIZE.y, TANK_SIZE.z)));
-    // let material = MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3)));
 
     // Create tank on the left side facing right
     let create_left_tank = |row: usize, col: usize| {

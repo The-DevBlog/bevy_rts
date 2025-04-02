@@ -1,4 +1,5 @@
 use bevy::math::bounding::Aabb2d;
+use bevy_kira_audio::SpatialAudioReceiver;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use bevy_rts_pathfinding::components as pf_comps;
 
@@ -20,7 +21,7 @@ fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
         pf_comps::GameCamera,
-        SpatialListener::default(),
+        SpatialAudioReceiver,
         RtsCamera {
             bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),
             min_angle: 60.0f32.to_radians(),

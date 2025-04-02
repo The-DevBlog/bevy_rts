@@ -4,12 +4,10 @@ use rand::seq::IndexedRandom;
 use std::fs;
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::components::units::Unit;
+use crate::components::units::*;
+use crate::events::*;
 use crate::resources::DbgOptions;
-use crate::{
-    components::units::{SelectedUnit, UnitType},
-    events::{SelectMultipleUnitEv, SelectSingleUnitEv, SetUnitDestinationEv},
-};
+use bevy_rts_pathfinding::components as pf_comps;
 
 pub struct AudioPlugin;
 
@@ -17,6 +15,7 @@ impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MyAudio>()
             .add_systems(Startup, load_assets)
+            .add_systems(Update, unit_move_audio)
             .add_observer(unit_audio)
             .add_observer(multiple_select)
             .add_observer(single_select)
@@ -243,11 +242,13 @@ fn relocate_cmd(
     }
 }
 
-fn add_audio_to_units(
-    mut cmds: Commands,
-    mut q_units: Query<Entity, Added<Unit>>,
-    audio: Res<Audio>,
-    my_audio: Res<MyAudio>,
+fn unit_move_audio(
+    q_units: Query<&SpatialAudioEmitter, Added<pf_comps::Destination>>,
+    mut audio_instances: ResMut<Assets<AudioInstance>>,
 ) {
-    for mut unit_ent in q_units.iter_mut() {}
+    for audio_emitter in q_units.iter() {
+        if let Some(instance) = audio_instances.get_mut(&audio_emitter.instances[0]) {
+            instance.resume(AudioTween::default());
+        }
+    }
 }

@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_rts_pathfinding::components::RtsObjSize;
 
 #[derive(Event)]
 pub struct SetBoxCoordsEv;

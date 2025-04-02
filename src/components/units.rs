@@ -5,10 +5,10 @@ use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
 
 use super::{structures::StructureType, BorderSize};
-use crate::{
-    asset_manager::audio::MyAudio, resources::MyAssets, tank::BORDER_SIZE, SPEED_RIFELMAN,
-    SPEED_TANK_GEN_1, SPEED_TANK_GEN_2,
-};
+use crate::asset_manager::audio::*;
+use crate::resources::*;
+use crate::tank::*;
+use crate::*;
 
 const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
 const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
@@ -112,7 +112,7 @@ impl UnitType {
 
     fn size(&self) -> Vec3 {
         match self {
-            UnitType::Rifleman => Vec3::new(2.0, 2.0, 2.0),
+            UnitType::Rifleman => Vec3::new(2.0, 2.0, 2.0), // TODO: Define rifleman size
             UnitType::TankGen1 => TANK_GEN1_SIZE,
             UnitType::TankGen2 => TANK_GEN2_SIZE,
         }
@@ -182,10 +182,11 @@ pub struct UnitBundle {
     pub unit_type: UnitType,
     pub unit: Unit,
     pub audio_emitter: SpatialAudioEmitter,
+    pub spatial_audio_radius: SpatialRadius,
 }
 
 impl UnitBundle {
-    pub fn new(
+    fn new(
         border_size: Vec2,
         name: String,
         scene: Handle<Scene>,
@@ -221,6 +222,7 @@ impl UnitBundle {
             unit_type: unit_type,
             unit: Unit,
             audio_emitter,
+            spatial_audio_radius: SpatialRadius { radius: 150.0 }, // TODO For some reason anything above 150 and I cant hear anything at all
         }
     }
 }

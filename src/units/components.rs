@@ -8,12 +8,17 @@ use crate::asset_manager::audio::*;
 use crate::asset_manager::imgs::MyImgs;
 use crate::asset_manager::models::MyModels;
 use crate::components::structures::StructureType;
-use crate::components::BorderSize;
 use crate::tank::*;
 use crate::*;
 
 const TANK_GEN_1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
 const TANK_GEN_2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
+
+#[derive(Component, Clone)]
+pub struct UnitSelectBorder(pub Entity);
+
+#[derive(Component)]
+pub struct BorderSize(pub Vec2);
 
 #[derive(Component)]
 pub struct Speed(pub f32);

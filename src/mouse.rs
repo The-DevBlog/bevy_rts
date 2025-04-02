@@ -6,7 +6,6 @@ use core::f32;
 
 use crate::asset_manager::imgs::MyImgs;
 use crate::components::structures::Structure;
-use crate::components::{BorderSize, UnitSelectBorder};
 use crate::events::*;
 use crate::resources::*;
 use crate::units::components::*;

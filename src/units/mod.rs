@@ -11,7 +11,6 @@ pub mod components;
 pub mod events;
 pub mod resources;
 
-use components::*;
 use resources::*;
 
 pub struct UnitsPlugin;

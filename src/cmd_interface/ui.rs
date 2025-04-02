@@ -9,7 +9,7 @@ use crate::asset_manager::imgs::MyImgs;
 use crate::bank::Bank;
 use crate::components::structures::StructureType;
 use crate::components::units::UnitType;
-use crate::resources::units::UnlockedUnits;
+use crate::units::resources::UnlockedUnits;
 
 pub struct UiPlugin;
 

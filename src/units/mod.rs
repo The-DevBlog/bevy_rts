@@ -3,18 +3,21 @@ use events::{BuildSoldier, BuildVehicle};
 
 use crate::cmd_interface::events::BuildUnitEv;
 use crate::components::structures::*;
-use crate::resources::units::UnlockedUnits;
 use crate::resources::DbgOptions;
 use crate::structures::resources::StructuresBuilt;
 use crate::structures::*;
 
 pub mod events;
+pub mod resources;
+
+use resources::*;
 
 pub struct UnitsPlugin;
 
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, mark_available_units.after(count_structures))
+        app.add_plugins(ResourcesPlugin)
+            .add_systems(Update, mark_available_units.after(count_structures))
             .add_observer(handle_build_unit);
     }
 }

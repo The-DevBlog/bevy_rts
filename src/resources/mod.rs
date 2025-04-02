@@ -1,9 +1,5 @@
 use bevy::prelude::*;
 
-pub mod units;
-
-use units::UnitsPlugin;
-
 use crate::*;
 
 pub struct ResourcesPlugin;
@@ -13,8 +9,7 @@ impl Plugin for ResourcesPlugin {
         let args: Vec<String> = std::env::args().collect();
         let debug_flag = args.contains(&String::from("-debug"));
 
-        app.add_plugins(UnitsPlugin)
-            .init_resource::<MouseCoords>()
+        app.init_resource::<MouseCoords>()
             .init_resource::<SelectBox>()
             .init_resource::<GameCommands>()
             .init_resource::<CursorState>()

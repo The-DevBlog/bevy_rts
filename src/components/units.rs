@@ -11,8 +11,8 @@ use crate::asset_manager::models::MyModels;
 use crate::tank::*;
 use crate::*;
 
-const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
-const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
+const TANK_GEN_1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
+const TANK_GEN_2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
 
 #[derive(Component)]
 pub struct Speed(pub f32);
@@ -114,8 +114,8 @@ impl UnitType {
     fn size(&self) -> Vec3 {
         match self {
             UnitType::Rifleman => Vec3::new(2.0, 2.0, 2.0), // TODO: Define rifleman size
-            UnitType::TankGen1 => TANK_GEN1_SIZE,
-            UnitType::TankGen2 => TANK_GEN2_SIZE,
+            UnitType::TankGen1 => TANK_GEN_1_SIZE,
+            UnitType::TankGen2 => TANK_GEN_2_SIZE,
         }
     }
 

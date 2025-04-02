@@ -17,7 +17,6 @@ impl Plugin for ResourcesPlugin {
             .init_resource::<MouseCoords>()
             .init_resource::<SelectBox>()
             .init_resource::<GameCommands>()
-            .init_resource::<MyImgs>()
             .init_resource::<CursorState>()
             .insert_resource(DbgOptions {
                 print_statements: debug_flag,
@@ -38,19 +37,6 @@ impl DbgOptions {
         }
     }
 }
-
-#[derive(Resource, Default)]
-pub struct MyImgs {
-    // pub textures: Textures,
-}
-
-// #[derive(Default)]
-// pub struct Textures {
-//     pub grass_clr: Handle<Image>,
-//     pub grass_normal: Handle<Image>,
-//     pub grass_roughness: Handle<Image>,
-//     pub grass_occlusion: Handle<Image>,
-// }
 
 #[derive(Resource, Default, Debug)]
 pub struct MouseCoords {

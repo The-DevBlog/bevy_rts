@@ -12,6 +12,7 @@ use resources::StructuresBuilt;
 use vehicle_depot::VehicleDepotPlugin;
 
 use crate::asset_manager::audio::*;
+use crate::asset_manager::models::MyModels;
 use crate::bank::*;
 use crate::components::structures::*;
 use crate::events::*;
@@ -113,7 +114,7 @@ fn place_structure(
     dbg: Res<DbgOptions>,
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_state: ResMut<CursorState>,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
     my_audio: Res<MyAudio>,
     game_cmds: Res<GameCommands>,
 ) {
@@ -129,7 +130,7 @@ fn place_structure(
 
     if input.just_pressed(MouseButton::Left) && placeholder.is_valid {
         *cursor_state = CursorState::Standard;
-        structure.place(placeholder_ent, &my_assets, &mut scene, &mut rb, &mut cmds);
+        structure.place(placeholder_ent, &my_models, &mut scene, &mut rb, &mut cmds);
 
         // Adjust bank
         cmds.trigger(AdjustFundsEv(-structure.cost()));
@@ -146,7 +147,7 @@ fn validate_structure_placement(
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     mut q_placeholder: Query<(Entity, &mut StructurePlaceholder, &mut SceneRoot)>,
     q_collider: Query<&Collider, With<pf_comps::MapBase>>,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
 ) {
     let Ok((placeholder_ent, mut placeholder, mut scene)) = q_placeholder.get_single_mut() else {
         return;
@@ -170,12 +171,12 @@ fn validate_structure_placement(
         placeholder.is_valid = false;
         placeholder
             .structure
-            .invalid_placement(&my_assets, &mut scene);
+            .invalid_placement(&my_models, &mut scene);
     } else {
         placeholder.is_valid = true;
         placeholder
             .structure
-            .valid_placement(&my_assets, &mut scene);
+            .valid_placement(&my_models, &mut scene);
     }
 }
 

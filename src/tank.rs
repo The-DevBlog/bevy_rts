@@ -8,6 +8,7 @@ use bevy_rts_pathfinding::flowfield::FlowField;
 use std::time::Duration;
 
 use crate::asset_manager::audio::MyAudio;
+use crate::asset_manager::models::MyModels;
 use crate::components::units::*;
 use crate::{resources::*, *};
 use events::SetUnitDestinationEv;
@@ -37,26 +38,26 @@ impl Plugin for TankPlugin {
 
 pub fn spawn_tank(
     mut cmds: Commands,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
     audio: Res<bevy_kira_audio::Audio>,
     my_audio: Res<MyAudio>,
 ) {
     // GEN I
     let transform = Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0));
-    cmds.spawn(UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio));
 
     // GEN II
     let transform = Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0));
-    cmds.spawn(UnitType::TankGen2.build(transform, &my_assets, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_models, &audio, &my_audio));
 
     // GEN II
     let transform = Transform::from_translation(Vec3::new(0.0, 2.0, 0.0));
-    cmds.spawn(UnitType::TankGen2.build(transform, &my_assets, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_models, &audio, &my_audio));
 }
 
 pub fn spawn_tanks(
     mut cmds: Commands,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
     audio: Res<bevy_kira_audio::Audio>,
     my_audio: Res<MyAudio>,
 ) {
@@ -69,14 +70,14 @@ pub fn spawn_tanks(
     let create_left_tank = |row: usize, col: usize| {
         let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         let transform = Transform::from_translation(pos);
-        UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio)
+        UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio)
     };
 
     // Create tank on the right side facing left
     let create_right_tank = |row: usize, col: usize| {
         let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
         let transform = Transform::from_translation(pos);
-        UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio)
+        UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio)
     };
 
     // Spawn Left Group (facing right)

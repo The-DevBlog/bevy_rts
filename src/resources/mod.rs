@@ -41,7 +41,7 @@ impl DbgOptions {
 
 #[derive(Resource, Default)]
 pub struct MyAssets {
-    pub models: Models,
+    // pub models: Models,
     pub imgs: Images,
     pub textures: Textures,
 }
@@ -78,32 +78,32 @@ pub struct Images {
     pub unit_rifleman: Handle<Image>,
 }
 
-#[derive(Default)]
-pub struct Models {
-    pub barracks: Handle<Scene>,
-    pub tank_gen1: Handle<Scene>,
-    pub tank_gen2: Handle<Scene>,
-    pub rifleman: Handle<Scene>,
-    pub cannon: Handle<Scene>,
-    pub vehicle_depot: Handle<Scene>,
-    pub research_center: Handle<Scene>,
-    pub satellite_dish: Handle<Scene>,
-    pub placeholders: Placeholders,
-}
+// #[derive(Default)]
+// pub struct Models {
+//     pub barracks: Handle<Scene>,
+//     pub tank_gen1: Handle<Scene>,
+//     pub tank_gen2: Handle<Scene>,
+//     pub rifleman: Handle<Scene>,
+//     pub cannon: Handle<Scene>,
+//     pub vehicle_depot: Handle<Scene>,
+//     pub research_center: Handle<Scene>,
+//     pub satellite_dish: Handle<Scene>,
+//     pub placeholders: Placeholders,
+// }
 
-#[derive(Default)]
-pub struct Placeholders {
-    pub barracks_valid: Handle<Scene>,
-    pub barracks_invalid: Handle<Scene>,
-    pub cannon_valid: Handle<Scene>,
-    pub cannon_invalid: Handle<Scene>,
-    pub vehicle_depot_valid: Handle<Scene>,
-    pub vehicle_depot_invalid: Handle<Scene>,
-    pub research_center_valid: Handle<Scene>,
-    pub research_center_invalid: Handle<Scene>,
-    pub satellite_dish_valid: Handle<Scene>,
-    pub satellite_dish_invalid: Handle<Scene>,
-}
+// #[derive(Default)]
+// pub struct Placeholders {
+//     pub barracks_valid: Handle<Scene>,
+//     pub barracks_invalid: Handle<Scene>,
+//     pub cannon_valid: Handle<Scene>,
+//     pub cannon_invalid: Handle<Scene>,
+//     pub vehicle_depot_valid: Handle<Scene>,
+//     pub vehicle_depot_invalid: Handle<Scene>,
+//     pub research_center_valid: Handle<Scene>,
+//     pub research_center_invalid: Handle<Scene>,
+//     pub satellite_dish_valid: Handle<Scene>,
+//     pub satellite_dish_invalid: Handle<Scene>,
+// }
 
 #[derive(Resource, Default, Debug)]
 pub struct MouseCoords {

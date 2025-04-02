@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_manager::audio::MyAudio,
+    asset_manager::{audio::MyAudio, models::MyModels},
     components::structures::{PrimaryStructure, StructureType},
-    resources::MyAssets,
     units::events::BuildVehicle,
 };
 
@@ -19,7 +18,7 @@ fn build_vehicle(
     trigger: Trigger<BuildVehicle>,
     mut cmds: Commands,
     q_structure: Query<(&Transform, &StructureType), With<PrimaryStructure>>,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
     audio: Res<bevy_kira_audio::Audio>,
     my_audio: Res<MyAudio>,
 ) {
@@ -50,7 +49,7 @@ fn build_vehicle(
         // Build the unit and spawn it.
         let unit = trigger
             .0
-            .build(vehicle_transform, &my_assets, &audio, &my_audio);
+            .build(vehicle_transform, &my_models, &audio, &my_audio);
         cmds.spawn(unit);
 
         return;

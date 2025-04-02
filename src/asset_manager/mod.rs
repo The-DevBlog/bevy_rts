@@ -2,8 +2,12 @@ use bevy::image::*;
 use bevy::prelude::*;
 
 pub mod audio;
+pub mod imgs;
+pub mod models;
 
 use audio::AudioPlugin;
+use imgs::ImgsPlugin;
+use models::ModelsPlugin;
 
 use crate::resources::MyAssets;
 
@@ -11,7 +15,7 @@ pub struct AssetManagerPlugin;
 
 impl Plugin for AssetManagerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(AudioPlugin)
+        app.add_plugins((AudioPlugin, ModelsPlugin, ImgsPlugin))
             .add_systems(PreStartup, load_assets);
     }
 }
@@ -94,40 +98,40 @@ fn load_assets(mut my_assets: ResMut<MyAssets>, assets: Res<AssetServer>) {
     my_assets.imgs.info_ctr_build_time = assets.load("imgs/info_ctr/build_time.png");
     my_assets.imgs.info_ctr_hp = assets.load("imgs/info_ctr/hp.png");
 
-    // units
-    my_assets.models.rifleman = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0"); // TODO: Temporary
-    my_assets.models.tank_gen1 = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0");
-    my_assets.models.tank_gen2 = assets.load("models/units/tank_gen_2/tank_gen_2.gltf#Scene0");
+    // // units
+    // my_assets.models.rifleman = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0"); // TODO: Temporary
+    // my_assets.models.tank_gen1 = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0");
+    // my_assets.models.tank_gen2 = assets.load("models/units/tank_gen_2/tank_gen_2.gltf#Scene0");
 
-    // structures
-    my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");
-    my_assets.models.cannon = assets.load("models/structures/cannon.gltf#Scene0");
-    my_assets.models.vehicle_depot =
-        assets.load("models/structures/vehicle_depot/vehicle_depot.gltf#Scene0");
-    my_assets.models.research_center = assets.load("models/structures/research_center.gltf#Scene0");
-    my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.gltf#Scene0");
+    // // structures
+    // my_assets.models.barracks = assets.load("models/structures/barracks.gltf#Scene0");
+    // my_assets.models.cannon = assets.load("models/structures/cannon.gltf#Scene0");
+    // my_assets.models.vehicle_depot =
+    //     assets.load("models/structures/vehicle_depot/vehicle_depot.gltf#Scene0");
+    // my_assets.models.research_center = assets.load("models/structures/research_center.gltf#Scene0");
+    // my_assets.models.satellite_dish = assets.load("models/structures/satellite_dish.gltf#Scene0");
 
-    // structure placeholders valid
-    my_assets.models.placeholders.barracks_valid =
-        assets.load("models/structures/placeholders/valid/barracks.gltf#Scene0");
-    my_assets.models.placeholders.cannon_valid =
-        assets.load("models/structures/placeholders/valid/cannon.gltf#Scene0");
-    my_assets.models.placeholders.vehicle_depot_valid =
-        assets.load("models/structures/placeholders/valid/vehicle_depot/vehicle_depot.gltf#Scene0");
-    my_assets.models.placeholders.research_center_valid =
-        assets.load("models/structures/placeholders/valid/research_center.gltf#Scene0");
-    my_assets.models.placeholders.satellite_dish_valid =
-        assets.load("models/structures/placeholders/valid/satellite_dish.gltf#Scene0");
+    // // structure placeholders valid
+    // my_assets.models.placeholders.barracks_valid =
+    //     assets.load("models/structures/placeholders/valid/barracks.gltf#Scene0");
+    // my_assets.models.placeholders.cannon_valid =
+    //     assets.load("models/structures/placeholders/valid/cannon.gltf#Scene0");
+    // my_assets.models.placeholders.vehicle_depot_valid =
+    //     assets.load("models/structures/placeholders/valid/vehicle_depot/vehicle_depot.gltf#Scene0");
+    // my_assets.models.placeholders.research_center_valid =
+    //     assets.load("models/structures/placeholders/valid/research_center.gltf#Scene0");
+    // my_assets.models.placeholders.satellite_dish_valid =
+    //     assets.load("models/structures/placeholders/valid/satellite_dish.gltf#Scene0");
 
-    // structure placeholders invalid
-    my_assets.models.placeholders.barracks_invalid =
-        assets.load("models/structures/placeholders/invalid/barracks.gltf#Scene0");
-    my_assets.models.placeholders.cannon_invalid =
-        assets.load("models/structures/placeholders/invalid/cannon.gltf#Scene0");
-    my_assets.models.placeholders.vehicle_depot_invalid = assets
-        .load("models/structures/placeholders/invalid/vehicle_depot/vehicle_depot.gltf#Scene0");
-    my_assets.models.placeholders.research_center_invalid =
-        assets.load("models/structures/placeholders/invalid/research_center.gltf#Scene0");
-    my_assets.models.placeholders.satellite_dish_invalid =
-        assets.load("models/structures/placeholders/invalid/satellite_dish.gltf#Scene0");
+    // // structure placeholders invalid
+    // my_assets.models.placeholders.barracks_invalid =
+    //     assets.load("models/structures/placeholders/invalid/barracks.gltf#Scene0");
+    // my_assets.models.placeholders.cannon_invalid =
+    //     assets.load("models/structures/placeholders/invalid/cannon.gltf#Scene0");
+    // my_assets.models.placeholders.vehicle_depot_invalid = assets
+    //     .load("models/structures/placeholders/invalid/vehicle_depot/vehicle_depot.gltf#Scene0");
+    // my_assets.models.placeholders.research_center_invalid =
+    //     assets.load("models/structures/placeholders/invalid/research_center.gltf#Scene0");
+    // my_assets.models.placeholders.satellite_dish_invalid =
+    //     assets.load("models/structures/placeholders/invalid/satellite_dish.gltf#Scene0");
 }

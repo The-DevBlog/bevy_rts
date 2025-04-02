@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::components::*;
 use super::events::*;
 use super::resources::InfoContainerData;
+use crate::asset_manager::models::MyModels;
 use crate::bank::Bank;
 use crate::components::structures::*;
 use crate::events::DeselectAllEv;
@@ -134,7 +135,7 @@ fn select_structure(
     dbg: Res<DbgOptions>,
     mut cursor_state: ResMut<CursorState>,
     mut cmds: Commands,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
 ) {
     dbg.print("Select Structure");
 
@@ -144,7 +145,7 @@ fn select_structure(
         cmds.entity(placeholder_ent).despawn_recursive();
     }
 
-    let placeholder_properties = placeholder.build_placeholder(my_assets);
+    let placeholder_properties = placeholder.build_placeholder(my_models);
     let transform = Transform::from_xyz(100000.0, 0.0, 0.0); // avoid bug flicker
 
     *cursor_state = CursorState::Build;

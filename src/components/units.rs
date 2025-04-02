@@ -6,6 +6,7 @@ use strum_macros::EnumIter;
 
 use super::{structures::StructureType, BorderSize};
 use crate::asset_manager::audio::*;
+use crate::asset_manager::models::MyModels;
 use crate::resources::*;
 use crate::tank::*;
 use crate::*;
@@ -102,11 +103,11 @@ impl UnitType {
         }
     }
 
-    fn model(&self, my_assets: &MyAssets) -> Handle<Scene> {
+    fn model(&self, my_models: &MyModels) -> Handle<Scene> {
         match self {
-            UnitType::Rifleman => my_assets.models.rifleman.clone(),
-            UnitType::TankGen1 => my_assets.models.tank_gen1.clone(),
-            UnitType::TankGen2 => my_assets.models.tank_gen2.clone(),
+            UnitType::Rifleman => my_models.rifleman.clone(),
+            UnitType::TankGen1 => my_models.tank_gen1.clone(),
+            UnitType::TankGen2 => my_models.tank_gen2.clone(),
         }
     }
 
@@ -146,14 +147,14 @@ impl UnitType {
     pub fn build(
         &self,
         transform: Transform,
-        my_assets: &Res<MyAssets>,
+        my_models: &Res<MyModels>,
         audio: &bevy_kira_audio::Audio,
         my_audio: &MyAudio,
     ) -> UnitBundle {
         let unit_bundle = UnitBundle::new(
             BORDER_SIZE,
             self.name(),
-            self.model(&my_assets),
+            self.model(&my_models),
             self.size(),
             transform,
             *self,

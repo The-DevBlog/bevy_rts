@@ -7,9 +7,11 @@ use crate::resources::DbgOptions;
 use crate::structures::resources::StructuresBuilt;
 use crate::structures::*;
 
+pub mod components;
 pub mod events;
 pub mod resources;
 
+use components::*;
 use resources::*;
 
 pub struct UnitsPlugin;

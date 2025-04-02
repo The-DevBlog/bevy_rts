@@ -4,9 +4,9 @@ use rand::seq::IndexedRandom;
 use std::fs;
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::components::units::*;
 use crate::events::*;
 use crate::resources::DbgOptions;
+use crate::units::components::*;
 use bevy_rts_pathfinding::components as pf_comps;
 
 pub struct AudioPlugin;

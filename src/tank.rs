@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use crate::asset_manager::audio::MyAudio;
 use crate::asset_manager::models::MyModels;
-use crate::components::units::*;
+use crate::units::components::*;
 use crate::{resources::*, *};
 use events::SetUnitDestinationEv;
 

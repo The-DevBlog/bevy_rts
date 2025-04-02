@@ -4,10 +4,11 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
 
-use super::{structures::StructureType, BorderSize};
 use crate::asset_manager::audio::*;
 use crate::asset_manager::imgs::MyImgs;
 use crate::asset_manager::models::MyModels;
+use crate::components::structures::StructureType;
+use crate::components::BorderSize;
 use crate::tank::*;
 use crate::*;
 

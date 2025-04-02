@@ -8,7 +8,7 @@ use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::asset_manager::imgs::MyImgs;
 use crate::bank::Bank;
 use crate::components::structures::StructureType;
-use crate::components::units::UnitType;
+use crate::units::components::UnitType;
 use crate::units::resources::UnlockedUnits;
 
 pub struct UiPlugin;

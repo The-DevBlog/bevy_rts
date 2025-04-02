@@ -6,9 +6,10 @@ use core::f32;
 
 use crate::asset_manager::imgs::MyImgs;
 use crate::components::structures::Structure;
-use crate::components::{units::*, BorderSize, UnitSelectBorder};
+use crate::components::{BorderSize, UnitSelectBorder};
 use crate::events::*;
 use crate::resources::*;
+use crate::units::components::*;
 use crate::utils::{self, billboard_sync};
 use crate::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};

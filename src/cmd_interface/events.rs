@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{structures::StructureType, units::UnitType};
+use crate::{components::structures::StructureType, units::components::UnitType};
 
 // Event when user selects a structure to build (not actually placing the structure)
 #[derive(Event)]

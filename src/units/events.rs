@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::units::UnitType;
+use super::components::UnitType;
 
 #[derive(Event)]
 pub struct BuildVehicle(pub UnitType);

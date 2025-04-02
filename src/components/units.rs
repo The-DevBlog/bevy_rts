@@ -6,8 +6,8 @@ use strum_macros::EnumIter;
 
 use super::{structures::StructureType, BorderSize};
 use crate::asset_manager::audio::*;
+use crate::asset_manager::imgs::MyImgs;
 use crate::asset_manager::models::MyModels;
-use crate::resources::*;
 use crate::tank::*;
 use crate::*;
 
@@ -95,11 +95,11 @@ impl UnitType {
         }
     }
 
-    pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
+    pub fn img(&self, my_imgs: &Res<MyImgs>) -> Handle<Image> {
         match self {
-            UnitType::Rifleman => my_assets.imgs.unit_rifleman.clone(),
-            UnitType::TankGen1 => my_assets.imgs.unit_tank_gen1.clone(),
-            UnitType::TankGen2 => my_assets.imgs.unit_tank_gen2.clone(),
+            UnitType::Rifleman => my_imgs.unit_rifleman.clone(),
+            UnitType::TankGen1 => my_imgs.unit_tank_gen1.clone(),
+            UnitType::TankGen2 => my_imgs.unit_tank_gen2.clone(),
         }
     }
 

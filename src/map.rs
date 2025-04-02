@@ -7,7 +7,7 @@ use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;
 use std::time::Duration;
 
-use crate::resources::MyAssets;
+use crate::resources::MyImgs;
 
 use super::*;
 
@@ -44,7 +44,7 @@ fn spawn_ground(
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    my_assets: Res<MyAssets>,
+    my_assets: Res<MyImgs>,
 ) {
     // let desired_tile_size = 30.0;
     // let tile_factor = MAP_WIDTH / desired_tile_size;

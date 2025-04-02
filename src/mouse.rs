@@ -3,9 +3,9 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 use core::f32;
-use std::f32::consts::FRAC_PI_2;
 
-use crate::components::structures::{SelectedStructure, Structure};
+use crate::asset_manager::imgs::MyImgs;
+use crate::components::structures::Structure;
 use crate::components::{units::*, BorderSize, UnitSelectBorder};
 use crate::events::*;
 use crate::resources::*;
@@ -51,7 +51,6 @@ fn sync_select_border_with_unit(
 
     // For this example we assume a perspective camera with a 90° vertical FOV.
     // In a real app, you’d query for your camera's actual fov.
-    let fov_y = FRAC_PI_2;
 
     for (mut style, border) in q_border.iter_mut() {
         let Ok((trans, border_size)) = q_unit.get(border.0) else {
@@ -289,7 +288,7 @@ pub fn handle_drag_select(
     mut unit_q: Query<(Entity, &Transform), With<UnitType>>,
     box_coords: Res<SelectBox>,
     q_selected: Query<&SelectedUnit>,
-    my_assets: Res<MyAssets>,
+    my_imgs: Res<MyImgs>,
     q_border: Query<(Entity, &UnitSelectBorder)>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
@@ -305,7 +304,7 @@ pub fn handle_drag_select(
     let border = |ent: Entity| -> (UnitSelectBorder, ImageNode, Name) {
         (
             UnitSelectBorder(ent),
-            ImageNode::new(my_assets.imgs.select_border.clone()),
+            ImageNode::new(my_imgs.select_border.clone()),
             Name::new("Unit Select Border"),
         )
     };
@@ -368,7 +367,7 @@ pub fn handle_drag_select(
 pub fn update_cursor_img(
     game_cmds: Res<GameCommands>,
     mut cursor_state: ResMut<CursorState>,
-    my_assets: Res<MyAssets>,
+    my_imgs: Res<MyImgs>,
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
@@ -414,22 +413,22 @@ pub fn update_cursor_img(
     match *cursor_state {
         CursorState::Relocate => {
             window.cursor_options.visible = true;
-            img = my_assets.imgs.cursor_relocate.clone();
+            img = my_imgs.cursor_relocate.clone();
             hotspot = (2, 2)
         }
         CursorState::Standard => {
             window.cursor_options.visible = true;
-            img = my_assets.imgs.cursor_standard.clone();
+            img = my_imgs.cursor_standard.clone();
             hotspot = (0, 0)
         }
         CursorState::Select => {
             window.cursor_options.visible = true;
-            img = my_assets.imgs.cursor_select.clone();
+            img = my_imgs.cursor_select.clone();
             hotspot = (25, 25)
         }
         CursorState::Build => {
             window.cursor_options.visible = false;
-            img = my_assets.imgs.cursor_relocate.clone();
+            img = my_imgs.cursor_relocate.clone();
             hotspot = (0, 0)
         }
     }
@@ -444,7 +443,7 @@ pub fn single_select_unit(
     trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
-    my_assets: Res<MyAssets>,
+    my_imgs: Res<MyImgs>,
 ) {
     if game_cmds.hvr_cmd_interface {
         return;
@@ -457,7 +456,7 @@ pub fn single_select_unit(
         (
             UnitSelectBorder(ent),
             ImageNode {
-                image: my_assets.imgs.select_border.clone(),
+                image: my_imgs.select_border.clone(),
                 ..default()
             },
         )

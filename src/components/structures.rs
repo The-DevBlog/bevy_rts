@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 use strum_macros::EnumIter;
 
-use crate::{asset_manager::models::MyModels, resources::MyAssets};
+use crate::asset_manager::{imgs::MyImgs, models::MyModels};
 
 use super::BorderSize;
 
@@ -70,13 +70,13 @@ impl StructureType {
         }
     }
 
-    pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
+    pub fn img(&self, my_imgs: &Res<MyImgs>) -> Handle<Image> {
         match self {
-            StructureType::Cannon => my_assets.imgs.structure_cannon.clone(),
-            StructureType::Barracks => my_assets.imgs.structure_barracks.clone(),
-            StructureType::VehicleDepot => my_assets.imgs.structure_vehicle_depot.clone(),
-            StructureType::ResearchCenter => my_assets.imgs.structure_research_center.clone(),
-            StructureType::SatelliteDish => my_assets.imgs.structure_satellite_dish.clone(),
+            StructureType::Cannon => my_imgs.structure_cannon.clone(),
+            StructureType::Barracks => my_imgs.structure_barracks.clone(),
+            StructureType::VehicleDepot => my_imgs.structure_vehicle_depot.clone(),
+            StructureType::ResearchCenter => my_imgs.structure_research_center.clone(),
+            StructureType::SatelliteDish => my_imgs.structure_satellite_dish.clone(),
         }
     }
 

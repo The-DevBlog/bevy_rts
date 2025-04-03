@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     asset_manager::{audio::MyAudio, models::MyModels},
-    units::events::BuildVehicle,
+    units::events::BuildVehicleEv,
 };
 
 use super::components::*;
@@ -16,7 +16,7 @@ impl Plugin for VehicleDepotPlugin {
 }
 
 fn build_vehicle(
-    trigger: Trigger<BuildVehicle>,
+    trigger: Trigger<BuildVehicleEv>,
     mut cmds: Commands,
     q_structure: Query<(&Transform, &StructureType), With<PrimaryStructure>>,
     my_models: Res<MyModels>,

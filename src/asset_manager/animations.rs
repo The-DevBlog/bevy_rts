@@ -2,12 +2,14 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
+use crate::units::events::BuildVehicleEv;
+
 pub struct AnimtationsPlugin;
 
 impl Plugin for AnimtationsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, build_animation_graph)
-            .add_systems(Update, setup_scene_once_loaded);
+            .add_observer(garage_door_animation);
     }
 }
 
@@ -26,7 +28,6 @@ fn build_animation_graph(
     let mut graph = AnimationGraph::new();
     let animations = graph
         .add_clips(
-            // [GltfAssetLabel::Animation(0).from_asset("cube.gltf")]
             [GltfAssetLabel::Animation(0)
                 .from_asset("models/structures/vehicle_depot/vehicle_depot.gltf")]
             .into_iter()
@@ -44,18 +45,17 @@ fn build_animation_graph(
     });
 }
 
-fn setup_scene_once_loaded(
+fn garage_door_animation(
+    _trigger: Trigger<BuildVehicleEv>,
     mut cmds: Commands,
     animations: Res<Animations>,
-    mut players: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
+    mut players: Query<(Entity, &mut AnimationPlayer)>,
 ) {
     for (entity, mut player) in players.iter_mut() {
         let mut transitions = AnimationTransitions::new();
         let animation = animations.animations[0];
 
-        transitions
-            .play(&mut player, animation, Duration::ZERO)
-            .repeat();
+        transitions.play(&mut player, animation, Duration::ZERO);
 
         cmds.entity(entity)
             .insert(AnimationGraphHandle(animations.graph.clone()))

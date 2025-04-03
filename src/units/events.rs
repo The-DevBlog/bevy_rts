@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use super::components::UnitType;
 
 #[derive(Event)]
-pub struct BuildVehicle(pub UnitType);
+pub struct BuildVehicleEv(pub UnitType);
 
 #[derive(Event)]
-pub struct BuildSoldier(pub UnitType);
+pub struct BuildSoldierEv(pub UnitType);

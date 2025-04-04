@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::{animation::transition, prelude::*};
 
-use crate::units::events::BuildVehicleEv;
+use crate::{structures::components::PrimaryStructure, units::events::BuildVehicleEv};
 
 pub struct AnimtationsPlugin;
 
@@ -49,16 +49,24 @@ fn garage_door_animation(
     _trigger: Trigger<BuildVehicleEv>,
     mut cmds: Commands,
     animations: Res<Animations>,
+    q_vehicle_depot: Query<Entity, With<PrimaryStructure>>,
+    q_children: Query<&Children>,
     mut players: Query<(Entity, &mut AnimationPlayer)>,
 ) {
-    for (entity, mut player) in players.iter_mut() {
-        let mut transitions = AnimationTransitions::new();
-        let animation = animations.animations[0];
+    let Ok(vehicle_depot_ent) = q_vehicle_depot.get_single() else {
+        return;
+    };
 
-        transitions.play(&mut player, animation, Duration::ZERO);
+    for child_ent in q_children.iter_descendants(vehicle_depot_ent) {
+        if let Ok((ent, mut animation_player)) = players.get_mut(child_ent) {
+            let mut transitions = AnimationTransitions::new();
+            let animation = animations.animations[0];
 
-        cmds.entity(entity)
-            .insert(AnimationGraphHandle(animations.graph.clone()))
-            .insert(transitions);
+            transitions.play(&mut animation_player, animation, Duration::ZERO);
+
+            cmds.entity(ent)
+                .insert(AnimationGraphHandle(animations.graph.clone()))
+                .insert(transitions);
+        }
     }
 }

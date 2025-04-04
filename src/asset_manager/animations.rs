@@ -1,6 +1,5 @@
+use bevy::prelude::*;
 use std::time::Duration;
-
-use bevy::{animation::transition, prelude::*};
 
 use crate::{structures::components::PrimaryStructure, units::events::BuildVehicleEv};
 

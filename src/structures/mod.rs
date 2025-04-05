@@ -41,7 +41,6 @@ impl Plugin for StructuresPlugin {
                     sync_placeholder,
                     sync_primary_structure_txt,
                     deselect_rmb,
-                    count,
                     validate_structure_placement,
                     place_structure.after(validate_structure_placement),
                 ),
@@ -50,19 +49,6 @@ impl Plugin for StructuresPlugin {
             .add_observer(obs_deselect)
             .add_observer(obs_set_primary_structure);
     }
-}
-
-fn count(
-    q: Query<&PrimaryStructure>,
-    qb: Query<&PrimaryBarracks>,
-    qb2: Query<&PrimaryVehicleDepot>,
-) {
-    println!(
-        "Primary Structures: {}, Primary Barracks: {}, Primary Vehicle Depots: {}",
-        q.iter().count(),
-        qb.iter().count(),
-        qb2.iter().count()
-    );
 }
 
 // modifies the 'StructuresBuilt' resource, whenever a structure is placed or removed (destroyed)

@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::units::components::UnitType;
+
 #[derive(Event)]
 pub struct SetPrimaryStructureEv(pub Entity);
 
@@ -7,4 +9,4 @@ pub struct SetPrimaryStructureEv(pub Entity);
 pub struct DeselectAllStructuresEv;
 
 #[derive(Event)]
-pub struct BuildVehicleEv;
+pub struct BuildVehicleEv(pub UnitType);

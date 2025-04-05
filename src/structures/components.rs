@@ -24,6 +24,12 @@ pub struct Structure;
 #[derive(Component)]
 pub struct PrimaryStructure;
 
+#[derive(Component)]
+pub struct PrimaryVehicleDepot;
+
+#[derive(Component)]
+pub struct PrimaryBarracks;
+
 #[derive(Component, Clone, Copy, EnumIter, PartialEq)]
 pub enum StructureType {
     Cannon,

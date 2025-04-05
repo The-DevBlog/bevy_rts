@@ -42,14 +42,28 @@ impl Plugin for StructuresPlugin {
                     sync_placeholder,
                     sync_primary_structure_txt,
                     deselect_rmb,
+                    count,
                     validate_structure_placement,
                     place_structure.after(validate_structure_placement),
                 ),
             )
-            .add_observer(select_structure)
-            .add_observer(deselect)
-            .add_observer(set_primary_structure);
+            .add_observer(obs_select_structure)
+            .add_observer(obs_deselect)
+            .add_observer(obs_set_primary_structure);
     }
+}
+
+fn count(
+    q: Query<&PrimaryStructure>,
+    qb: Query<&PrimaryBarracks>,
+    qb2: Query<&PrimaryVehicleDepot>,
+) {
+    println!(
+        "Primary Structures: {}, Primary Barracks: {}, Primary Vehicle Depots: {}",
+        q.iter().count(),
+        qb.iter().count(),
+        qb2.iter().count()
+    );
 }
 
 // modifies the 'StructuresBuilt' resource, whenever a structure is placed or removed (destroyed)
@@ -68,12 +82,13 @@ pub fn count_structures(
     }
 }
 
-fn select_structure(
+fn obs_select_structure(
     trigger: Trigger<SelectStructureEv>,
     dbg: Res<DbgOptions>,
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     mut q: Query<Entity, With<NewlyPlacedStructure>>,
+    q_selected: Query<(), With<SelectedStructure>>,
 ) {
     // Hack. This is used to prevent a newly placed structure from automatically being selected
     if let Ok(ent) = q.get_single_mut() {
@@ -81,13 +96,21 @@ fn select_structure(
         return;
     }
 
-    dbg.print("Structure selected");
-
     if game_cmds.hvr_cmd_interface {
         return;
     }
 
     let structure_ent = trigger.0;
+
+    // Check if the structure is already selected.
+    if q_selected.get(structure_ent).is_ok() {
+        dbg.print("Structure is already selected");
+        cmds.trigger(SetPrimaryStructureEv(structure_ent));
+        return;
+    }
+
+    dbg.print("Structure selected");
+    cmds.trigger(DeselectAllStructuresEv);
 
     let outline = (
         OutlineVolume {
@@ -220,7 +243,7 @@ fn deselect_rmb(mut cmds: Commands, input: Res<ButtonInput<MouseButton>>) {
     }
 }
 
-fn deselect(
+fn obs_deselect(
     _trigger: Trigger<DeselectAllStructuresEv>,
     mut cmds: Commands,
     mut q_selected_structure: Query<Entity, With<SelectedStructure>>,
@@ -277,13 +300,51 @@ fn sync_primary_structure_txt(
     }
 }
 
-fn set_primary_structure(
+fn obs_set_primary_structure(
     trigger: Trigger<SetPrimaryStructureEv>,
+    q_structure_type: Query<(Entity, &StructureType)>,
     mut cmds: Commands,
     dbg: Res<DbgOptions>,
 ) {
     dbg.print("Assigning new primary structure");
     let new_primary = trigger.0;
+
+    let Ok((structure_ent, structure_type)) = q_structure_type.get(new_primary) else {
+        return;
+    };
+
+    match structure_type {
+        StructureType::Barracks => {
+            for (ent, t) in q_structure_type.iter() {
+                if ent == structure_ent {
+                    continue;
+                }
+
+                if *t == StructureType::Barracks {
+                    cmds.entity(ent).remove::<PrimaryStructure>();
+                    cmds.entity(ent).remove::<PrimaryBarracks>();
+                }
+            }
+
+            cmds.entity(new_primary).insert(PrimaryBarracks);
+        }
+        StructureType::VehicleDepot => {
+            for (ent, t) in q_structure_type.iter() {
+                if ent == structure_ent {
+                    continue;
+                }
+
+                if *t == StructureType::VehicleDepot {
+                    cmds.entity(ent).remove::<PrimaryStructure>();
+                    cmds.entity(ent).remove::<PrimaryStructure>();
+                }
+            }
+
+            cmds.entity(new_primary).insert(PrimaryVehicleDepot);
+        }
+        _ => (),
+    }
+
     cmds.entity(new_primary).insert(PrimaryStructure);
 }
 

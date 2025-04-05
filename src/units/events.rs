@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
-use crate::components::units::UnitType;
+use super::components::UnitType;
 
 #[derive(Event)]
-pub struct BuildVehicle(pub UnitType);
+pub struct QueueVehicleEv(pub UnitType);
 
 #[derive(Event)]
-pub struct BuildSoldier(pub UnitType);
+pub struct BuildSoldierEv(pub UnitType);

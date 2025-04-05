@@ -9,7 +9,6 @@ mod asset_manager;
 mod bank;
 mod camera;
 mod cmd_interface;
-mod components;
 mod events;
 mod map;
 mod mouse;

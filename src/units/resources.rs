@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-pub struct UnitsPlugin;
+pub struct ResourcesPlugin;
 
-impl Plugin for UnitsPlugin {
+impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UnlockedUnits>();
     }

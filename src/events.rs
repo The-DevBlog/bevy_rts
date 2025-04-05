@@ -25,7 +25,7 @@ pub struct SelectSingleUnitEv(pub Entity);
 pub struct SelectMultipleUnitEv;
 
 #[derive(Event)]
-pub struct DeselectAllEv;
+pub struct DeselectAllUnitsEv;
 
 #[derive(Event)]
 pub struct SelectStructureEv(pub Entity);

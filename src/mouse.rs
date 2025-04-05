@@ -3,12 +3,13 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 use core::f32;
-use std::f32::consts::FRAC_PI_2;
 
-use crate::components::structures::{SelectedStructure, Structure};
-use crate::components::{units::*, BorderSize, UnitSelectBorder};
+use crate::asset_manager::imgs::MyImgs;
 use crate::events::*;
 use crate::resources::*;
+use crate::structures::components::Structure;
+use crate::structures::events::DeselectAllStructuresEv;
+use crate::units::components::*;
 use crate::utils::{self, billboard_sync};
 use crate::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};
@@ -51,7 +52,6 @@ fn sync_select_border_with_unit(
 
     // For this example we assume a perspective camera with a 90° vertical FOV.
     // In a real app, you’d query for your camera's actual fov.
-    let fov_y = FRAC_PI_2;
 
     for (mut style, border) in q_border.iter_mut() {
         let Ok((trans, border_size)) = q_unit.get(border.0) else {
@@ -132,7 +132,7 @@ fn mouse_input(
             }
 
             if !game_cmds.is_any_unit_selected || hit_unit.is_some() || hit_structure.is_some() {
-                cmds.trigger(DeselectAllEv);
+                cmds.trigger(DeselectAllUnitsEv);
 
                 if let Some(hit_ent) = hit_unit {
                     cmds.trigger(SelectSingleUnitEv(hit_ent));
@@ -152,7 +152,7 @@ fn mouse_input(
     }
 
     if input.just_released(MouseButton::Right) {
-        cmds.trigger(DeselectAllEv);
+        cmds.trigger(DeselectAllUnitsEv);
     }
 }
 
@@ -289,7 +289,7 @@ pub fn handle_drag_select(
     mut unit_q: Query<(Entity, &Transform), With<UnitType>>,
     box_coords: Res<SelectBox>,
     q_selected: Query<&SelectedUnit>,
-    my_assets: Res<MyAssets>,
+    my_imgs: Res<MyImgs>,
     q_border: Query<(Entity, &UnitSelectBorder)>,
 ) {
     fn cross_product(v1: Vec3, v2: Vec3) -> f32 {
@@ -305,7 +305,7 @@ pub fn handle_drag_select(
     let border = |ent: Entity| -> (UnitSelectBorder, ImageNode, Name) {
         (
             UnitSelectBorder(ent),
-            ImageNode::new(my_assets.imgs.select_border.clone()),
+            ImageNode::new(my_imgs.select_border.clone()),
             Name::new("Unit Select Border"),
         )
     };
@@ -368,7 +368,7 @@ pub fn handle_drag_select(
 pub fn update_cursor_img(
     game_cmds: Res<GameCommands>,
     mut cursor_state: ResMut<CursorState>,
-    my_assets: Res<MyAssets>,
+    my_imgs: Res<MyImgs>,
     mouse_coords: Res<MouseCoords>,
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
@@ -414,22 +414,22 @@ pub fn update_cursor_img(
     match *cursor_state {
         CursorState::Relocate => {
             window.cursor_options.visible = true;
-            img = my_assets.imgs.cursor_relocate.clone();
+            img = my_imgs.cursor_relocate.clone();
             hotspot = (2, 2)
         }
         CursorState::Standard => {
             window.cursor_options.visible = true;
-            img = my_assets.imgs.cursor_standard.clone();
+            img = my_imgs.cursor_standard.clone();
             hotspot = (0, 0)
         }
         CursorState::Select => {
             window.cursor_options.visible = true;
-            img = my_assets.imgs.cursor_select.clone();
+            img = my_imgs.cursor_select.clone();
             hotspot = (25, 25)
         }
         CursorState::Build => {
             window.cursor_options.visible = false;
-            img = my_assets.imgs.cursor_relocate.clone();
+            img = my_imgs.cursor_relocate.clone();
             hotspot = (0, 0)
         }
     }
@@ -444,7 +444,7 @@ pub fn single_select_unit(
     trigger: Trigger<SelectSingleUnitEv>,
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
-    my_assets: Res<MyAssets>,
+    my_imgs: Res<MyImgs>,
 ) {
     if game_cmds.hvr_cmd_interface {
         return;
@@ -457,7 +457,7 @@ pub fn single_select_unit(
         (
             UnitSelectBorder(ent),
             ImageNode {
-                image: my_assets.imgs.select_border.clone(),
+                image: my_imgs.select_border.clone(),
                 ..default()
             },
         )
@@ -468,7 +468,7 @@ pub fn single_select_unit(
 }
 
 pub fn deselect_all(
-    _trigger: Trigger<DeselectAllEv>,
+    _trigger: Trigger<DeselectAllUnitsEv>,
     mut cmds: Commands,
     mut select_q: Query<Entity, With<SelectedUnit>>,
     mut q_border: Query<Entity, With<UnitSelectBorder>>,
@@ -482,6 +482,13 @@ pub fn deselect_all(
     }
 }
 
-fn set_is_any_selected(q_selected: Query<&SelectedUnit>, mut game_cmds: ResMut<GameCommands>) {
+fn set_is_any_selected(
+    mut cmds: Commands,
+    q_selected: Query<&SelectedUnit>,
+    mut game_cmds: ResMut<GameCommands>,
+) {
     game_cmds.is_any_unit_selected = q_selected.iter().next().is_some();
+    if game_cmds.is_any_unit_selected {
+        cmds.trigger(DeselectAllStructuresEv);
+    }
 }

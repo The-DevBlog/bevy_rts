@@ -6,22 +6,26 @@ use bevy_mod_outline::OutlineMode;
 use bevy_mod_outline::OutlineVolume;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::RtsCamera;
-use bevy_rts_pathfinding::components::RtsObjSize;
 use bevy_rts_pathfinding::components::{self as pf_comps};
+use events::DeselectAllStructuresEv;
+use events::SetPrimaryStructureEv;
 use resources::StructuresBuilt;
 use vehicle_depot::VehicleDepotPlugin;
 
 use crate::asset_manager::audio::*;
+use crate::asset_manager::models::MyModels;
 use crate::bank::*;
-use crate::components::structures::*;
 use crate::events::*;
 use crate::resources::*;
 use crate::utils;
 use crate::utils::billboard_sync;
 
+pub mod components;
+pub mod events;
 pub mod resources;
 mod vehicle_depot;
 
+use components::*;
 use resources::ResourcesPlugin;
 
 pub struct StructuresPlugin;
@@ -32,17 +36,18 @@ impl Plugin for StructuresPlugin {
             .add_systems(
                 Update,
                 (
-                    mark_primary_structure,
-                    primary_structure_txt,
-                    count_structures,
+                    mark_primary_structure_initial,
+                    count_structures.after(place_structure),
                     sync_placeholder,
-                    deselect_if_any_unit_is_selected,
+                    sync_primary_structure_txt,
+                    deselect_rmb,
                     validate_structure_placement,
                     place_structure.after(validate_structure_placement),
                 ),
             )
-            .add_observer(select_structure)
-            .add_observer(deselect);
+            .add_observer(obs_select_structure)
+            .add_observer(obs_deselect)
+            .add_observer(obs_set_primary_structure);
     }
 }
 
@@ -62,12 +67,13 @@ pub fn count_structures(
     }
 }
 
-fn select_structure(
+fn obs_select_structure(
     trigger: Trigger<SelectStructureEv>,
     dbg: Res<DbgOptions>,
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     mut q: Query<Entity, With<NewlyPlacedStructure>>,
+    q_selected: Query<(), With<SelectedStructure>>,
 ) {
     // Hack. This is used to prevent a newly placed structure from automatically being selected
     if let Ok(ent) = q.get_single_mut() {
@@ -75,13 +81,21 @@ fn select_structure(
         return;
     }
 
-    dbg.print("Structure selected");
-
     if game_cmds.hvr_cmd_interface {
         return;
     }
 
     let structure_ent = trigger.0;
+
+    // Check if the structure is already selected.
+    if q_selected.get(structure_ent).is_ok() {
+        dbg.print("Structure is already selected");
+        cmds.trigger(SetPrimaryStructureEv(structure_ent));
+        return;
+    }
+
+    dbg.print("Structure selected");
+    cmds.trigger(DeselectAllStructuresEv);
 
     let outline = (
         OutlineVolume {
@@ -113,7 +127,7 @@ fn place_structure(
     dbg: Res<DbgOptions>,
     input: Res<ButtonInput<MouseButton>>,
     mut cursor_state: ResMut<CursorState>,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
     my_audio: Res<MyAudio>,
     game_cmds: Res<GameCommands>,
 ) {
@@ -129,7 +143,7 @@ fn place_structure(
 
     if input.just_pressed(MouseButton::Left) && placeholder.is_valid {
         *cursor_state = CursorState::Standard;
-        structure.place(placeholder_ent, &my_assets, &mut scene, &mut rb, &mut cmds);
+        structure.place(placeholder_ent, &my_models, &mut scene, &mut rb, &mut cmds);
 
         // Adjust bank
         cmds.trigger(AdjustFundsEv(-structure.cost()));
@@ -146,7 +160,7 @@ fn validate_structure_placement(
     q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
     mut q_placeholder: Query<(Entity, &mut StructurePlaceholder, &mut SceneRoot)>,
     q_collider: Query<&Collider, With<pf_comps::MapBase>>,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
 ) {
     let Ok((placeholder_ent, mut placeholder, mut scene)) = q_placeholder.get_single_mut() else {
         return;
@@ -170,12 +184,12 @@ fn validate_structure_placement(
         placeholder.is_valid = false;
         placeholder
             .structure
-            .invalid_placement(&my_assets, &mut scene);
+            .invalid_placement(&my_models, &mut scene);
     } else {
         placeholder.is_valid = true;
         placeholder
             .structure
-            .valid_placement(&my_assets, &mut scene);
+            .valid_placement(&my_models, &mut scene);
     }
 }
 
@@ -208,32 +222,14 @@ fn sync_placeholder(
     }
 }
 
-fn deselect_if_any_unit_is_selected(
-    mut cmds: Commands,
-    game_cmds: Res<GameCommands>,
-    q_selected_structure: Query<Entity, With<SelectedStructure>>,
-    mut q_primary_structure_txt: Query<Entity, With<PrimaryStructureTxt>>,
-) {
-    if !game_cmds.is_any_unit_selected {
-        return;
-    }
-
-    for structure_ent in q_selected_structure.iter() {
-        cmds.entity(structure_ent).remove::<(
-            SelectedStructure,
-            OutlineVolume,
-            OutlineMode,
-            AsyncSceneInheritOutline,
-        )>();
-    }
-
-    for txt_ent in q_primary_structure_txt.iter_mut() {
-        cmds.entity(txt_ent).despawn_recursive();
+fn deselect_rmb(mut cmds: Commands, input: Res<ButtonInput<MouseButton>>) {
+    if input.just_released(MouseButton::Right) {
+        cmds.trigger(DeselectAllStructuresEv);
     }
 }
 
-fn deselect(
-    _trigger: Trigger<DeselectAllEv>,
+fn obs_deselect(
+    _trigger: Trigger<DeselectAllStructuresEv>,
     mut cmds: Commands,
     mut q_selected_structure: Query<Entity, With<SelectedStructure>>,
     mut q_primary_structure_txt: Query<Entity, With<PrimaryStructureTxt>>,
@@ -252,13 +248,10 @@ fn deselect(
     }
 }
 
-#[derive(Component)]
-pub struct PrimaryStructureTxt;
-
-fn primary_structure_txt(
+fn sync_primary_structure_txt(
     mut cmds: Commands,
     q_selected_structure: Query<
-        (&Transform, &RtsObjSize, &PrimaryStructure),
+        (&Transform, &pf_comps::RtsObjSize, &PrimaryStructure),
         With<SelectedStructure>,
     >,
     mut q_primary_structure_txt: Query<&mut Node, With<PrimaryStructureTxt>>,
@@ -292,7 +285,47 @@ fn primary_structure_txt(
     }
 }
 
-fn mark_primary_structure(
+fn obs_set_primary_structure(
+    trigger: Trigger<SetPrimaryStructureEv>,
+    q_primary_barracks: Query<Entity, With<PrimaryBarracks>>,
+    q_primary_vehicle_depot: Query<Entity, With<PrimaryVehicleDepot>>,
+    q_structure_type: Query<&StructureType>,
+    mut cmds: Commands,
+    dbg: Res<DbgOptions>,
+) {
+    dbg.print("Assigning new primary structure");
+    let new_primary = trigger.0;
+
+    let Ok(structure_type) = q_structure_type.get(new_primary) else {
+        return;
+    };
+
+    match structure_type {
+        StructureType::Barracks => {
+            // remove any other primary barracks
+            for ent in q_primary_barracks.iter() {
+                cmds.entity(ent).remove::<PrimaryStructure>();
+                cmds.entity(ent).remove::<PrimaryBarracks>();
+            }
+
+            cmds.entity(new_primary).insert(PrimaryBarracks);
+        }
+        StructureType::VehicleDepot => {
+            // remove any other primary vehicle depots
+            for ent in q_primary_vehicle_depot.iter() {
+                cmds.entity(ent).remove::<PrimaryStructure>();
+                cmds.entity(ent).remove::<PrimaryVehicleDepot>();
+            }
+
+            cmds.entity(new_primary).insert(PrimaryVehicleDepot);
+        }
+        _ => (),
+    }
+
+    cmds.entity(new_primary).insert(PrimaryStructure);
+}
+
+fn mark_primary_structure_initial(
     mut cmds: Commands,
     structures_built: ResMut<StructuresBuilt>,
     q_structures: Query<(Entity, &StructureType), Added<Structure>>,
@@ -301,12 +334,12 @@ fn mark_primary_structure(
         match structure_type {
             StructureType::Barracks => {
                 if structures_built.barracks == 1 {
-                    cmds.entity(structure_ent).insert(PrimaryStructure);
+                    cmds.trigger(SetPrimaryStructureEv(structure_ent));
                 }
             }
             StructureType::VehicleDepot => {
                 if structures_built.vehicle_depot == 1 {
-                    cmds.entity(structure_ent).insert(PrimaryStructure);
+                    cmds.trigger(SetPrimaryStructureEv(structure_ent));
                 }
             }
             _ => (),

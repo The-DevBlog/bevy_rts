@@ -4,14 +4,21 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::EnumIter;
 
-use super::{structures::StructureType, BorderSize};
 use crate::asset_manager::audio::*;
-use crate::resources::*;
+use crate::asset_manager::imgs::MyImgs;
+use crate::asset_manager::models::MyModels;
+use crate::structures::components::StructureType;
 use crate::tank::*;
 use crate::*;
 
-const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
-const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
+const TANK_GEN_1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
+const TANK_GEN_2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
+
+#[derive(Component, Clone)]
+pub struct UnitSelectBorder(pub Entity);
+
+#[derive(Component)]
+pub struct BorderSize(pub Vec2);
 
 #[derive(Component)]
 pub struct Speed(pub f32);
@@ -70,11 +77,11 @@ impl UnitType {
         }
     }
 
-    pub fn build_time(&self) -> i32 {
+    pub fn build_time(&self) -> u64 {
         match self {
             UnitType::Rifleman => 1,
-            UnitType::TankGen1 => 5,
-            UnitType::TankGen2 => 10,
+            UnitType::TankGen1 => 2,
+            UnitType::TankGen2 => 2,
         }
     }
 
@@ -94,27 +101,27 @@ impl UnitType {
         }
     }
 
-    pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
+    pub fn img(&self, my_imgs: &Res<MyImgs>) -> Handle<Image> {
         match self {
-            UnitType::Rifleman => my_assets.imgs.unit_rifleman.clone(),
-            UnitType::TankGen1 => my_assets.imgs.unit_tank_gen1.clone(),
-            UnitType::TankGen2 => my_assets.imgs.unit_tank_gen2.clone(),
+            UnitType::Rifleman => my_imgs.unit_rifleman.clone(),
+            UnitType::TankGen1 => my_imgs.unit_tank_gen1.clone(),
+            UnitType::TankGen2 => my_imgs.unit_tank_gen2.clone(),
         }
     }
 
-    fn model(&self, my_assets: &MyAssets) -> Handle<Scene> {
+    fn model(&self, my_models: &MyModels) -> Handle<Scene> {
         match self {
-            UnitType::Rifleman => my_assets.models.rifleman.clone(),
-            UnitType::TankGen1 => my_assets.models.tank_gen1.clone(),
-            UnitType::TankGen2 => my_assets.models.tank_gen2.clone(),
+            UnitType::Rifleman => my_models.rifleman.clone(),
+            UnitType::TankGen1 => my_models.tank_gen1.clone(),
+            UnitType::TankGen2 => my_models.tank_gen2.clone(),
         }
     }
 
     fn size(&self) -> Vec3 {
         match self {
             UnitType::Rifleman => Vec3::new(2.0, 2.0, 2.0), // TODO: Define rifleman size
-            UnitType::TankGen1 => TANK_GEN1_SIZE,
-            UnitType::TankGen2 => TANK_GEN2_SIZE,
+            UnitType::TankGen1 => TANK_GEN_1_SIZE,
+            UnitType::TankGen2 => TANK_GEN_2_SIZE,
         }
     }
 
@@ -146,14 +153,14 @@ impl UnitType {
     pub fn build(
         &self,
         transform: Transform,
-        my_assets: &Res<MyAssets>,
+        my_models: &Res<MyModels>,
         audio: &bevy_kira_audio::Audio,
         my_audio: &MyAudio,
     ) -> UnitBundle {
         let unit_bundle = UnitBundle::new(
             BORDER_SIZE,
             self.name(),
-            self.model(&my_assets),
+            self.model(&my_models),
             self.size(),
             transform,
             *self,

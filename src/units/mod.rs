@@ -1,20 +1,24 @@
 use bevy::prelude::*;
-use events::{BuildSoldier, BuildVehicle};
+use events::{BuildSoldierEv, QueueVehicleEv};
 
 use crate::cmd_interface::events::BuildUnitEv;
-use crate::components::structures::*;
-use crate::resources::units::UnlockedUnits;
 use crate::resources::DbgOptions;
+use crate::structures::components::*;
 use crate::structures::resources::StructuresBuilt;
 use crate::structures::*;
 
+pub mod components;
 pub mod events;
+pub mod resources;
+
+use resources::*;
 
 pub struct UnitsPlugin;
 
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, mark_available_units.after(count_structures))
+        app.add_plugins(ResourcesPlugin)
+            .add_systems(Update, mark_available_units.after(count_structures))
             .add_observer(handle_build_unit);
     }
 }
@@ -43,8 +47,8 @@ fn handle_build_unit(trigger: Trigger<BuildUnitEv>, mut cmds: Commands, dbg: Res
     dbg.print(&format!("Building unit: {}", unit_type.name()));
 
     match unit_type.source() {
-        StructureType::Barracks => cmds.trigger(BuildSoldier(unit_type)),
-        StructureType::VehicleDepot => cmds.trigger(BuildVehicle(unit_type)),
+        StructureType::Barracks => cmds.trigger(BuildSoldierEv(unit_type)),
+        StructureType::VehicleDepot => cmds.trigger(QueueVehicleEv(unit_type)),
         _ => (),
     }
 }

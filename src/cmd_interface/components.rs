@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::units::UnitType;
+use crate::units::components::UnitType;
 
 #[derive(Component)]
 pub struct CmdInterfaceCtr;

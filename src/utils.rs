@@ -2,7 +2,6 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::prelude::*;
 use bevy_rapier3d::{plugin::RapierContext, prelude::QueryFilter};
-use bevy_rts_pathfinding::components::RtsObjSize;
 
 pub fn cast_ray(
     rapier: &RapierContext,

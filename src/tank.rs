@@ -8,12 +8,11 @@ use bevy_rts_pathfinding::flowfield::FlowField;
 use std::time::Duration;
 
 use crate::asset_manager::audio::MyAudio;
-use crate::components::units::*;
+use crate::asset_manager::models::MyModels;
+use crate::units::components::*;
 use crate::{resources::*, *};
 use events::SetUnitDestinationEv;
 
-const TANK_GEN1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
-const TANK_GEN2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
 pub const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
 
 pub struct TankPlugin;
@@ -24,7 +23,6 @@ impl Plugin for TankPlugin {
         app.add_systems(
             Update,
             (
-                // move_unit.run_if(any_with_component::<pf_comps::Destination>),
                 set_is_moving,
                 spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
                 move_unit.run_if(any_with_component::<pf_comps::Destination>),
@@ -37,26 +35,26 @@ impl Plugin for TankPlugin {
 
 pub fn spawn_tank(
     mut cmds: Commands,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
     audio: Res<bevy_kira_audio::Audio>,
     my_audio: Res<MyAudio>,
 ) {
     // GEN I
     let transform = Transform::from_translation(Vec3::new(-100.0, 2.0, 0.0));
-    cmds.spawn(UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio));
 
     // GEN II
     let transform = Transform::from_translation(Vec3::new(-25.0, 2.0, 0.0));
-    cmds.spawn(UnitType::TankGen2.build(transform, &my_assets, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_models, &audio, &my_audio));
 
     // GEN II
     let transform = Transform::from_translation(Vec3::new(0.0, 2.0, 0.0));
-    cmds.spawn(UnitType::TankGen2.build(transform, &my_assets, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_models, &audio, &my_audio));
 }
 
 pub fn spawn_tanks(
     mut cmds: Commands,
-    my_assets: Res<MyAssets>,
+    my_models: Res<MyModels>,
     audio: Res<bevy_kira_audio::Audio>,
     my_audio: Res<MyAudio>,
 ) {
@@ -66,27 +64,27 @@ pub fn spawn_tanks(
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 
     // Create tank on the left side facing right
-    let create_left_tank = |row: usize, col: usize| {
+    let _create_left_tank = |row: usize, col: usize| {
         let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         let transform = Transform::from_translation(pos);
-        UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio)
+        UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio)
     };
 
     // Create tank on the right side facing left
     let create_right_tank = |row: usize, col: usize| {
         let pos = initial_pos_right + Vec3::new(-offset.x * row as f32, 2.0, offset.z * col as f32);
         let transform = Transform::from_translation(pos);
-        UnitType::TankGen1.build(transform, &my_assets, &audio, &my_audio)
+        UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio)
     };
 
     // Spawn Left Group (facing right)
     let mut count = 0;
-    for row in 0..grid_size {
-        for col in 0..grid_size {
+    for _row in 0..grid_size {
+        for _col in 0..grid_size {
             if count >= TANK_COUNT {
                 break;
             }
-            // cmds.spawn(create_left_tank(row, col));
+            // cmds.spawn(_create_left_tank(_row, _col));
             count += 1;
         }
     }

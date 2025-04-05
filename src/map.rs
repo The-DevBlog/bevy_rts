@@ -1,13 +1,6 @@
-use bevy::image::ImageAddressMode;
-use bevy::render::mesh::VertexAttributeValues;
-use bevy::render::render_resource::{AddressMode, SamplerDescriptor};
-use bevy::time::common_conditions::once_after_delay;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;
-use std::time::Duration;
-
-use crate::resources::MyAssets;
 
 use super::*;
 
@@ -15,23 +8,7 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Startup,
-            (
-                spawn_ground,
-                spawn_light,
-                // spawn_obstacle,
-                spawn_grid,
-            )
-                .chain(),
-        );
-        // app.add_systems(
-        //     Update,
-        //     (
-        // spawn_obstacle_2.run_if(once_after_delay(Duration::from_secs_f32(4.0))),
-        // despawn_obstacles.run_if(once_after_delay(Duration::from_secs(6))),
-        //     ),
-        // );
+        app.add_systems(Startup, (spawn_ground, spawn_light, spawn_grid).chain());
     }
 }
 
@@ -44,7 +21,6 @@ fn spawn_ground(
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    my_assets: Res<MyAssets>,
 ) {
     // let desired_tile_size = 30.0;
     // let tile_factor = MAP_WIDTH / desired_tile_size;
@@ -121,74 +97,4 @@ fn spawn_light(mut cmds: Commands) {
         )),
         Name::new("Light"),
     ));
-}
-
-fn spawn_obstacle(
-    mut cmds: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let size = 12.0;
-    cmds.spawn((
-        Mesh3d(meshes.add(Cuboid::new(size, size, size))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(100.0, 6.0, 150.0)),
-        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-        RigidBody::Fixed,
-        pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec3::new(size, size, size)),
-    ));
-
-    let obst = (
-        Mesh3d(meshes.add(Cylinder::new(size, size / 2.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(-100.0, 6.0, 150.0)),
-        Collider::cuboid(size, size / 2.0, size),
-        RigidBody::Fixed,
-        pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec3::new(size * 2.0, size, size * 2.0)),
-    );
-
-    let size = 125.0;
-    let wall = (
-        Mesh3d(meshes.add(Cuboid::new(5.0, 5.0, size))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(-175.0, 2.5, 0.0)),
-        Collider::cuboid(5.0 / 2.0, 5.0 / 2.0, size / 2.0),
-        RigidBody::Fixed,
-        pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec3::new(5.0, 5.0, size)),
-    );
-
-    cmds.spawn(obst);
-    cmds.spawn(wall);
-}
-
-fn spawn_obstacle_2(
-    mut cmds: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let size = 12.0;
-    cmds.spawn((
-        Mesh3d(meshes.add(Cuboid::new(size, size, size))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(-100.0, 6.0, -150.0)),
-        Collider::cuboid(size / 2.0, size / 2.0, size / 2.0),
-        RigidBody::Fixed,
-        pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec3::new(size, size, size)),
-    ));
-
-    let obst = (
-        Mesh3d(meshes.add(Cylinder::new(size, size / 2.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-        Transform::from_translation(Vec3::new(100.0, 6.0, -150.0)),
-        Collider::cuboid(size, size / 2.0, size),
-        RigidBody::Fixed,
-        pf_comps::RtsObj,
-        pf_comps::RtsObjSize(Vec3::new(size * 2.0, size * 2.0, size * 2.0)),
-    );
-
-    cmds.spawn(obst);
 }

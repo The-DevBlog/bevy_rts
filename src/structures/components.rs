@@ -3,9 +3,13 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 use strum_macros::EnumIter;
 
-use crate::resources::MyAssets;
+use crate::{
+    asset_manager::{imgs::MyImgs, models::MyModels},
+    units::components::BorderSize,
+};
 
-use super::BorderSize;
+#[derive(Component)]
+pub struct PrimaryStructureTxt;
 
 #[derive(Component)]
 pub struct SelectedStructure;
@@ -19,6 +23,12 @@ pub struct Structure;
 
 #[derive(Component)]
 pub struct PrimaryStructure;
+
+#[derive(Component)]
+pub struct PrimaryVehicleDepot;
+
+#[derive(Component)]
+pub struct PrimaryBarracks;
 
 #[derive(Component, Clone, Copy, EnumIter, PartialEq)]
 pub enum StructureType {
@@ -40,7 +50,7 @@ impl StructureType {
         }
     }
 
-    pub fn build_time(&self) -> i32 {
+    pub fn build_time(&self) -> u64 {
         match self {
             StructureType::Cannon => 5,
             StructureType::Barracks => 10,
@@ -70,37 +80,37 @@ impl StructureType {
         }
     }
 
-    pub fn img(&self, my_assets: &Res<MyAssets>) -> Handle<Image> {
+    pub fn img(&self, my_imgs: &Res<MyImgs>) -> Handle<Image> {
         match self {
-            StructureType::Cannon => my_assets.imgs.structure_cannon.clone(),
-            StructureType::Barracks => my_assets.imgs.structure_barracks.clone(),
-            StructureType::VehicleDepot => my_assets.imgs.structure_vehicle_depot.clone(),
-            StructureType::ResearchCenter => my_assets.imgs.structure_research_center.clone(),
-            StructureType::SatelliteDish => my_assets.imgs.structure_satellite_dish.clone(),
+            StructureType::Cannon => my_imgs.structure_cannon.clone(),
+            StructureType::Barracks => my_imgs.structure_barracks.clone(),
+            StructureType::VehicleDepot => my_imgs.structure_vehicle_depot.clone(),
+            StructureType::ResearchCenter => my_imgs.structure_research_center.clone(),
+            StructureType::SatelliteDish => my_imgs.structure_satellite_dish.clone(),
         }
     }
 
-    fn model(&self, my_assets: &MyAssets) -> Handle<Scene> {
+    fn model(&self, my_models: &MyModels) -> Handle<Scene> {
         match self {
-            StructureType::Cannon => my_assets.models.cannon.clone(),
-            StructureType::Barracks => my_assets.models.barracks.clone(),
-            StructureType::VehicleDepot => my_assets.models.vehicle_depot.clone(),
-            StructureType::ResearchCenter => my_assets.models.research_center.clone(),
-            StructureType::SatelliteDish => my_assets.models.satellite_dish.clone(),
+            StructureType::Cannon => my_models.cannon.clone(),
+            StructureType::Barracks => my_models.barracks.clone(),
+            StructureType::VehicleDepot => my_models.vehicle_depot.clone(),
+            StructureType::ResearchCenter => my_models.research_center.clone(),
+            StructureType::SatelliteDish => my_models.satellite_dish.clone(),
         }
     }
 
     pub fn place(
         &self,
         placeholder_ent: Entity,
-        my_assets: &MyAssets,
+        my_models: &MyModels,
         scene: &mut SceneRoot,
         rb: &mut RigidBody,
         cmds: &mut Commands,
     ) {
         *rb = RigidBody::Fixed;
 
-        scene.0 = self.model(my_assets);
+        scene.0 = self.model(my_models);
 
         cmds.entity(placeholder_ent)
             .remove::<(ActiveEvents, Sensor, StructurePlaceholder)>()
@@ -113,43 +123,41 @@ impl StructureType {
             ));
     }
 
-    pub fn invalid_placement(&self, assets: &MyAssets, scene: &mut SceneRoot) {
+    pub fn invalid_placement(&self, my_models: &MyModels, scene: &mut SceneRoot) {
         match self {
-            StructureType::Cannon => scene.0 = assets.models.placeholders.cannon_invalid.clone(),
-            StructureType::Barracks => {
-                scene.0 = assets.models.placeholders.barracks_invalid.clone()
-            }
+            StructureType::Cannon => scene.0 = my_models.placeholders.cannon_invalid.clone(),
+            StructureType::Barracks => scene.0 = my_models.placeholders.barracks_invalid.clone(),
             StructureType::VehicleDepot => {
-                scene.0 = assets.models.placeholders.vehicle_depot_invalid.clone()
+                scene.0 = my_models.placeholders.vehicle_depot_invalid.clone()
             }
             StructureType::ResearchCenter => {
-                scene.0 = assets.models.placeholders.research_center_invalid.clone()
+                scene.0 = my_models.placeholders.research_center_invalid.clone()
             }
             StructureType::SatelliteDish => {
-                scene.0 = assets.models.placeholders.satellite_dish_invalid.clone()
+                scene.0 = my_models.placeholders.satellite_dish_invalid.clone()
             }
         }
     }
 
-    pub fn valid_placement(&self, assets: &MyAssets, scene: &mut SceneRoot) {
+    pub fn valid_placement(&self, my_models: &MyModels, scene: &mut SceneRoot) {
         match self {
-            StructureType::Cannon => scene.0 = assets.models.placeholders.cannon_valid.clone(),
-            StructureType::Barracks => scene.0 = assets.models.placeholders.barracks_valid.clone(),
+            StructureType::Cannon => scene.0 = my_models.placeholders.cannon_valid.clone(),
+            StructureType::Barracks => scene.0 = my_models.placeholders.barracks_valid.clone(),
             StructureType::VehicleDepot => {
-                scene.0 = assets.models.placeholders.vehicle_depot_valid.clone()
+                scene.0 = my_models.placeholders.vehicle_depot_valid.clone()
             }
             StructureType::ResearchCenter => {
-                scene.0 = assets.models.placeholders.research_center_valid.clone()
+                scene.0 = my_models.placeholders.research_center_valid.clone()
             }
             StructureType::SatelliteDish => {
-                scene.0 = assets.models.placeholders.satellite_dish_valid.clone()
+                scene.0 = my_models.placeholders.satellite_dish_valid.clone()
             }
         }
     }
 
     pub fn build_placeholder(
         &self,
-        my_assets: Res<MyAssets>,
+        my_models: Res<MyModels>,
     ) -> (
         SceneRoot,
         Collider,
@@ -164,23 +172,23 @@ impl StructureType {
         match self {
             StructureType::Cannon => {
                 size = Vec3::new(10.0, 0.75, 10.0);
-                structure = SceneRoot(my_assets.models.placeholders.cannon_valid.clone());
+                structure = SceneRoot(my_models.placeholders.cannon_valid.clone());
             }
             StructureType::Barracks => {
                 size = Vec3::new(30.0, 12.0, 25.0);
-                structure = SceneRoot(my_assets.models.placeholders.barracks_valid.clone());
+                structure = SceneRoot(my_models.placeholders.barracks_valid.clone());
             }
             StructureType::VehicleDepot => {
                 size = Vec3::new(60.0, 4.0, 40.0);
-                structure = SceneRoot(my_assets.models.placeholders.vehicle_depot_valid.clone());
+                structure = SceneRoot(my_models.placeholders.vehicle_depot_valid.clone());
             }
             StructureType::ResearchCenter => {
                 size = Vec3::new(30.0, 18.0, 30.0);
-                structure = SceneRoot(my_assets.models.placeholders.research_center_valid.clone());
+                structure = SceneRoot(my_models.placeholders.research_center_valid.clone());
             }
             StructureType::SatelliteDish => {
                 size = Vec3::new(32.0, 8.0, 32.0);
-                structure = SceneRoot(my_assets.models.placeholders.satellite_dish_valid.clone());
+                structure = SceneRoot(my_models.placeholders.satellite_dish_valid.clone());
             }
         }
 

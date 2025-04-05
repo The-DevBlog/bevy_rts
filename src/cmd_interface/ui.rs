@@ -5,10 +5,11 @@ use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
 
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
-use crate::components::structures::StructureType;
-use crate::components::units::UnitType;
-use crate::resources::units::UnlockedUnits;
-use crate::{bank::Bank, resources::MyAssets};
+use crate::asset_manager::imgs::MyImgs;
+use crate::bank::Bank;
+use crate::structures::components::StructureType;
+use crate::units::components::UnitType;
+use crate::units::resources::UnlockedUnits;
 
 pub struct UiPlugin;
 
@@ -62,10 +63,10 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
     }
 }
 
-fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Bank>) {
+fn command_center_ui(mut cmds: Commands, my_imgs: Res<MyImgs>, bank: Res<Bank>) {
     let info_ctr = (
         InfoCtr,
-        ImageNode::new(my_assets.imgs.info_ctr.clone()),
+        ImageNode::new(my_imgs.info_ctr.clone()),
         Node {
             flex_direction: FlexDirection::Column,
             position_type: PositionType::Absolute,
@@ -117,7 +118,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     let cmd_interface_ctr = (
         CmdInterfaceCtr,
         Button,
-        ImageNode::new(my_assets.imgs.cmd_intrfce_background.clone()),
+        ImageNode::new(my_imgs.cmd_intrfce_background.clone()),
         Node {
             margin: UiRect::left(Val::Auto),
             flex_direction: FlexDirection::Column,
@@ -219,7 +220,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     };
 
     let structure_opt_ctr = |structure: StructureType,
-                             assets: &Res<MyAssets>|
+                             my_imgs: &Res<MyImgs>|
      -> (
         OptCtr,
         Button,
@@ -234,7 +235,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
             Button,
             BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             ImageNode {
-                image: structure.img(assets),
+                image: structure.img(my_imgs),
                 color: CLR_STRUCTURE_BUILD_ACTIONS,
                 ..default()
             },
@@ -253,7 +254,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
     };
 
     let spawn_structure_btn =
-        |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyAssets>| {
+        |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyImgs>| {
             parent
                 .spawn(structure_opt_ctr(structure, assets))
                 .insert(PickingBehavior {
@@ -276,14 +277,14 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         p.spawn(create_ctr(InfoCtrBuildTime, "Build Time Ctr"))
             .with_children(|p| {
                 p.spawn(info_ctr_icon(
-                    my_assets.imgs.info_ctr_build_time.clone(),
+                    my_imgs.info_ctr_build_time.clone(),
                     "Build Time Icon".to_string(),
                 ));
                 p.spawn(build_time_txt);
             });
         p.spawn(create_ctr(InfoCtrHp, "HP Ctr")).with_children(|p| {
             p.spawn(info_ctr_icon(
-                my_assets.imgs.info_ctr_hp.clone(),
+                my_imgs.info_ctr_hp.clone(),
                 "HP Icon".to_string(),
             ));
             p.spawn(hp_txt);
@@ -291,7 +292,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         p.spawn(create_ctr(InfoCtrDmg, "Dmg Ctr"))
             .with_children(|p| {
                 p.spawn(info_ctr_icon(
-                    my_assets.imgs.info_ctr_dmg.clone(),
+                    my_imgs.info_ctr_dmg.clone(),
                     "Dmg Icon".to_string(),
                 ));
                 p.spawn(dmg_txt);
@@ -299,7 +300,7 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
         p.spawn(create_ctr(InfoCtrSpeed, "Speed Ctr"))
             .with_children(|p| {
                 p.spawn(info_ctr_icon(
-                    my_assets.imgs.info_ctr_speed.clone(),
+                    my_imgs.info_ctr_speed.clone(),
                     "Speed Icon".to_string(),
                 ));
                 p.spawn(speed_txt);
@@ -316,8 +317,8 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
 
         // Structure/Units Icons
         p.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_assets.imgs.cmd_intrfce_structures.clone()));
-            parent.spawn(icon(my_assets.imgs.cmd_intrfce_units.clone()));
+            parent.spawn(icon(my_imgs.cmd_intrfce_structures.clone()));
+            parent.spawn(icon(my_imgs.cmd_intrfce_units.clone()));
         });
 
         // Structure/Units Columns
@@ -326,10 +327,10 @@ fn command_center_ui(mut cmds: Commands, my_assets: Res<MyAssets>, bank: Res<Ban
                 // Structures Column
                 p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
                     for structure in StructureType::iter() {
-                        spawn_structure_btn(parent, structure, &my_assets);
+                        spawn_structure_btn(parent, structure, &my_imgs);
                     }
                     for structure in StructureType::iter() {
-                        spawn_structure_btn(parent, structure, &my_assets);
+                        spawn_structure_btn(parent, structure, &my_imgs);
                     }
                 });
 
@@ -343,7 +344,7 @@ fn spawn_unit_ctrs(
     mut cmds: Commands,
     q_unit_build_column: Query<Entity, With<UnitBuildColumn>>,
     unlocked_units: Res<UnlockedUnits>,
-    my_assets: Res<MyAssets>,
+    my_assets: Res<MyImgs>,
 ) {
     let Ok(unit_build_column) = q_unit_build_column.get_single() else {
         return;
@@ -396,7 +397,7 @@ pub fn update_scroll_position(
 
 fn unit_opt_ctr(
     unit: UnitType,
-    assets: &Res<MyAssets>,
+    assets: &Res<MyImgs>,
 ) -> (OptCtr, Button, BorderColor, ImageNode, Node, UnitCtr, Name) {
     (
         OptCtr,
@@ -420,7 +421,7 @@ fn unit_opt_ctr(
 fn spawn_unit_btn<T: Component>(
     parent: &mut ChildBuilder,
     unit: UnitType,
-    assets: &Res<MyAssets>,
+    assets: &Res<MyImgs>,
     comp: T,
 ) {
     parent

@@ -6,7 +6,6 @@ use bevy_mod_outline::OutlineMode;
 use bevy_mod_outline::OutlineVolume;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::RtsCamera;
-use bevy_rts_pathfinding::components::RtsObjSize;
 use bevy_rts_pathfinding::components::{self as pf_comps};
 use events::DeselectAllStructuresEv;
 use events::SetPrimaryStructureEv;
@@ -266,7 +265,7 @@ fn obs_deselect(
 fn sync_primary_structure_txt(
     mut cmds: Commands,
     q_selected_structure: Query<
-        (&Transform, &RtsObjSize, &PrimaryStructure),
+        (&Transform, &pf_comps::RtsObjSize, &PrimaryStructure),
         With<SelectedStructure>,
     >,
     mut q_primary_structure_txt: Query<&mut Node, With<PrimaryStructureTxt>>,

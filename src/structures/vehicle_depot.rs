@@ -24,9 +24,6 @@ impl Plugin for VehicleDepotPlugin {
 #[derive(Resource, Default)]
 struct BuildQueue(Vec<(UnitType, Timer)>);
 
-// #[derive(Component)]
-// struct StartPosition(Vec3);
-
 // move the unit from the garage
 #[derive(Component)]
 struct NewUnit {

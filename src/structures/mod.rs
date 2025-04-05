@@ -315,6 +315,7 @@ fn obs_set_primary_structure(
 
     match structure_type {
         StructureType::Barracks => {
+            // remove any other primary barracks
             for (ent, t) in q_structure_type.iter() {
                 if ent == structure_ent {
                     continue;
@@ -329,6 +330,7 @@ fn obs_set_primary_structure(
             cmds.entity(new_primary).insert(PrimaryBarracks);
         }
         StructureType::VehicleDepot => {
+            // remove any other primary vehicle depots
             for (ent, t) in q_structure_type.iter() {
                 if ent == structure_ent {
                     continue;

@@ -44,7 +44,7 @@ impl StructureType {
         }
     }
 
-    pub fn build_time(&self) -> i32 {
+    pub fn build_time(&self) -> u64 {
         match self {
             StructureType::Cannon => 5,
             StructureType::Barracks => 10,

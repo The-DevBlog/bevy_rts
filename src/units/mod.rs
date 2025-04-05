@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use events::{BuildSoldierEv, BuildVehicleEv};
+use events::{BuildSoldierEv, QueueVehicleEv};
 
 use crate::cmd_interface::events::BuildUnitEv;
 use crate::resources::DbgOptions;
@@ -48,7 +48,7 @@ fn handle_build_unit(trigger: Trigger<BuildUnitEv>, mut cmds: Commands, dbg: Res
 
     match unit_type.source() {
         StructureType::Barracks => cmds.trigger(BuildSoldierEv(unit_type)),
-        StructureType::VehicleDepot => cmds.trigger(BuildVehicleEv(unit_type)),
+        StructureType::VehicleDepot => cmds.trigger(QueueVehicleEv(unit_type)),
         _ => (),
     }
 }

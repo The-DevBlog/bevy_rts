@@ -77,7 +77,7 @@ impl UnitType {
         }
     }
 
-    pub fn build_time(&self) -> i32 {
+    pub fn build_time(&self) -> u64 {
         match self {
             UnitType::Rifleman => 1,
             UnitType::TankGen1 => 5,

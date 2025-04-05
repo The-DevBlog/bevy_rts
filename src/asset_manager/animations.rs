@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-use crate::{structures::components::PrimaryStructure, units::events::BuildVehicleEv};
+use crate::{structures::components::PrimaryStructure, units::events::QueueVehicleEv};
 
 pub struct AnimtationsPlugin;
 
@@ -45,7 +45,7 @@ fn build_animation_graph(
 }
 
 fn garage_door_animation(
-    _trigger: Trigger<BuildVehicleEv>,
+    _trigger: Trigger<QueueVehicleEv>,
     mut cmds: Commands,
     animations: Res<Animations>,
     q_vehicle_depot: Query<Entity, With<PrimaryStructure>>,

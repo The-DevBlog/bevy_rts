@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-use crate::structures::{
-    components::{PrimaryStructure, PrimaryVehicleDepot},
-    events::BuildVehicleEv,
-};
+use crate::structures::{components::PrimaryVehicleDepot, events::BuildVehicleEv};
 
 pub struct AnimtationsPlugin;
 

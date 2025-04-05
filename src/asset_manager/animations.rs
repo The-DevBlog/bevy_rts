@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-use crate::{structures::components::PrimaryStructure, units::events::QueueVehicleEv};
+use crate::structures::{
+    components::{PrimaryStructure, PrimaryVehicleDepot},
+    events::BuildVehicleEv,
+};
 
 pub struct AnimtationsPlugin;
 
@@ -45,10 +48,10 @@ fn build_animation_graph(
 }
 
 fn garage_door_animation(
-    _trigger: Trigger<QueueVehicleEv>,
+    _trigger: Trigger<BuildVehicleEv>,
     mut cmds: Commands,
     animations: Res<Animations>,
-    q_vehicle_depot: Query<Entity, With<PrimaryStructure>>,
+    q_vehicle_depot: Query<Entity, With<PrimaryVehicleDepot>>,
     q_children: Query<&Children>,
     mut players: Query<(Entity, &mut AnimationPlayer)>,
 ) {

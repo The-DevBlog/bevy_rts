@@ -133,7 +133,6 @@ fn mouse_input(
 
             if !game_cmds.is_any_unit_selected || hit_unit.is_some() || hit_structure.is_some() {
                 cmds.trigger(DeselectAllUnitsEv);
-                // cmds.trigger(DeselectAllStructuresEv);
 
                 if let Some(hit_ent) = hit_unit {
                     cmds.trigger(SelectSingleUnitEv(hit_ent));

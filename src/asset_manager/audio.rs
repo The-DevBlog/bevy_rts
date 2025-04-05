@@ -39,6 +39,7 @@ impl UnitAudioEv {
 pub enum AudioCmd {
     Relocate,
     Select,
+    Ready,
 }
 
 #[derive(Resource, Default)]
@@ -58,6 +59,7 @@ pub struct AudioUnits {
 pub struct AudioUnitCmds {
     pub relocate: Vec<Handle<bevy::prelude::AudioSource>>,
     pub select: Vec<Handle<bevy::prelude::AudioSource>>,
+    pub ready: Vec<Handle<bevy::prelude::AudioSource>>,
 }
 
 #[derive(Default)]
@@ -65,9 +67,6 @@ pub struct Sfx {
     pub moving_rifleman: SfxOptions,
     pub moving_tank_gen_1: SfxOptions,
     pub moving_tank_gen_2: SfxOptions,
-    // pub moving_rifleman: Handle<bevy_kira_audio::AudioSource>,
-    // pub moving_tank_gen_1: Handle<bevy_kira_audio::AudioSource>,
-    // pub moving_tank_gen_2: Handle<bevy_kira_audio::AudioSource>,
 }
 
 #[derive(Default)]
@@ -107,6 +106,11 @@ fn load_assets(
     let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_1.relocate.extend(handles);
 
+    // tank gen 1 - cmd ready
+    let folder = "audio/unit_cmds/tank_gen_1/ready";
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
+    my_audio.unit_cmds.tank_gen_1.ready.extend(handles);
+
     // tank gen 2 - cmd select
     let folder = "audio/unit_cmds/tank_gen_2/select";
     let handles = load_audio_from_folder(folder, &assets, &dbg);
@@ -116,6 +120,11 @@ fn load_assets(
     let folder = "audio/unit_cmds/tank_gen_2/move";
     let handles = load_audio_from_folder(folder, &assets, &dbg);
     my_audio.unit_cmds.tank_gen_2.relocate.extend(handles);
+
+    // tank gen 2 - cmd ready
+    let folder = "audio/unit_cmds/tank_gen_2/ready";
+    let handles = load_audio_from_folder(folder, &assets, &dbg);
+    my_audio.unit_cmds.tank_gen_2.ready.extend(handles);
 }
 
 fn load_audio_from_folder(
@@ -162,15 +171,18 @@ fn unit_audio(trigger: Trigger<UnitAudioEv>, mut cmds: Commands, my_audio: Res<M
         UnitType::TankGen1 => match unit_cmd {
             AudioCmd::Relocate => &my_audio.unit_cmds.tank_gen_1.relocate,
             AudioCmd::Select => &my_audio.unit_cmds.tank_gen_1.select,
+            AudioCmd::Ready => &my_audio.unit_cmds.tank_gen_1.ready,
         },
         UnitType::TankGen2 => match unit_cmd {
             AudioCmd::Relocate => &my_audio.unit_cmds.tank_gen_2.relocate,
             AudioCmd::Select => &my_audio.unit_cmds.tank_gen_2.select,
+            AudioCmd::Ready => &my_audio.unit_cmds.tank_gen_2.ready,
         },
         // TODO: Temporary
         UnitType::Rifleman => match unit_cmd {
             AudioCmd::Relocate => &my_audio.unit_cmds.tank_gen_2.relocate,
             AudioCmd::Select => &my_audio.unit_cmds.tank_gen_2.select,
+            AudioCmd::Ready => &my_audio.unit_cmds.tank_gen_2.ready,
         },
     };
 

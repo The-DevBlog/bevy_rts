@@ -5,10 +5,7 @@ use bevy_rapier3d::prelude::ExternalImpulse;
 
 use crate::{
     asset_manager::{audio::MyAudio, models::MyModels},
-    units::{
-        components::{Speed, UnitType},
-        events::QueueVehicleEv,
-    },
+    units::{components::UnitType, events::QueueVehicleEv},
 };
 
 use super::{components::*, events::BuildVehicleEv};
@@ -27,6 +24,10 @@ impl Plugin for VehicleDepotPlugin {
 #[derive(Resource, Default)]
 struct BuildQueue(Vec<(UnitType, Timer)>);
 
+// move the unit from the garage
+#[derive(Component)]
+struct StartPosition(Vec3);
+
 #[derive(Component)]
 struct NewUnit;
 
@@ -44,9 +45,6 @@ fn obs_queue_vehicle(trigger: Trigger<QueueVehicleEv>, mut build_queue: ResMut<B
     let timer = Timer::new(Duration::from_secs(unit.build_time()), TimerMode::Once);
     build_queue.0.push((unit, timer));
 }
-
-#[derive(Component)]
-struct StartPosition(Vec3);
 
 fn obs_build_vehicle(
     trigger: Trigger<BuildVehicleEv>,

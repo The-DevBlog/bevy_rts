@@ -51,14 +51,14 @@ fn obs_build_vehicle(
     };
 
     // Set spawn offsets.
-    let offset_distance = -50.0; // Distance in front of the depot (assumes front is -Z)
+    let z_offset = -10.0; // Distance in front of the depot (assumes front is -Z)
     let vertical_offset = 2.4; // Fixed vertical placement
 
     // Calculate the depot's forward direction (assuming front is -Z).
     let forward = structure_trans.rotation * Vec3::new(0.0, 0.0, -1.0);
 
     // Compute the spawn location, overriding the Y axis with vertical_offset.
-    let mut spawn_location = structure_trans.translation + forward * offset_distance;
+    let mut spawn_location = structure_trans.translation + forward * z_offset;
     spawn_location.y = vertical_offset;
 
     // Create the transform for the vehicle: same as depot's rotation, but rotated 180°.

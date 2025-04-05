@@ -24,12 +24,24 @@ impl Plugin for VehicleDepotPlugin {
 #[derive(Resource, Default)]
 struct BuildQueue(Vec<(UnitType, Timer)>);
 
+// #[derive(Component)]
+// struct StartPosition(Vec3);
+
 // move the unit from the garage
 #[derive(Component)]
-struct StartPosition(Vec3);
+struct NewUnit {
+    start_pos: Vec3,
+    timer: Timer,
+}
 
-#[derive(Component)]
-struct NewUnit;
+impl NewUnit {
+    fn new(start_pos: Vec3) -> Self {
+        Self {
+            start_pos,
+            timer: Timer::new(Duration::from_secs(1), TimerMode::Once),
+        }
+    }
+}
 
 fn build_vehicle_timer(mut cmds: Commands, mut build_queue: ResMut<BuildQueue>, time: Res<Time>) {
     if let Some((unit_type, timer)) = build_queue.0.first_mut() {
@@ -58,8 +70,9 @@ fn obs_build_vehicle(
         return;
     };
 
-    let forward = structure_trans.rotation * Vec3::new(-10.0, 2.4, -12.0); // TODO: Fix this hardcoded value, especiialy the Y axis
-    let spawn_location = structure_trans.translation + forward;
+    let forward: Vec3 = structure_trans.rotation * Vec3::new(-10.0, 0.0, -5.0);
+    let mut spawn_location = structure_trans.translation + forward;
+    spawn_location.y = 2.0; // TODO: Fix this hardcoded value
 
     // Create the transform for the vehicle: same as depot's rotation
     let vehicle_transform = Transform {
@@ -72,25 +85,27 @@ fn obs_build_vehicle(
         .0
         .build(vehicle_transform, &my_models, &audio, &my_audio);
 
-    cmds.spawn((unit, NewUnit, StartPosition(vehicle_transform.translation)));
+    cmds.spawn((unit, NewUnit::new(vehicle_transform.translation)));
 }
 
 fn move_vehicle_from_garage(
     mut cmds: Commands,
-    mut q_new_unit: Query<
-        (Entity, &mut ExternalImpulse, &Transform, &StartPosition),
-        With<NewUnit>,
-    >,
+    mut q_new_unit: Query<(Entity, &mut ExternalImpulse, &Transform, &mut NewUnit)>,
     time: Res<Time>,
 ) {
-    for (entity, mut ext_impulse, transform, garage) in q_new_unit.iter_mut() {
+    for (entity, mut ext_impulse, transform, mut new_unit) in q_new_unit.iter_mut() {
+        new_unit.timer.tick(time.delta());
+
+        if !new_unit.timer.finished() {
+            continue;
+        }
+
         let forward = transform.rotation * Vec3::new(0.0, 0.0, -1.0);
         ext_impulse.impulse += 300.0 * forward * time.delta_secs();
 
-        let distance_traveled = transform.translation.distance(garage.0);
+        let distance_traveled = transform.translation.distance(new_unit.start_pos);
         if distance_traveled >= 50.0 {
             cmds.entity(entity).remove::<NewUnit>();
-            cmds.entity(entity).remove::<StartPosition>();
         }
     }
 }

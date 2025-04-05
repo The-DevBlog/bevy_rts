@@ -1,10 +1,14 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::ExternalImpulse;
 
 use crate::{
     asset_manager::{audio::MyAudio, models::MyModels},
-    units::{components::UnitType, events::QueueVehicleEv},
+    units::{
+        components::{Speed, UnitType},
+        events::QueueVehicleEv,
+    },
 };
 
 use super::{components::*, events::BuildVehicleEv};
@@ -14,7 +18,7 @@ pub struct VehicleDepotPlugin;
 impl Plugin for VehicleDepotPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<BuildQueue>()
-            .add_systems(Update, build_vehicle_timer)
+            .add_systems(Update, (build_vehicle_timer, move_vehicle_from_garage))
             .add_observer(obs_queue_vehicle)
             .add_observer(obs_build_vehicle);
     }
@@ -22,6 +26,9 @@ impl Plugin for VehicleDepotPlugin {
 
 #[derive(Resource, Default)]
 struct BuildQueue(Vec<(UnitType, Timer)>);
+
+#[derive(Component)]
+struct NewUnit;
 
 fn build_vehicle_timer(mut cmds: Commands, mut build_queue: ResMut<BuildQueue>, time: Res<Time>) {
     if let Some((unit_type, timer)) = build_queue.0.first_mut() {
@@ -38,6 +45,9 @@ fn obs_queue_vehicle(trigger: Trigger<QueueVehicleEv>, mut build_queue: ResMut<B
     build_queue.0.push((unit, timer));
 }
 
+#[derive(Component)]
+struct StartPosition(Vec3);
+
 fn obs_build_vehicle(
     trigger: Trigger<BuildVehicleEv>,
     mut cmds: Commands,
@@ -50,27 +60,39 @@ fn obs_build_vehicle(
         return;
     };
 
-    // Set spawn offsets.
-    let z_offset = -10.0; // Distance in front of the depot (assumes front is -Z)
-    let vertical_offset = 2.4; // Fixed vertical placement
+    let forward = structure_trans.rotation * Vec3::new(-10.0, 2.4, -12.0); // TODO: Fix this hardcoded value, especiialy the Y axis
+    let spawn_location = structure_trans.translation + forward;
 
-    // Calculate the depot's forward direction (assuming front is -Z).
-    let forward = structure_trans.rotation * Vec3::new(0.0, 0.0, -1.0);
-
-    // Compute the spawn location, overriding the Y axis with vertical_offset.
-    let mut spawn_location = structure_trans.translation + forward * z_offset;
-    spawn_location.y = vertical_offset;
-
-    // Create the transform for the vehicle: same as depot's rotation, but rotated 180°.
+    // Create the transform for the vehicle: same as depot's rotation
     let vehicle_transform = Transform {
         translation: spawn_location,
         rotation: structure_trans.rotation * Quat::from_rotation_y(std::f32::consts::PI),
         ..Default::default()
     };
 
-    // Build the unit and spawn it.
     let unit = trigger
         .0
         .build(vehicle_transform, &my_models, &audio, &my_audio);
-    cmds.spawn(unit);
+
+    cmds.spawn((unit, NewUnit, StartPosition(vehicle_transform.translation)));
+}
+
+fn move_vehicle_from_garage(
+    mut cmds: Commands,
+    mut q_new_unit: Query<
+        (Entity, &mut ExternalImpulse, &Transform, &StartPosition),
+        With<NewUnit>,
+    >,
+    time: Res<Time>,
+) {
+    for (entity, mut ext_impulse, transform, garage) in q_new_unit.iter_mut() {
+        let forward = transform.rotation * Vec3::new(0.0, 0.0, -1.0);
+        ext_impulse.impulse += 300.0 * forward * time.delta_secs();
+
+        let distance_traveled = transform.translation.distance(garage.0);
+        if distance_traveled >= 50.0 {
+            cmds.entity(entity).remove::<NewUnit>();
+            cmds.entity(entity).remove::<StartPosition>();
+        }
+    }
 }

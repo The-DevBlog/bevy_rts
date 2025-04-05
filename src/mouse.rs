@@ -8,6 +8,7 @@ use crate::asset_manager::imgs::MyImgs;
 use crate::events::*;
 use crate::resources::*;
 use crate::structures::components::Structure;
+use crate::structures::events::DeselectAllStructuresEv;
 use crate::units::components::*;
 use crate::utils::{self, billboard_sync};
 use crate::*;
@@ -131,7 +132,7 @@ fn mouse_input(
             }
 
             if !game_cmds.is_any_unit_selected || hit_unit.is_some() || hit_structure.is_some() {
-                cmds.trigger(DeselectAllEv);
+                cmds.trigger(DeselectAllUnitsEv);
 
                 if let Some(hit_ent) = hit_unit {
                     cmds.trigger(SelectSingleUnitEv(hit_ent));
@@ -151,7 +152,7 @@ fn mouse_input(
     }
 
     if input.just_released(MouseButton::Right) {
-        cmds.trigger(DeselectAllEv);
+        cmds.trigger(DeselectAllUnitsEv);
     }
 }
 
@@ -467,7 +468,7 @@ pub fn single_select_unit(
 }
 
 pub fn deselect_all(
-    _trigger: Trigger<DeselectAllEv>,
+    _trigger: Trigger<DeselectAllUnitsEv>,
     mut cmds: Commands,
     mut select_q: Query<Entity, With<SelectedUnit>>,
     mut q_border: Query<Entity, With<UnitSelectBorder>>,

@@ -8,6 +8,8 @@ use bevy_rapier3d::prelude::*;
 use bevy_rts_camera::RtsCamera;
 use bevy_rts_pathfinding::components::RtsObjSize;
 use bevy_rts_pathfinding::components::{self as pf_comps};
+use events::DeselectAllStructuresEv;
+use events::SetPrimaryStructureEv;
 use resources::StructuresBuilt;
 use vehicle_depot::VehicleDepotPlugin;
 
@@ -20,6 +22,7 @@ use crate::utils;
 use crate::utils::billboard_sync;
 
 pub mod components;
+pub mod events;
 pub mod resources;
 mod vehicle_depot;
 
@@ -34,17 +37,19 @@ impl Plugin for StructuresPlugin {
             .add_systems(
                 Update,
                 (
-                    mark_primary_structure,
-                    primary_structure_txt,
-                    count_structures,
+                    mark_primary_structure_initial,
+                    count_structures.after(place_structure),
                     sync_placeholder,
+                    sync_primary_structure_txt,
+                    deselect_rmb,
                     deselect_if_any_unit_is_selected,
                     validate_structure_placement,
                     place_structure.after(validate_structure_placement),
                 ),
             )
             .add_observer(select_structure)
-            .add_observer(deselect);
+            .add_observer(deselect)
+            .add_observer(set_primary_structure);
     }
 }
 
@@ -234,8 +239,14 @@ fn deselect_if_any_unit_is_selected(
     }
 }
 
+fn deselect_rmb(mut cmds: Commands, input: Res<ButtonInput<MouseButton>>) {
+    if input.just_released(MouseButton::Right) {
+        cmds.trigger(DeselectAllStructuresEv);
+    }
+}
+
 fn deselect(
-    _trigger: Trigger<DeselectAllEv>,
+    _trigger: Trigger<DeselectAllStructuresEv>,
     mut cmds: Commands,
     mut q_selected_structure: Query<Entity, With<SelectedStructure>>,
     mut q_primary_structure_txt: Query<Entity, With<PrimaryStructureTxt>>,
@@ -254,10 +265,7 @@ fn deselect(
     }
 }
 
-#[derive(Component)]
-pub struct PrimaryStructureTxt;
-
-fn primary_structure_txt(
+fn sync_primary_structure_txt(
     mut cmds: Commands,
     q_selected_structure: Query<
         (&Transform, &RtsObjSize, &PrimaryStructure),
@@ -294,7 +302,17 @@ fn primary_structure_txt(
     }
 }
 
-fn mark_primary_structure(
+fn set_primary_structure(
+    trigger: Trigger<SetPrimaryStructureEv>,
+    mut cmds: Commands,
+    dbg: Res<DbgOptions>,
+) {
+    dbg.print("Assigning new primary structure");
+    let new_primary = trigger.0;
+    cmds.entity(new_primary).insert(PrimaryStructure);
+}
+
+fn mark_primary_structure_initial(
     mut cmds: Commands,
     structures_built: ResMut<StructuresBuilt>,
     q_structures: Query<(Entity, &StructureType), Added<Structure>>,
@@ -303,12 +321,12 @@ fn mark_primary_structure(
         match structure_type {
             StructureType::Barracks => {
                 if structures_built.barracks == 1 {
-                    cmds.entity(structure_ent).insert(PrimaryStructure);
+                    cmds.trigger(SetPrimaryStructureEv(structure_ent));
                 }
             }
             StructureType::VehicleDepot => {
                 if structures_built.vehicle_depot == 1 {
-                    cmds.entity(structure_ent).insert(PrimaryStructure);
+                    cmds.trigger(SetPrimaryStructureEv(structure_ent));
                 }
             }
             _ => (),

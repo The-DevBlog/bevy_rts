@@ -9,6 +9,9 @@ use crate::{
 };
 
 #[derive(Component)]
+pub struct PrimaryStructureTxt;
+
+#[derive(Component)]
 pub struct SelectedStructure;
 
 // Hack. This is used to prevent a newly placed structure from automatically being selected

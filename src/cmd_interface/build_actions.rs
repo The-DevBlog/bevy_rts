@@ -5,7 +5,7 @@ use super::events::*;
 use super::resources::InfoContainerData;
 use crate::asset_manager::models::MyModels;
 use crate::bank::Bank;
-use crate::events::DeselectAllEv;
+use crate::events::DeselectAllUnitsEv;
 use crate::resources::*;
 use crate::structures::components::*;
 
@@ -149,7 +149,7 @@ fn select_structure(
     let transform = Transform::from_xyz(100000.0, 0.0, 0.0); // avoid bug flicker
 
     *cursor_state = CursorState::Build;
-    cmds.trigger(DeselectAllEv);
+    cmds.trigger(DeselectAllUnitsEv);
     cmds.spawn((placeholder_properties, transform, placeholder));
 }
 

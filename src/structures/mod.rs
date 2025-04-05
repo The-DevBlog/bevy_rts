@@ -42,7 +42,6 @@ impl Plugin for StructuresPlugin {
                     sync_placeholder,
                     sync_primary_structure_txt,
                     deselect_rmb,
-                    deselect_if_any_unit_is_selected,
                     validate_structure_placement,
                     place_structure.after(validate_structure_placement),
                 ),
@@ -212,30 +211,6 @@ fn sync_placeholder(
     if let Some(coords) = coords {
         transform.translation = coords;
         transform.translation.y = size.0.y / 2.0;
-    }
-}
-
-fn deselect_if_any_unit_is_selected(
-    mut cmds: Commands,
-    game_cmds: Res<GameCommands>,
-    q_selected_structure: Query<Entity, With<SelectedStructure>>,
-    mut q_primary_structure_txt: Query<Entity, With<PrimaryStructureTxt>>,
-) {
-    if !game_cmds.is_any_unit_selected {
-        return;
-    }
-
-    for structure_ent in q_selected_structure.iter() {
-        cmds.entity(structure_ent).remove::<(
-            SelectedStructure,
-            OutlineVolume,
-            OutlineMode,
-            AsyncSceneInheritOutline,
-        )>();
-    }
-
-    for txt_ent in q_primary_structure_txt.iter_mut() {
-        cmds.entity(txt_ent).despawn_recursive();
     }
 }
 

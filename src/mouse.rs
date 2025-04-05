@@ -483,6 +483,13 @@ pub fn deselect_all(
     }
 }
 
-fn set_is_any_selected(q_selected: Query<&SelectedUnit>, mut game_cmds: ResMut<GameCommands>) {
+fn set_is_any_selected(
+    mut cmds: Commands,
+    q_selected: Query<&SelectedUnit>,
+    mut game_cmds: ResMut<GameCommands>,
+) {
     game_cmds.is_any_unit_selected = q_selected.iter().next().is_some();
+    if game_cmds.is_any_unit_selected {
+        cmds.trigger(DeselectAllStructuresEv);
+    }
 }

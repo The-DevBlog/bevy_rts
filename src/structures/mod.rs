@@ -301,44 +301,34 @@ fn sync_primary_structure_txt(
 
 fn obs_set_primary_structure(
     trigger: Trigger<SetPrimaryStructureEv>,
-    q_structure_type: Query<(Entity, &StructureType)>,
+    q_primary_barracks: Query<Entity, With<PrimaryBarracks>>,
+    q_primary_vehicle_depot: Query<Entity, With<PrimaryVehicleDepot>>,
+    q_structure_type: Query<&StructureType>,
     mut cmds: Commands,
     dbg: Res<DbgOptions>,
 ) {
     dbg.print("Assigning new primary structure");
     let new_primary = trigger.0;
 
-    let Ok((structure_ent, structure_type)) = q_structure_type.get(new_primary) else {
+    let Ok(structure_type) = q_structure_type.get(new_primary) else {
         return;
     };
 
     match structure_type {
         StructureType::Barracks => {
             // remove any other primary barracks
-            for (ent, t) in q_structure_type.iter() {
-                if ent == structure_ent {
-                    continue;
-                }
-
-                if *t == StructureType::Barracks {
-                    cmds.entity(ent).remove::<PrimaryStructure>();
-                    cmds.entity(ent).remove::<PrimaryBarracks>();
-                }
+            for ent in q_primary_barracks.iter() {
+                cmds.entity(ent).remove::<PrimaryStructure>();
+                cmds.entity(ent).remove::<PrimaryBarracks>();
             }
 
             cmds.entity(new_primary).insert(PrimaryBarracks);
         }
         StructureType::VehicleDepot => {
             // remove any other primary vehicle depots
-            for (ent, t) in q_structure_type.iter() {
-                if ent == structure_ent {
-                    continue;
-                }
-
-                if *t == StructureType::VehicleDepot {
-                    cmds.entity(ent).remove::<PrimaryStructure>();
-                    cmds.entity(ent).remove::<PrimaryStructure>();
-                }
+            for ent in q_primary_vehicle_depot.iter() {
+                cmds.entity(ent).remove::<PrimaryStructure>();
+                cmds.entity(ent).remove::<PrimaryVehicleDepot>();
             }
 
             cmds.entity(new_primary).insert(PrimaryVehicleDepot);

@@ -88,13 +88,13 @@ fn load_assets(
     my_audio.sfx.moving_rifleman.source = handle.clone();
     my_audio.sfx.moving_rifleman.instance = audio.play(handle).looped().paused().handle();
 
-    // let handle = assets.load("audio/sfx/tank_gen_1/moving.ogg");
-    // my_audio.sfx.moving_tank_gen_1.source = handle.clone();
-    // my_audio.sfx.moving_tank_gen_1.instance = audio.play(handle).looped().paused().handle();
+    let handle = assets.load("audio/sfx/tank_gen_1/moving.ogg");
+    my_audio.sfx.moving_tank_gen_1.source = handle.clone();
+    my_audio.sfx.moving_tank_gen_1.instance = audio.play(handle).looped().paused().handle();
 
-    // let handle = assets.load("audio/sfx/tank_gen_2/moving.ogg");
-    // my_audio.sfx.moving_tank_gen_2.source = handle.clone();
-    // my_audio.sfx.moving_tank_gen_2.instance = audio.play(handle).looped().paused().handle();
+    let handle = assets.load("audio/sfx/tank_gen_2/moving.ogg");
+    my_audio.sfx.moving_tank_gen_2.source = handle.clone();
+    my_audio.sfx.moving_tank_gen_2.instance = audio.play(handle).looped().paused().handle();
 
     // tank gen 1 - cmd select
     let folder = "audio/unit_cmds/tank_gen_1/select";
@@ -255,12 +255,22 @@ fn relocate_cmd(
 }
 
 fn unit_move_audio(
-    q_units: Query<&SpatialAudioEmitter, Added<pf_comps::Destination>>,
+    q_destination_add: Query<&SpatialAudioEmitter, Added<pf_comps::Destination>>,
+    mut removed_dest: RemovedComponents<pf_comps::Destination>,
+    q_audio_emitter: Query<&SpatialAudioEmitter>,
     mut audio_instances: ResMut<Assets<AudioInstance>>,
 ) {
-    for audio_emitter in q_units.iter() {
+    for audio_emitter in q_destination_add.iter() {
         if let Some(instance) = audio_instances.get_mut(&audio_emitter.instances[0]) {
             instance.resume(AudioTween::default());
+        }
+    }
+
+    for entity in removed_dest.read() {
+        if let Ok(audio_emitter) = q_audio_emitter.get(entity) {
+            if let Some(instance) = audio_instances.get_mut(&audio_emitter.instances[0]) {
+                instance.pause(AudioTween::default());
+            }
         }
     }
 }

@@ -19,12 +19,12 @@ pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_tank);
+        // app.add_systems(Startup, spawn_tank);
         app.add_systems(
             Update,
             (
                 set_is_moving,
-                spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
+                // spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
                 move_unit.run_if(any_with_component::<pf_comps::Destination>),
             )
                 .chain(),

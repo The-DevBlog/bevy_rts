@@ -140,6 +140,8 @@ fn mouse_input(
 
                 if let Some(structure_ent) = hit_structure {
                     cmds.trigger(SelectStructureEv(structure_ent));
+                } else {
+                    cmds.trigger(DeselectAllStructuresEv);
                 }
             } else if hit_structure.is_none() {
                 cmds.trigger(SetUnitDestinationEv);

@@ -13,7 +13,7 @@ use crate::structures::resources::VehicleBuildQueue;
 use crate::units::components::UnitType;
 use crate::units::resources::UnlockedUnits;
 
-const CLR_BUILD_PROGRESS_BAR: Color = Color::srgba(1.0, 1.0, 1.0, 0.05);
+const CLR_BUILD_PROGRESS_BAR: Color = Color::srgba(1.0, 1.0, 1.0, 0.075);
 
 pub struct UiPlugin;
 

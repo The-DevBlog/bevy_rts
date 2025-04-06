@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::cmd_interface::ui::BankCtr;
+use crate::cmd_interface::components::BankCtr;
 
 pub struct BankPlugin;
 

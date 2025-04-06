@@ -2,8 +2,10 @@ use bevy::prelude::*;
 
 use super::components::*;
 use super::events::*;
+use super::resources::BuildQueueCount;
 use super::resources::InfoContainerData;
 use crate::asset_manager::models::MyModels;
+use crate::bank::AdjustFundsEv;
 use crate::bank::Bank;
 use crate::events::DeselectAllUnitsEv;
 use crate::resources::*;
@@ -50,6 +52,7 @@ fn build_structure_btn_interaction(
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
     mut info_ctr_data: ResMut<InfoContainerData>,
+    input: Res<ButtonInput<MouseButton>>,
 ) {
     for (interaction, mut img, structure) in q_btn_bldg.iter_mut() {
         match interaction {
@@ -59,10 +62,13 @@ fn build_structure_btn_interaction(
             Interaction::Pressed => {
                 info_ctr_data.active = true;
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
-                if bank.funds >= structure.cost() {
-                    cmds.trigger(BuildStructureSelectEv(structure.clone()));
-                } else {
-                    dbg.print("Not enough funds");
+
+                if input.just_pressed(MouseButton::Left) {
+                    if bank.funds >= structure.cost() {
+                        cmds.trigger(BuildStructureSelectEv(structure.clone()));
+                    } else {
+                        dbg.print("Not enough funds");
+                    }
                 }
             }
             Interaction::Hovered => {
@@ -85,6 +91,7 @@ fn build_unit_btn_interaction(
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
     mut info_ctr_data: ResMut<InfoContainerData>,
+    mut build_queue_count: ResMut<BuildQueueCount>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     for (interaction, mut img, unit_ctr) in q_btn_unit.iter_mut() {
@@ -97,7 +104,13 @@ fn build_unit_btn_interaction(
                 img.color = CLR_STRUCTURE_BUILD_ACTIONS_HVR;
 
                 if input.just_pressed(MouseButton::Left) {
-                    cmds.trigger(BuildUnitEv(unit_ctr.0));
+                    if bank.funds >= unit_ctr.0.cost() {
+                        build_queue_count.add(&unit_ctr.0);
+                        cmds.trigger(AdjustFundsEv(-unit_ctr.0.cost()));
+                        cmds.trigger(BuildUnitEv(unit_ctr.0));
+                    } else {
+                        dbg.print("Not enough funds");
+                    }
                 }
             }
             Interaction::Hovered => {

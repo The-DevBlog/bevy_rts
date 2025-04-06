@@ -43,3 +43,6 @@ pub struct InfoCtrHpTxt;
 
 #[derive(Component)]
 pub struct UnitBuildColumn;
+
+#[derive(Component)]
+pub struct BankCtr;

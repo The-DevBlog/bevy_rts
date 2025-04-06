@@ -4,7 +4,10 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::ExternalImpulse;
 
 use crate::{
-    asset_manager::{audio::MyAudio, models::MyModels},
+    asset_manager::{
+        audio::{AudioCmd, MyAudio, UnitAudioEv},
+        models::MyModels,
+    },
     units::{components::UnitType, events::QueueVehicleEv},
 };
 
@@ -87,14 +90,24 @@ fn obs_build_vehicle(
 
 fn move_vehicle_from_garage(
     mut cmds: Commands,
-    mut q_new_unit: Query<(Entity, &mut ExternalImpulse, &Transform, &mut NewUnit)>,
+    mut q_new_unit: Query<(
+        Entity,
+        &mut ExternalImpulse,
+        &Transform,
+        &UnitType,
+        &mut NewUnit,
+    )>,
     time: Res<Time>,
 ) {
-    for (entity, mut ext_impulse, transform, mut new_unit) in q_new_unit.iter_mut() {
+    for (entity, mut ext_impulse, transform, unit_type, mut new_unit) in q_new_unit.iter_mut() {
         new_unit.timer.tick(time.delta());
 
         if !new_unit.timer.finished() {
             continue;
+        }
+
+        if new_unit.timer.just_finished() {
+            cmds.trigger(UnitAudioEv::new(AudioCmd::Ready, unit_type.clone()));
         }
 
         let forward = transform.rotation * Vec3::new(0.0, 0.0, -1.0);

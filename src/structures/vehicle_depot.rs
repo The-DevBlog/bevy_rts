@@ -35,7 +35,7 @@ impl NewUnit {
     fn new(start_pos: Vec3) -> Self {
         Self {
             start_pos,
-            timer: Timer::new(Duration::from_secs(1), TimerMode::Once),
+            timer: Timer::new(Duration::from_millis(500), TimerMode::Once),
         }
     }
 }

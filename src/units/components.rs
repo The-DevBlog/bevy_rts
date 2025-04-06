@@ -80,8 +80,8 @@ impl UnitType {
     pub fn build_time(&self) -> u64 {
         match self {
             UnitType::Rifleman => 1,
-            UnitType::TankGen1 => 2,
-            UnitType::TankGen2 => 2,
+            UnitType::TankGen1 => 3,
+            UnitType::TankGen2 => 3,
         }
     }
 

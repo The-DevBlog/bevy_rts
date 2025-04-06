@@ -149,6 +149,7 @@ fn command_center_ui(
             min_width: Val::Px(min_width),
             ..default()
         },
+        ZIndex(105),
         Name::new("Command Interface Ctr"),
     );
 
@@ -580,8 +581,6 @@ fn update_build_progress_bar(
     } else {
         0.0
     };
-
-    println!("Progress: {}%", progress_percent);
 
     for (mut visibility, mut node, progress_bar) in unit_ctr.iter_mut() {
         // Only update the progress bar for the matching unit type.

@@ -43,25 +43,33 @@ const SPEED_TANK_GEN_1: f32 = SPEED_QUANTIFIER * 50.0;
 const SPEED_TANK_GEN_2: f32 = SPEED_QUANTIFIER * 65.0;
 
 fn main() {
-    App::new()
-        .add_plugins((
-            DefaultPlugins,
-            CmdInterfacePlugin,
-            AssetManagerPlugin,
-            BankPlugin,
-            RapierPhysicsPlugin::<NoUserData>::default(),
-            // RapierDebugRenderPlugin::default(),
-            OutlinePlugin,
-            WorldInspectorPlugin::new(),
-            bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
-            ResourcesPlugin,
-            StructuresPlugin,
-            CameraPlugin,
-            UnitsPlugin,
-            MapPlugin,
-            MousePlugin,
-            TankPlugin,
-        ))
-        .add_plugins((AudioPlugin, SpatialAudioPlugin))
-        .run();
+    let args: Vec<String> = std::env::args().collect();
+    let shorts_flag = args.contains(&String::from("-shorts"));
+
+    let mut app = App::new();
+    app.add_plugins((
+        DefaultPlugins,
+        CmdInterfacePlugin,
+        AssetManagerPlugin,
+        BankPlugin,
+        RapierPhysicsPlugin::<NoUserData>::default(),
+        // RapierDebugRenderPlugin::default(),
+        OutlinePlugin,
+        bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
+        ResourcesPlugin,
+        StructuresPlugin,
+        CameraPlugin,
+        UnitsPlugin,
+        MapPlugin,
+        MousePlugin,
+        TankPlugin,
+    ));
+
+    app.add_plugins((AudioPlugin, SpatialAudioPlugin));
+
+    if !shorts_flag {
+        app.add_plugins(WorldInspectorPlugin::new());
+    }
+
+    app.run();
 }

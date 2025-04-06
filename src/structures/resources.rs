@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 
+use crate::units::components::UnitType;
+
 pub struct ResourcesPlugin;
 
 impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<StructuresBuilt>();
+        app.init_resource::<StructuresBuilt>()
+            .init_resource::<VehicleBuildQueue>();
     }
 }
 
@@ -16,3 +19,6 @@ pub struct StructuresBuilt {
     pub research_center: u32,
     pub satellite_dish: u32,
 }
+
+#[derive(Resource, Default)]
+pub struct VehicleBuildQueue(pub Vec<(UnitType, Timer)>);

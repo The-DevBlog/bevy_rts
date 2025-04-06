@@ -12,21 +12,17 @@ use crate::{
     units::{components::UnitType, events::QueueVehicleEv},
 };
 
-use super::{components::*, events::BuildVehicleEv};
+use super::{components::*, events::BuildVehicleEv, resources::VehicleBuildQueue};
 
 pub struct VehicleDepotPlugin;
 
 impl Plugin for VehicleDepotPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<BuildQueue>()
-            .add_systems(Update, (build_vehicle_timer, move_vehicle_from_garage))
+        app.add_systems(Update, (build_vehicle_timer, move_vehicle_from_garage))
             .add_observer(obs_queue_vehicle)
             .add_observer(obs_build_vehicle);
     }
 }
-
-#[derive(Resource, Default)]
-struct BuildQueue(Vec<(UnitType, Timer)>);
 
 // move the unit from the garage
 #[derive(Component)]
@@ -44,7 +40,11 @@ impl NewUnit {
     }
 }
 
-fn build_vehicle_timer(mut cmds: Commands, mut build_queue: ResMut<BuildQueue>, time: Res<Time>) {
+fn build_vehicle_timer(
+    mut cmds: Commands,
+    mut build_queue: ResMut<VehicleBuildQueue>,
+    time: Res<Time>,
+) {
     if let Some((unit_type, timer)) = build_queue.0.first_mut() {
         if timer.tick(time.delta()).just_finished() {
             cmds.trigger(BuildVehicleEv(*unit_type));
@@ -53,7 +53,7 @@ fn build_vehicle_timer(mut cmds: Commands, mut build_queue: ResMut<BuildQueue>, 
     }
 }
 
-fn obs_queue_vehicle(trigger: Trigger<QueueVehicleEv>, mut build_queue: ResMut<BuildQueue>) {
+fn obs_queue_vehicle(trigger: Trigger<QueueVehicleEv>, mut build_queue: ResMut<VehicleBuildQueue>) {
     let unit = trigger.0;
     let timer = Timer::new(Duration::from_secs(unit.build_time()), TimerMode::Once);
     build_queue.0.push((unit, timer));

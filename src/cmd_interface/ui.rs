@@ -9,8 +9,11 @@ use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::asset_manager::imgs::MyImgs;
 use crate::bank::Bank;
 use crate::structures::components::StructureType;
+use crate::structures::resources::VehicleBuildQueue;
 use crate::units::components::UnitType;
 use crate::units::resources::UnlockedUnits;
+
+const CLR_BUILD_PROGRESS_BAR: Color = Color::srgba(1.0, 1.0, 1.0, 0.05);
 
 pub struct UiPlugin;
 
@@ -21,6 +24,7 @@ impl Plugin for UiPlugin {
             (
                 update_build_queue_count.run_if(resource_changed::<BuildQueueCount>),
                 update_minimap_aspect,
+                update_build_progress_bar,
                 update_scroll_position,
                 spawn_unit_ctrs.run_if(resource_changed::<UnlockedUnits>),
             ),
@@ -28,8 +32,42 @@ impl Plugin for UiPlugin {
     }
 }
 
+fn update_build_progress_bar(
+    res: Res<VehicleBuildQueue>,
+    mut unit_ctr: Query<(&mut Visibility, &mut Node, &BuildUnitProgressBar)>,
+) {
+    // Get the first item in the build queue.
+    let Some((unit_type, timer)) = res.0.first() else {
+        return;
+    };
+
+    // Compute progress percent
+    let elapsed_secs = timer.elapsed().as_secs_f32();
+    let total_secs = timer.duration().as_secs_f32();
+    let progress_percent = if total_secs > 0.0 {
+        (elapsed_secs / total_secs) * 100.0
+    } else {
+        0.0
+    };
+
+    for (mut visibility, mut node, progress_bar) in unit_ctr.iter_mut() {
+        // Only update the progress bar for the matching unit type.
+        if progress_bar.0 != *unit_type || progress_percent > 99.5 {
+            *visibility = Visibility::Hidden;
+            continue;
+        }
+
+        *visibility = Visibility::Visible;
+        // Update the height of the progress bar relative to the timer's progress.
+        node.height = Val::Percent(progress_percent);
+    }
+}
+
 #[derive(Component)]
 struct BuildQueueCountCtr(UnitType);
+
+#[derive(Component)]
+struct BuildUnitProgressBar(UnitType);
 
 #[derive(Component)]
 struct OptCtr;
@@ -461,6 +499,28 @@ fn spawn_unit_btn<T: Component>(
             )
         };
 
+    let build_unit_progress_bar_ctr = |unit_type: UnitType| -> (
+        BuildUnitProgressBar,
+        BackgroundColor,
+        Node,
+        Visibility,
+        Name,
+    ) {
+        (
+            BuildUnitProgressBar(unit_type),
+            BackgroundColor(CLR_BUILD_PROGRESS_BAR),
+            Node {
+                position_type: PositionType::Absolute,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                bottom: Val::Px(0.0),
+                ..default()
+            },
+            Visibility::Hidden,
+            Name::new("Build Unit Progress Bar"),
+        )
+    };
+
     parent
         .spawn(unit_opt_ctr(unit, assets))
         .insert(comp)
@@ -469,7 +529,16 @@ fn spawn_unit_btn<T: Component>(
             ..default()
         })
         .with_children(|p| {
-            p.spawn(build_queue_count_ctr(unit));
+            p.spawn(build_queue_count_ctr(unit))
+                .insert(PickingBehavior {
+                    should_block_lower: false,
+                    ..default()
+                });
+            p.spawn(build_unit_progress_bar_ctr(unit))
+                .insert(PickingBehavior {
+                    should_block_lower: false,
+                    ..default()
+                });
             p.spawn(build_opt_txt(unit.name())).insert(PickingBehavior {
                 should_block_lower: false,
                 ..default()

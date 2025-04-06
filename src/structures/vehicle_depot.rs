@@ -8,6 +8,7 @@ use crate::{
         audio::{AudioCmd, MyAudio, UnitAudioEv},
         models::MyModels,
     },
+    cmd_interface::resources::BuildQueueCount,
     units::{components::UnitType, events::QueueVehicleEv},
 };
 
@@ -65,14 +66,17 @@ fn obs_build_vehicle(
     my_models: Res<MyModels>,
     audio: Res<bevy_kira_audio::Audio>,
     my_audio: Res<MyAudio>,
+    mut build_queue_count: ResMut<BuildQueueCount>,
 ) {
     let Ok(structure_trans) = q_structure.get_single() else {
         return;
     };
 
+    let unit_type = trigger.0;
+
     let forward: Vec3 = structure_trans.rotation * Vec3::new(-10.0, 0.0, -5.0);
     let mut spawn_location = structure_trans.translation + forward;
-    spawn_location.y = 2.0; // TODO: Fix this hardcoded value
+    spawn_location.y = 2.0; // TODO: Fix this hardcoded value. Needs to be dynamic based on unit models height
 
     // Create the transform for the vehicle: same as depot's rotation
     let vehicle_transform = Transform {
@@ -81,11 +85,11 @@ fn obs_build_vehicle(
         ..Default::default()
     };
 
-    let unit = trigger
-        .0
-        .build(vehicle_transform, &my_models, &audio, &my_audio);
+    let unit = unit_type.build(vehicle_transform, &my_models, &audio, &my_audio);
 
     cmds.spawn((unit, NewUnit::new(vehicle_transform.translation)));
+
+    build_queue_count.remove(&unit_type);
 }
 
 fn move_vehicle_from_garage(

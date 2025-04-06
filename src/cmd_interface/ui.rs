@@ -4,6 +4,7 @@ use bevy::picking::focus::HoverMap;
 use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
 
+use super::resources::BuildQueueCount;
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::asset_manager::imgs::MyImgs;
 use crate::bank::Bank;
@@ -18,6 +19,7 @@ impl Plugin for UiPlugin {
         app.add_systems(Startup, command_center_ui).add_systems(
             Update,
             (
+                update_build_queue_count.run_if(resource_changed::<BuildQueueCount>),
                 update_minimap_aspect,
                 update_scroll_position,
                 spawn_unit_ctrs.run_if(resource_changed::<UnlockedUnits>),
@@ -27,13 +29,13 @@ impl Plugin for UiPlugin {
 }
 
 #[derive(Component)]
+struct BuildQueueCountCtr(UnitType);
+
+#[derive(Component)]
 struct OptCtr;
 
 #[derive(Component)]
 struct MiniMapCtr;
-
-#[derive(Component)]
-pub struct BankCtr;
 
 #[derive(Component)]
 struct BuildColumnsCtr;
@@ -190,7 +192,6 @@ fn command_center_ui(mut cmds: Commands, my_imgs: Res<MyImgs>, bank: Res<Bank>) 
 
     let build_columns_ctr = (
         BuildColumnsCtr,
-        // BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         BackgroundColor(Color::BLACK),
         Node {
             padding: UiRect::top(Val::Px(5.0)),
@@ -340,6 +341,25 @@ fn command_center_ui(mut cmds: Commands, my_imgs: Res<MyImgs>, bank: Res<Bank>) 
     });
 }
 
+fn update_build_queue_count(
+    mut q_build_queue_ctr: Query<(&mut Text, &mut Visibility, &BuildQueueCountCtr)>,
+    build_queue_count: Res<BuildQueueCount>,
+) {
+    for (mut text, mut visibility, count_ctr) in q_build_queue_ctr.iter_mut() {
+        let count = build_queue_count.get(&count_ctr.0);
+
+        if count == 0 {
+            text.0 = "".to_string();
+            *visibility = Visibility::Hidden;
+            continue;
+        }
+
+        *visibility = Visibility::Visible;
+
+        text.0 = format!("{}", count);
+    }
+}
+
 fn spawn_unit_ctrs(
     mut cmds: Commands,
     q_unit_build_column: Query<Entity, With<UnitBuildColumn>>,
@@ -424,6 +444,23 @@ fn spawn_unit_btn<T: Component>(
     assets: &Res<MyImgs>,
     comp: T,
 ) {
+    let build_queue_count_ctr =
+        |unit_type: UnitType| -> (BuildQueueCountCtr, Node, Visibility, TextFont, Text, Name) {
+            (
+                BuildQueueCountCtr(unit_type),
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(5.0),
+                    top: Val::Px(5.0),
+                    ..default()
+                },
+                Visibility::Hidden,
+                TextFont::from_font_size(30.0),
+                Text::new(""),
+                Name::new("Build Queue Count"),
+            )
+        };
+
     parent
         .spawn(unit_opt_ctr(unit, assets))
         .insert(comp)
@@ -432,6 +469,7 @@ fn spawn_unit_btn<T: Component>(
             ..default()
         })
         .with_children(|p| {
+            p.spawn(build_queue_count_ctr(unit));
             p.spawn(build_opt_txt(unit.name())).insert(PickingBehavior {
                 should_block_lower: false,
                 ..default()

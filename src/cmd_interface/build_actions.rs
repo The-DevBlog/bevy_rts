@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use super::components::*;
 use super::events::*;
+use super::resources::BuildQueueCount;
 use super::resources::InfoContainerData;
 use crate::asset_manager::models::MyModels;
 use crate::bank::AdjustFundsEv;
@@ -90,6 +91,7 @@ fn build_unit_btn_interaction(
     bank: Res<Bank>,
     dbg: Res<DbgOptions>,
     mut info_ctr_data: ResMut<InfoContainerData>,
+    mut build_queue_count: ResMut<BuildQueueCount>,
     input: Res<ButtonInput<MouseButton>>,
 ) {
     for (interaction, mut img, unit_ctr) in q_btn_unit.iter_mut() {
@@ -103,6 +105,7 @@ fn build_unit_btn_interaction(
 
                 if input.just_pressed(MouseButton::Left) {
                     if bank.funds >= unit_ctr.0.cost() {
+                        build_queue_count.add(&unit_ctr.0);
                         cmds.trigger(AdjustFundsEv(-unit_ctr.0.cost()));
                         cmds.trigger(BuildUnitEv(unit_ctr.0));
                     } else {

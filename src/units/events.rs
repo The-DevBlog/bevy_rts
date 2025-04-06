@@ -6,4 +6,4 @@ use super::components::UnitType;
 pub struct QueueVehicleEv(pub UnitType);
 
 #[derive(Event)]
-pub struct BuildSoldierEv(pub UnitType);
+pub struct QueueSolderEv(pub UnitType);

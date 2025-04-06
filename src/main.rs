@@ -43,8 +43,8 @@ const SPEED_TANK_GEN_1: f32 = SPEED_QUANTIFIER * 50.0;
 const SPEED_TANK_GEN_2: f32 = SPEED_QUANTIFIER * 65.0;
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let shorts_flag = args.contains(&String::from("-shorts"));
+    // let args: Vec<String> = std::env::args().collect();
+    // let shorts_flag = args.contains(&String::from("-shorts"));
 
     let mut app = App::new();
     app.add_plugins((
@@ -54,6 +54,7 @@ fn main() {
         BankPlugin,
         RapierPhysicsPlugin::<NoUserData>::default(),
         // RapierDebugRenderPlugin::default(),
+        WorldInspectorPlugin::new(),
         OutlinePlugin,
         bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
         ResourcesPlugin,
@@ -67,9 +68,9 @@ fn main() {
 
     app.add_plugins((AudioPlugin, SpatialAudioPlugin));
 
-    if !shorts_flag {
-        app.add_plugins(WorldInspectorPlugin::new());
-    }
+    // if !shorts_flag {
+    //     app.add_plugins(WorldInspectorPlugin::new());
+    // }
 
     app.run();
 }

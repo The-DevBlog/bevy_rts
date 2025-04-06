@@ -9,7 +9,7 @@ use crate::{
         models::MyModels,
     },
     cmd_interface::resources::BuildQueueCount,
-    units::{components::UnitType, events::QueueVehicleEv},
+    units::events::QueueVehicleEv,
 };
 
 use super::{components::*, events::BuildVehicleEv, resources::VehicleBuildQueue};
@@ -87,6 +87,7 @@ fn obs_build_vehicle(
 
     let unit = unit_type.build(vehicle_transform, &my_models, &audio, &my_audio);
 
+    cmds.trigger(UnitAudioEv::new(AudioCmd::Ready, unit_type.clone()));
     cmds.spawn((unit, NewUnit::new(vehicle_transform.translation)));
 
     build_queue_count.remove(&unit_type);
@@ -94,24 +95,14 @@ fn obs_build_vehicle(
 
 fn move_vehicle_from_garage(
     mut cmds: Commands,
-    mut q_new_unit: Query<(
-        Entity,
-        &mut ExternalImpulse,
-        &Transform,
-        &UnitType,
-        &mut NewUnit,
-    )>,
+    mut q_new_unit: Query<(Entity, &mut ExternalImpulse, &Transform, &mut NewUnit)>,
     time: Res<Time>,
 ) {
-    for (entity, mut ext_impulse, transform, unit_type, mut new_unit) in q_new_unit.iter_mut() {
+    for (entity, mut ext_impulse, transform, mut new_unit) in q_new_unit.iter_mut() {
         new_unit.timer.tick(time.delta());
 
         if !new_unit.timer.finished() {
             continue;
-        }
-
-        if new_unit.timer.just_finished() {
-            cmds.trigger(UnitAudioEv::new(AudioCmd::Ready, unit_type.clone()));
         }
 
         let forward = transform.rotation * Vec3::new(0.0, 0.0, -1.0);

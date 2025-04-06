@@ -32,37 +32,6 @@ impl Plugin for UiPlugin {
     }
 }
 
-fn update_build_progress_bar(
-    res: Res<VehicleBuildQueue>,
-    mut unit_ctr: Query<(&mut Visibility, &mut Node, &BuildUnitProgressBar)>,
-) {
-    // Get the first item in the build queue.
-    let Some((unit_type, timer)) = res.0.first() else {
-        return;
-    };
-
-    // Compute progress percent
-    let elapsed_secs = timer.elapsed().as_secs_f32();
-    let total_secs = timer.duration().as_secs_f32();
-    let progress_percent = if total_secs > 0.0 {
-        (elapsed_secs / total_secs) * 100.0
-    } else {
-        0.0
-    };
-
-    for (mut visibility, mut node, progress_bar) in unit_ctr.iter_mut() {
-        // Only update the progress bar for the matching unit type.
-        if progress_bar.0 != *unit_type || progress_percent > 99.5 {
-            *visibility = Visibility::Hidden;
-            continue;
-        }
-
-        *visibility = Visibility::Visible;
-        // Update the height of the progress bar relative to the timer's progress.
-        node.height = Val::Percent(progress_percent);
-    }
-}
-
 #[derive(Component)]
 struct BuildQueueCountCtr(UnitType);
 
@@ -572,4 +541,37 @@ fn build_opt_txt(
         AccessibilityNode(Accessible::new(Role::ListItem)),
         Name::new("Build Option Txt"),
     )
+}
+
+fn update_build_progress_bar(
+    res: Res<VehicleBuildQueue>,
+    mut unit_ctr: Query<(&mut Visibility, &mut Node, &BuildUnitProgressBar)>,
+) {
+    // Get the first item in the build queue.
+    let Some((unit_type, timer)) = res.0.first() else {
+        return;
+    };
+
+    // Compute progress percent
+    let elapsed_secs = timer.elapsed().as_secs_f32();
+    let total_secs = timer.duration().as_secs_f32();
+    let progress_percent = if total_secs > 0.0 {
+        (elapsed_secs / total_secs) * 100.0
+    } else {
+        0.0
+    };
+
+    println!("Progress: {}%", progress_percent);
+
+    for (mut visibility, mut node, progress_bar) in unit_ctr.iter_mut() {
+        // Only update the progress bar for the matching unit type.
+        if progress_bar.0 != *unit_type || progress_percent > 99.5 {
+            *visibility = Visibility::Hidden;
+            continue;
+        }
+
+        *visibility = Visibility::Visible;
+        // Update the height of the progress bar relative to the timer's progress.
+        node.height = Val::Percent(progress_percent);
+    }
 }

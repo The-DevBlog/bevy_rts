@@ -8,6 +8,7 @@ use super::resources::BuildQueueCount;
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::asset_manager::imgs::MyImgs;
 use crate::bank::Bank;
+use crate::resources::DbgOptions;
 use crate::structures::components::StructureType;
 use crate::structures::resources::VehicleBuildQueue;
 use crate::units::components::UnitType;
@@ -72,7 +73,12 @@ fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<
     }
 }
 
-fn command_center_ui(mut cmds: Commands, my_imgs: Res<MyImgs>, bank: Res<Bank>) {
+fn command_center_ui(
+    mut cmds: Commands,
+    my_imgs: Res<MyImgs>,
+    bank: Res<Bank>,
+    dbg: Res<DbgOptions>,
+) {
     let info_ctr = (
         InfoCtr,
         ImageNode::new(my_imgs.info_ctr.clone()),
@@ -124,6 +130,11 @@ fn command_center_ui(mut cmds: Commands, my_imgs: Res<MyImgs>, bank: Res<Bank>) 
         Name::new("Build Time Txt"),
     );
 
+    let (min_width, width) = match dbg.youtube_shorts {
+        true => (0.0, 30.0),
+        false => (200.0, 100.0),
+    };
+
     let cmd_interface_ctr = (
         CmdInterfaceCtr,
         Button,
@@ -132,22 +143,26 @@ fn command_center_ui(mut cmds: Commands, my_imgs: Res<MyImgs>, bank: Res<Bank>) 
             margin: UiRect::left(Val::Auto),
             flex_direction: FlexDirection::Column,
             height: Val::Percent(100.0),
-            width: Val::Percent(100.0),
+            width: Val::Percent(width),
             align_items: AlignItems::Center,
             max_width: Val::Px(394.0),
-            min_width: Val::Px(200.0),
+            min_width: Val::Px(min_width),
             ..default()
         },
         Name::new("Command Interface Ctr"),
     );
 
+    let width = match dbg.youtube_shorts {
+        true => 93.0,
+        false => 100.0,
+    };
     let mini_map_ctr = (
         MiniMapCtr,
         Node {
             min_height: Val::Percent(25.0),
             max_height: Val::Px(341.0),
             max_width: Val::Px(341.0),
-            width: Val::Percent(100.0),
+            width: Val::Percent(width),
             margin: UiRect::bottom(Val::Px(41.0)),
             top: Val::Px(22.1),
             // left: Val::Percent(2.0),
@@ -197,15 +212,20 @@ fn command_center_ui(mut cmds: Commands, my_imgs: Res<MyImgs>, bank: Res<Bank>) 
         )
     };
 
+    let (min_width, width, height) = match dbg.youtube_shorts {
+        true => (0.0, 92.0, Val::Percent(46.2)),
+        false => (246.0, 100.0, Val::Auto),
+    };
     let build_columns_ctr = (
         BuildColumnsCtr,
         BackgroundColor(Color::BLACK),
         Node {
             padding: UiRect::top(Val::Px(5.0)),
             // margin: UiRect::new(Val::Auto, Val::Auto, Val::ZERO, Val::ZERO),
-            min_width: Val::Px(246.0),
+            min_width: Val::Px(min_width),
             max_width: Val::Px(358.0),
-            width: Val::Percent(100.0),
+            height,
+            width: Val::Percent(width),
             // max_width: Val::Px(341.0),
             overflow: Overflow::scroll_y(),
             ..default()

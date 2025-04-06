@@ -8,6 +8,7 @@ impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         let args: Vec<String> = std::env::args().collect();
         let debug_flag = args.contains(&String::from("-debug"));
+        let shorts_flag = args.contains(&String::from("-shorts"));
 
         app.init_resource::<MouseCoords>()
             .init_resource::<SelectBox>()
@@ -15,6 +16,7 @@ impl Plugin for ResourcesPlugin {
             .init_resource::<CursorState>()
             .insert_resource(DbgOptions {
                 print_statements: debug_flag,
+                youtube_shorts: shorts_flag,
             });
     }
 }
@@ -23,6 +25,7 @@ impl Plugin for ResourcesPlugin {
 #[reflect(Resource)]
 pub struct DbgOptions {
     pub print_statements: bool,
+    pub youtube_shorts: bool,
 }
 
 impl DbgOptions {

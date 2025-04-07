@@ -83,18 +83,17 @@ fn spawn_ground(
 
 fn spawn_light(mut cmds: Commands) {
     // Light
+    let yaw = 150.0f32.to_radians() + std::f32::consts::PI; // 150° + 180° = 330° (in radians)
+    let pitch = -40.0f32.to_radians();
+    let roll = 0.0;
+
     cmds.spawn((
         DirectionalLight {
             illuminance: 1000.0,
             shadows_enabled: true,
             ..default()
         },
-        Transform::from_rotation(Quat::from_euler(
-            EulerRot::YXZ,
-            150.0f32.to_radians(),
-            -40.0f32.to_radians(),
-            0.0,
-        )),
+        Transform::from_rotation(Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)),
         Name::new("Light"),
     ));
 }

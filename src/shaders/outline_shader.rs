@@ -32,7 +32,7 @@ pub struct OutlineShaderPlugin;
 
 impl Plugin for OutlineShaderPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
+        app.register_type::<ToonPostProcessSettings>().add_plugins((
             // The settings will be a component that lives in the main world but will
             // be extracted to the render world every frame.
             // This makes it possible to control the effect from the main world.
@@ -305,7 +305,7 @@ impl FromWorld for PostProcessPipeline {
 }
 
 // This is the component that will get passed to the shader
-#[derive(Component, Clone, Copy, ExtractComponent, ShaderType)]
+#[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
 pub struct ToonPostProcessSettings {
     pub depth_threshold: f32,
     pub depth_threshold_depth_mul: f32, // If something is further away, it should require more depth
@@ -319,12 +319,12 @@ pub struct ToonPostProcessSettings {
 impl Default for ToonPostProcessSettings {
     fn default() -> Self {
         Self {
-            depth_threshold: 1.0,
+            depth_threshold: 1.5,
             depth_threshold_depth_mul: 1.0,
-            depth_normal_threshold: 0.5,
+            depth_normal_threshold: 0.7,
             depth_normal_threshold_mul: 30.0,
-            normal_threshold: 0.4,
-            colour_threshold: 0.2,
+            normal_threshold: 0.6,
+            colour_threshold: 0.3,
             sampling_scale: 3.0,
         }
     }

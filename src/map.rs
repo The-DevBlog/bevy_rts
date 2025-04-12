@@ -1,6 +1,9 @@
+use bevy::pbr::ExtendedMaterial;
 use bevy_rts_camera::Ground;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::grid::Grid;
+
+use crate::shaders::MyExtension;
 
 use super::*;
 
@@ -21,6 +24,7 @@ fn spawn_ground(
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut extended_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, MyExtension>>>,
 ) {
     // let desired_tile_size = 30.0;
     // let tile_factor = MAP_WIDTH / desired_tile_size;
@@ -65,14 +69,26 @@ fn spawn_ground(
     // Ground
     // rgb(95, 123, 155)
     // rgb(111, 190, 111)
+    let clr = Color::srgb(0.44, 0.75, 0.44); // green
     cmds.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_DEPTH))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            // base_color: Color::srgb(0.37, 0.48, 0.61), // blue
-            base_color: Color::srgb(0.44, 0.75, 0.44), // green
-            perceptual_roughness: 1.0,
-            ..Default::default()
+        MeshMaterial3d(extended_materials.add(ExtendedMaterial {
+            base: StandardMaterial {
+                base_color: clr,
+                ..default()
+            },
+            extension: MyExtension {
+                base_color: clr.into(),
+                tint: TINT_CLR.into(),
+                tint_strength: TINT_STRENGTH,
+            },
         })),
+        // MeshMaterial3d(materials.add(StandardMaterial {
+        //     // base_color: Color::srgb(0.37, 0.48, 0.61), // blue
+        //     base_color: Color::srgb(0.44, 0.75, 0.44), // green
+        //     perceptual_roughness: 1.0,
+        //     ..Default::default()
+        // })),
         Collider::cuboid(MAP_WIDTH / 2.0, 0.0, MAP_DEPTH / 2.0),
         Sensor,
         Ground,
@@ -82,18 +98,18 @@ fn spawn_ground(
 }
 
 fn spawn_light(mut cmds: Commands) {
-    // Light
-    let yaw = 150.0f32.to_radians() + std::f32::consts::PI; // 150° + 180° = 330° (in radians)
-    let pitch = -40.0f32.to_radians();
-    let roll = 0.0;
+    // // Light
+    // let yaw = 150.0f32.to_radians() + std::f32::consts::PI; // 150° + 180° = 330° (in radians)
+    // let pitch = -40.0f32.to_radians();
+    // let roll = 0.0;
 
-    cmds.spawn((
-        DirectionalLight {
-            illuminance: 1000.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        Transform::from_rotation(Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)),
-        Name::new("Light"),
-    ));
+    // cmds.spawn((
+    //     DirectionalLight {
+    //         illuminance: 1000.0,
+    //         shadows_enabled: true,
+    //         ..default()
+    //     },
+    //     Transform::from_rotation(Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)),
+    //     Name::new("Light"),
+    // ));
 }

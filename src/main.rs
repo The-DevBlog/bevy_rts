@@ -13,6 +13,7 @@ mod events;
 mod map;
 mod mouse;
 mod resources;
+mod shaders;
 mod structures;
 mod tank;
 mod units;
@@ -25,10 +26,13 @@ use cmd_interface::CmdInterfacePlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
+use shaders::ShadersPlugin;
 use structures::StructuresPlugin;
 use tank::TankPlugin;
 use units::UnitsPlugin;
 
+const TINT_STRENGTH: f32 = 0.4;
+const TINT_CLR: Srgba = BLUE;
 const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
 const CELL_SIZE: f32 = 10.0;
@@ -66,7 +70,7 @@ fn main() {
         TankPlugin,
     ));
 
-    app.add_plugins((AudioPlugin, SpatialAudioPlugin));
+    app.add_plugins((AudioPlugin, SpatialAudioPlugin, ShadersPlugin));
 
     // if !shorts_flag {
     //     app.add_plugins(WorldInspectorPlugin::new());

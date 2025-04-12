@@ -1,9 +1,18 @@
-use bevy::math::bounding::Aabb2d;
+use bevy::{
+    core_pipeline::{
+        fxaa::{Fxaa, Sensitivity},
+        prepass::{DepthPrepass, NormalPrepass},
+    },
+    math::bounding::Aabb2d,
+};
 use bevy_kira_audio::SpatialAudioReceiver;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use bevy_rts_pathfinding::components as pf_comps;
 
-use crate::{resources::GameCommands, structures::components::StructurePlaceholder};
+use crate::{
+    resources::GameCommands, shaders::outline_shader::ToonPostProcessSettings,
+    structures::components::StructurePlaceholder,
+};
 
 use super::*;
 
@@ -20,6 +29,15 @@ impl Plugin for CameraPlugin {
 fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
+        ToonPostProcessSettings::default(),
+        DepthPrepass,
+        NormalPrepass,
+        Msaa::Off,
+        Fxaa {
+            enabled: true,
+            edge_threshold: Sensitivity::Ultra,
+            edge_threshold_min: Sensitivity::Ultra,
+        },
         pf_comps::GameCamera,
         SpatialAudioReceiver,
         RtsCamera {

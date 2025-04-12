@@ -100,16 +100,34 @@ fn detect_edge_colour(bl_uv: vec2f, tr_uv: vec2f, br_uv: vec2f, tl_uv: vec2f) ->
     return edge;
 }
 
-
+// version 3
 fn toon_colour(uv: vec2f) -> vec4f {
     let c = textureSample(screen_texture, texture_sampler, uv).rgb;
-    let ambient_bias = 0.1;
+    // Check if the color is nearly black
+    if length(c) < 0.01 {
+        return vec4<f32>(0.0, 0.0, 0.0, 1.0);
+    }
+
+    let ambient_bias = 0.2;
     let i = length(c) + ambient_bias;
     let new_i = floor(i * 15.0) / 15.0;
+    // Use the original color if it isn't black, normalized and scaled by new_i.
     let new_c = normalize(c) * new_i;
     return vec4<f32>(new_c, 1.0);
 }
 
+
+// version 2
+// fn toon_colour(uv: vec2f) -> vec4f {
+//     let c = textureSample(screen_texture, texture_sampler, uv).rgb;
+//     let ambient_bias = 0.1;
+//     let i = length(c) + ambient_bias;
+//     let new_i = floor(i * 15.0) / 15.0;
+//     let new_c = normalize(c) * new_i;
+//     return vec4<f32>(new_c, 1.0);
+// }
+
+// version 1
 // fn toon_colour(uv: vec2f) -> vec4f {
 //     let c = textureSample(screen_texture, texture_sampler, uv).rgb;
 //     let i = length(c);

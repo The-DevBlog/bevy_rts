@@ -10,7 +10,8 @@ use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use bevy_rts_pathfinding::components as pf_comps;
 
 use crate::{
-    resources::GameCommands, shaders::outline_shader::ToonPostProcessSettings,
+    resources::GameCommands,
+    shaders::{outline_shader::ToonPostProcessSettings, tint_shader::TintPostProcessSettings},
     structures::components::StructurePlaceholder,
 };
 
@@ -30,6 +31,7 @@ fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
         ToonPostProcessSettings::default(),
+        TintPostProcessSettings::default(),
         DepthPrepass,
         NormalPrepass,
         Msaa::Off,

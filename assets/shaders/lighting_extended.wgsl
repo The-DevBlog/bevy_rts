@@ -55,7 +55,9 @@ fn vertex(
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     // --- Lighting Computation ---
-    let light_direction = normalize(vec3<f32>(0.5, 0.5, 1.0));
+    // let light_direction = normalize(vec3<f32>(0.7, 0.7, 1.0));
+    let light_direction = normalize(vec3<f32>(0.6533, 0.3827, 0.6533));
+
     let normal = normalize(in.world_normal);
     let diffuse = max(dot(normal, light_direction), 0.0);
     let ambient = 0.1;

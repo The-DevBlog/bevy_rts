@@ -32,7 +32,7 @@ use tank::TankPlugin;
 use units::UnitsPlugin;
 
 const TINT_STRENGTH: f32 = 0.4;
-const TINT_CLR: Srgba = BLUE;
+const TINT_CLR: Srgba = YELLOW;
 const COLOR_SELECT_BOX: Color = Color::srgba(0.68, 0.68, 0.68, 0.25);
 const COLOR_SELECT_BOX_BORDER: Srgba = DARK_GRAY;
 const CELL_SIZE: f32 = 10.0;

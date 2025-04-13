@@ -316,7 +316,7 @@ impl Default for TintPostProcessSettings {
     fn default() -> Self {
         Self {
             tint: YELLOW.into(),
-            tint_strength: 0.05,
+            tint_strength: 0.00,
         }
     }
 }

@@ -10,6 +10,6 @@ pub struct ShadersPlugin;
 
 impl Plugin for ShadersPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((OutlineShaderPlugin, TintShaderPlugin));
+        app.add_plugins((OutlineShaderPlugin));
     }
 }

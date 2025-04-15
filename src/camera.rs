@@ -32,7 +32,7 @@ fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
         ToonPostProcessSettings::default(),
-        TintPostProcessSettings::default(),
+        // TintPostProcessSettings::default(),
         DepthPrepass,
         NormalPrepass,
         Msaa::Off,

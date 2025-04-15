@@ -26,7 +26,8 @@ use bevy::{
 
 /// This example uses a shader source file from the assets subdirectory
 // const SHADER_ASSET_PATH: &str = "shaders/outline.wgsl";
-const SHADER_ASSET_PATH: &str = "shaders/stylized.wgsl";
+// const SHADER_ASSET_PATH: &str = "shaders/stylized.wgsl";
+const SHADER_ASSET_PATH: &str = "shaders/outline.wgsl";
 
 /// It is generally encouraged to set up post processing effects as a plugin
 pub struct OutlineShaderPlugin;
@@ -308,51 +309,25 @@ impl FromWorld for PostProcessPipeline {
 // This is the component that will get passed to the shader
 #[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
 pub struct ToonPostProcessSettings {
-    pub camera_near: f32,
-    pub camera_far: f32,
-    pub resolution: Vec2,
-    pub shadow_type: f32,
-    // pub quantization_levels: u32,
-    // pub blend_factor: f32,
-    // pub saturation_boost: f32,
-    // pub brightness: f32,
-    // pub contrast: f32,
-    // pub hue_shift: f32,
-    // pub exposure: f32,
-    // pub gamma: f32,
-    // pub desaturation: f32,
-    // pub depth_threshold: f32,
-    // pub depth_threshold_depth_mul: f32, // If something is further away, it should require more depth
-    // pub depth_normal_threshold: f32,    // If at a glazing angle, depth threshold should be harsher
-    // pub depth_normal_threshold_mul: f32, // If at a glazing angle, depth threshold should be harsher
-    // pub normal_threshold: f32,
-    // pub colour_threshold: f32,
-    // pub sampling_scale: f32,
+    pub depth_threshold: f32,
+    pub depth_threshold_depth_mul: f32, // If something is further away, it should require more depth
+    pub depth_normal_threshold: f32,    // If at a glazing angle, depth threshold should be harsher
+    pub depth_normal_threshold_mul: f32, // If at a glazing angle, depth threshold should be harsher
+    pub normal_threshold: f32,
+    pub colour_threshold: f32,
+    pub sampling_scale: f32,
 }
 
 impl Default for ToonPostProcessSettings {
     fn default() -> Self {
         Self {
-            camera_near: 0.1,
-            camera_far: 1000.0,
-            resolution: Vec2::new(1920.0, 1080.0),
-            shadow_type: 0.0,
-            // quantization_levels: 16, // Posterization: number of quantization levels per channel.
-            // blend_factor: 0.5, // Blend factor between the original scene and the stylized version.
-            // saturation_boost: 1.0,
-            // brightness: 0.05,
-            // contrast: 1.0,
-            // hue_shift: 0.0,
-            // exposure: 1.0,
-            // gamma: 2.2,
-            // desaturation: 0.0,
-            // depth_threshold: 0.5,
-            // depth_threshold_depth_mul: 1.0,
-            // depth_normal_threshold: 0.5,
-            // depth_normal_threshold_mul: 10.0,
-            // normal_threshold: 0.5,
-            // colour_threshold: 0.5,
-            // sampling_scale: 3.0,
+            depth_threshold: 0.5,
+            depth_threshold_depth_mul: 1.0,
+            depth_normal_threshold: 0.5,
+            depth_normal_threshold_mul: 10.0,
+            normal_threshold: 0.5,
+            colour_threshold: 0.5,
+            sampling_scale: 3.0,
         }
     }
 }

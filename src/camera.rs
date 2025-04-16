@@ -12,7 +12,7 @@ use bevy_rts_pathfinding::components as pf_comps;
 
 use crate::{
     resources::GameCommands,
-    shaders::{outline_shader::ToonPostProcessSettings, tint_shader::TintPostProcessSettings},
+    shaders::{outline_shader::OutlineShaderSettings, tint_shader::TintPostProcessSettings},
     structures::components::StructurePlaceholder,
 };
 
@@ -31,7 +31,7 @@ impl Plugin for CameraPlugin {
 fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
-        ToonPostProcessSettings::default(),
+        OutlineShaderSettings::default(),
         // TintPostProcessSettings::default(),
         DepthPrepass,
         NormalPrepass,

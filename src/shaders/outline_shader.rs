@@ -5,6 +5,7 @@ use bevy::{
         prepass::ViewPrepassTextures,
     },
     ecs::query::QueryItem,
+    input::mouse::MouseWheel,
     prelude::*,
     render::{
         extract_component::{
@@ -25,8 +26,6 @@ use bevy::{
 };
 
 /// This example uses a shader source file from the assets subdirectory
-// const SHADER_ASSET_PATH: &str = "shaders/outline.wgsl";
-// const SHADER_ASSET_PATH: &str = "shaders/stylized.wgsl";
 const SHADER_ASSET_PATH: &str = "shaders/outline.wgsl";
 
 /// It is generally encouraged to set up post processing effects as a plugin
@@ -34,19 +33,22 @@ pub struct OutlineShaderPlugin;
 
 impl Plugin for OutlineShaderPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<ToonPostProcessSettings>().add_plugins((
+        app.register_type::<OutlineShaderSettings>();
+        app.register_type::<OutlineShaderSettings>().add_plugins((
             // The settings will be a component that lives in the main world but will
             // be extracted to the render world every frame.
             // This makes it possible to control the effect from the main world.
             // This plugin will take care of extracting it automatically.
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
-            ExtractComponentPlugin::<ToonPostProcessSettings>::default(),
+            ExtractComponentPlugin::<OutlineShaderSettings>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
             // and writing the data to that buffer every frame.
-            UniformComponentPlugin::<ToonPostProcessSettings>::default(),
+            UniformComponentPlugin::<OutlineShaderSettings>::default(),
         ));
+
+        app.add_systems(Update, update_zoom_system);
 
         // We need to get the render app from the main app
         let Some(render_app) = app.get_sub_app_mut(RenderApp) else {
@@ -115,10 +117,10 @@ impl ViewNode for PostProcessNode {
         &'static ViewTarget,
         &'static ViewPrepassTextures,
         // This makes sure the node only runs on cameras with the PostProcessSettings component
-        &'static ToonPostProcessSettings,
+        &'static OutlineShaderSettings,
         // As there could be multiple post processing components sent to the GPU (one per camera),
         // we need to get the index of the one that is associated with the current view.
-        &'static DynamicUniformIndex<ToonPostProcessSettings>,
+        &'static DynamicUniformIndex<OutlineShaderSettings>,
         &'static ViewUniformOffset,
     );
 
@@ -152,7 +154,7 @@ impl ViewNode for PostProcessNode {
         };
 
         // Get the settings uniform binding
-        let settings_uniforms = world.resource::<ComponentUniforms<ToonPostProcessSettings>>();
+        let settings_uniforms = world.resource::<ComponentUniforms<OutlineShaderSettings>>();
         let view_uniforms = world.resource::<ViewUniforms>();
         let Some(view_uniforms) = view_uniforms.uniforms.binding() else {
             return Ok(());
@@ -187,14 +189,19 @@ impl ViewNode for PostProcessNode {
             &post_process_pipeline.layout,
             // It's important for this to match the BindGroupLayout defined in the PostProcessPipeline
             &BindGroupEntries::sequential((
-                // Make sure to use the source view
+                // Binding 0: Screen texture (source view)
                 post_process.source,
-                // Use the sampler created for the pipeline
+                // Binding 1: Screen sampler
                 &post_process_pipeline.sampler,
-                // Set the settings binding
+                // Binding 2: Settings uniform
                 settings_binding.clone(),
-                &depth_texture.texture.default_view,
+                // Binding 3: Normal texture (use the normal texture view)
                 &normal_texture.texture.default_view,
+                // Binding 4: Normal sampler (reuse the same sampler or a dedicated one)
+                &post_process_pipeline.sampler,
+                // Binding 5: Depth texture
+                &depth_texture.texture.default_view,
+                // Binding 6: View uniform
                 view_uniforms,
             )),
         );
@@ -255,9 +262,11 @@ impl FromWorld for PostProcessPipeline {
                     // The sampler that will be used to sample the screen texture
                     sampler(SamplerBindingType::Filtering),
                     // The settings uniform that will control the effect
-                    uniform_buffer::<ToonPostProcessSettings>(true),
-                    texture_depth_2d(),
+                    uniform_buffer::<OutlineShaderSettings>(true),
                     texture_2d(TextureSampleType::Float { filterable: true }),
+                    // Binding 4: The normal sampler.
+                    sampler(SamplerBindingType::Filtering),
+                    texture_depth_2d(),
                     uniform_buffer::<ViewUniform>(true),
                 ),
             ),
@@ -308,26 +317,47 @@ impl FromWorld for PostProcessPipeline {
 
 // This is the component that will get passed to the shader
 #[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct ToonPostProcessSettings {
-    pub depth_threshold: f32,
-    pub depth_threshold_depth_mul: f32, // If something is further away, it should require more depth
-    pub depth_normal_threshold: f32,    // If at a glazing angle, depth threshold should be harsher
-    pub depth_normal_threshold_mul: f32, // If at a glazing angle, depth threshold should be harsher
+pub struct OutlineShaderSettings {
+    // pub zoom: f32,
+    pub resolution: Vec2,
     pub normal_threshold: f32,
-    pub colour_threshold: f32,
-    pub sampling_scale: f32,
+    pub outline_color: Vec4,
+    pub outline_thickness: f32,
 }
 
-impl Default for ToonPostProcessSettings {
+impl Default for OutlineShaderSettings {
     fn default() -> Self {
         Self {
-            depth_threshold: 0.5,
-            depth_threshold_depth_mul: 1.0,
-            depth_normal_threshold: 0.5,
-            depth_normal_threshold_mul: 10.0,
-            normal_threshold: 0.5,
-            colour_threshold: 0.5,
-            sampling_scale: 3.0,
+            // zoom: 1.0,
+            resolution: Vec2::new(1920.0, 1080.0),
+            normal_threshold: 0.02,
+            outline_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
+            outline_thickness: 0.8,
         }
     }
+}
+
+fn update_zoom_system(
+    // keyboard_input: Res<Input<KeyCode>>,
+    mut events: EventReader<MouseWheel>,
+    mut settings: Query<&mut OutlineShaderSettings>,
+) {
+    // let Ok(mut settings) = settings.get_single_mut() else {
+    //     return;
+    // };
+
+    // for ev in events.read() {
+    //     // Increase zoom (thicker outlines) when scrolling up,
+    //     // and decrease when scrolling down.
+    //     if ev.y < 0.0 {
+    //         settings.zoom -= 0.3;
+    //         info!("Zoom increased: {}", settings.zoom);
+    //     } else if ev.y > 0.0 {
+    //         settings.zoom += 0.3;
+    //         // settings.zoom = (settings.zoom - 0.1).max(0.1); // avoid non-positive zoom
+    //         info!("Zoom decreased: {}", settings.zoom);
+    //     }
+
+    //     settings.zoom = settings.zoom.clamp(0.8, 5.0);
+    // }
 }

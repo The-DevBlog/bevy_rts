@@ -33,18 +33,18 @@ pub struct TintShaderPlugin;
 
 impl Plugin for TintShaderPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<TintPostProcessSettings>().add_plugins((
+        app.register_type::<TintShaderSettings>().add_plugins((
             // The settings will be a component that lives in the main world but will
             // be extracted to the render world every frame.
             // This makes it possible to control the effect from the main world.
             // This plugin will take care of extracting it automatically.
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
-            ExtractComponentPlugin::<TintPostProcessSettings>::default(),
+            ExtractComponentPlugin::<TintShaderSettings>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
             // and writing the data to that buffer every frame.
-            UniformComponentPlugin::<TintPostProcessSettings>::default(),
+            UniformComponentPlugin::<TintShaderSettings>::default(),
         ));
 
         // We need to get the render app from the main app
@@ -114,10 +114,10 @@ impl ViewNode for PostProcessNode {
         &'static ViewTarget,
         &'static ViewPrepassTextures,
         // This makes sure the node only runs on cameras with the PostProcessSettings component
-        &'static TintPostProcessSettings,
+        &'static TintShaderSettings,
         // As there could be multiple post processing components sent to the GPU (one per camera),
         // we need to get the index of the one that is associated with the current view.
-        &'static DynamicUniformIndex<TintPostProcessSettings>,
+        &'static DynamicUniformIndex<TintShaderSettings>,
         &'static ViewUniformOffset,
     );
 
@@ -151,7 +151,7 @@ impl ViewNode for PostProcessNode {
         };
 
         // Get the settings uniform binding
-        let settings_uniforms = world.resource::<ComponentUniforms<TintPostProcessSettings>>();
+        let settings_uniforms = world.resource::<ComponentUniforms<TintShaderSettings>>();
         let view_uniforms = world.resource::<ViewUniforms>();
         let Some(view_uniforms) = view_uniforms.uniforms.binding() else {
             return Ok(());
@@ -254,7 +254,7 @@ impl FromWorld for PostProcessPipeline {
                     // The sampler that will be used to sample the screen texture
                     sampler(SamplerBindingType::Filtering),
                     // The settings uniform that will control the effect
-                    uniform_buffer::<TintPostProcessSettings>(true),
+                    uniform_buffer::<TintShaderSettings>(true),
                     texture_depth_2d(),
                     texture_2d(TextureSampleType::Float { filterable: true }),
                     uniform_buffer::<ViewUniform>(true),
@@ -307,12 +307,12 @@ impl FromWorld for PostProcessPipeline {
 
 // This is the component that will get passed to the shader
 #[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct TintPostProcessSettings {
+pub struct TintShaderSettings {
     pub tint: LinearRgba, // or LinearRgba if you convert it appropriately
     pub tint_strength: f32,
 }
 
-impl Default for TintPostProcessSettings {
+impl Default for TintShaderSettings {
     fn default() -> Self {
         Self {
             tint: YELLOW.into(),

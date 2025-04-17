@@ -189,20 +189,11 @@ impl ViewNode for PostProcessNode {
             &post_process_pipeline.layout,
             // It's important for this to match the BindGroupLayout defined in the PostProcessPipeline
             &BindGroupEntries::sequential((
-                // Binding 0: Screen texture (source view)
-                post_process.source,
-                // Binding 1: Screen sampler
-                &post_process_pipeline.sampler,
-                // Binding 2: Settings uniform
-                settings_binding.clone(),
-                // Binding 3: Normal texture (use the normal texture view)
-                &normal_texture.texture.default_view,
-                // Binding 4: Normal sampler (reuse the same sampler or a dedicated one)
-                &post_process_pipeline.sampler,
-                // Binding 5: Depth texture
-                &depth_texture.texture.default_view,
-                // Binding 6: View uniform
-                view_uniforms,
+                post_process.source,                  // Binding 0: Screen texture (source view)
+                &post_process_pipeline.sampler,       // Binding 1: Screen sampler
+                settings_binding.clone(),             // Binding 2: Settings uniform buffer
+                &normal_texture.texture.default_view, // Binding 3: Normal texture
+                &depth_texture.texture.default_view,  // Binding 4: Depth texture
             )),
         );
 
@@ -227,11 +218,7 @@ impl ViewNode for PostProcessNode {
         // By passing in the index of the post process settings on this view, we ensure
         // that in the event that multiple settings were sent to the GPU (as would be the
         // case with multiple cameras), we use the correct one.
-        render_pass.set_bind_group(
-            0,
-            &bind_group,
-            &[settings_index.index(), view_uniform.offset],
-        );
+        render_pass.set_bind_group(0, &bind_group, &[settings_index.index()]);
         render_pass.draw(0..3, 0..1);
 
         Ok(())
@@ -257,17 +244,11 @@ impl FromWorld for PostProcessPipeline {
                 // The layout entries will only be visible in the fragment stage
                 ShaderStages::FRAGMENT,
                 (
-                    // The screen texture
-                    texture_2d(TextureSampleType::Float { filterable: true }),
-                    // The sampler that will be used to sample the screen texture
-                    sampler(SamplerBindingType::Filtering),
-                    // The settings uniform that will control the effect
-                    uniform_buffer::<OutlineShaderSettings>(true),
-                    texture_2d(TextureSampleType::Float { filterable: true }),
-                    // Binding 4: The normal sampler.
-                    sampler(SamplerBindingType::Filtering),
-                    texture_depth_2d(),
-                    uniform_buffer::<ViewUniform>(true),
+                    texture_2d(TextureSampleType::Float { filterable: true }), // 0: The screen texture
+                    sampler(SamplerBindingType::Filtering), // 1: The screen sampler
+                    uniform_buffer::<OutlineShaderSettings>(true), // 2: The settings uniform
+                    texture_2d(TextureSampleType::Float { filterable: true }), // 3: The normal texture
+                    texture_depth_2d(), // 4: The depth texture
                 ),
             ),
         );

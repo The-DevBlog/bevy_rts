@@ -12,7 +12,9 @@ use bevy_rts_pathfinding::components as pf_comps;
 
 use crate::{
     resources::GameCommands,
-    shaders::{outline::OutlineShaderSettings, tint::TintShaderSettings},
+    shaders::{
+        outline::OutlineShaderSettings, stylized::StylizedShaderSettings, tint::TintShaderSettings,
+    },
     structures::components::StructurePlaceholder,
 };
 
@@ -33,6 +35,7 @@ fn spawn_camera(mut cmds: Commands) {
         Camera3d::default(),
         OutlineShaderSettings::default(),
         TintShaderSettings::default(),
+        StylizedShaderSettings::default(),
         DepthPrepass,
         NormalPrepass,
         Msaa::Off,

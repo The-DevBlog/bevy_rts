@@ -1,59 +1,63 @@
-// #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
+#import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
 
-// // Screen texture: the rendered scene.
-// @group(0) @binding(0)
-// var scene_texture: texture_2d<f32>;
+//–– Uniforms for controlling the look ––
+struct StylizedShaderSettings {
+    // 0.0 = only original scene colors; 1.0 = only ramp palette
+    ramp_mix:      f32,
+    // How far each channel splits (in UV space)
+    aberr_strength: f32,
+    // Strength of the per‑pixel noise
+    noise_strength: f32,
+}
 
-// // Sampler for the screen texture.
-// @group(0) @binding(1)
-// var scene_sampler: sampler;
+// Bindings
+@group(0) @binding(0) var sceneTex: texture_2d<f32>;
+@group(0) @binding(1) var sceneSampler: sampler;
+@group(0) @binding(2) var<uniform> settings: StylizedShaderSettings;
 
-// // A uniform containing our settings for the stylized effect.
-// struct Settings {
-//     // Number of quantization levels per channel.
-//     quantization_levels: u32,
-//     // Blend factor: 0.0 will show the original image, 1.0 will show the fully stylized image.
-//     blend_factor: f32,
-//     // Saturation boost: 1.0 means no change, values greater than 1.0 increase saturation.
-//     saturation_boost: f32,
-// }
-// @group(0) @binding(2)
-// var<uniform> settings: Settings;
+// Your 1D palette ramp: sample with x = luminance, y = 0.5
+@group(0) @binding(3) var rampTex: texture_2d<f32>;
+@group(0) @binding(4) var rampSampler: sampler;
 
-// // Function to quantize a color into a set number of levels.
-// fn quantize_color(c: vec3<f32>, levels: u32) -> vec3<f32> {
-//     let levels_f = f32(levels);
-//     // Multiply, add a half-step to round, floor, then scale back
-//     return floor(c * levels_f + 0.5) / levels_f;
-// }
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0)    uv:       vec2<f32>,
+};
 
-// // Function to boost saturation by mixing the color with its grayscale version.
-// fn saturate_color(c: vec3<f32>, boost: f32) -> vec3<f32> {
-//     // Compute perceived luminance using standard coefficients.
-//     let l = dot(c, vec3<f32>(0.299, 0.587, 0.114));
-//     // Mix between gray (no saturation) and the original color.
-//     return mix(vec3<f32>(l), c, boost);
-// }
+// Simple luminance extractor
+fn luminance(c: vec3<f32>) -> f32 {
+    return dot(c, vec3<f32>(0.299, 0.587, 0.114));
+}
 
-// @fragment
-// fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32> {
-//     // Sample the original rendered scene.
-//     let original_color = textureSample(scene_texture, scene_sampler, in.uv).rgb;
-    
-//     // Quantize the original color for a "posterized" look.
-//     let quantized = quantize_color(original_color, settings.quantization_levels);
-    
-//     // Apply a saturation boost to the quantized color.
-//     let sat_quantized = saturate_color(quantized, settings.saturation_boost);
-    
-//     // Blend between the original color and the stylized version.
-//     let final_color = mix(original_color, sat_quantized, settings.blend_factor);
-    
-//     return vec4<f32>(final_color, 1.0);
-// }
+// 2D “random” for a bit of per‑pixel noise
+fn rand(uv: vec2<f32>) -> f32 {
+    return fract(sin(dot(uv , vec2<f32>(12.9898, 78.233))) * 43758.5453);
+}
 
-// outline.wgsl – Converted from GLSL to WGSL
-//
-// NOTE: This conversion assumes that the functions for depth conversion are defined
-//       in a similar spirit as GLSL’s packing functions. Adjust the implementations if needed.
+@fragment
+fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
+    let uv = in.uv;
 
+    // 1) Sample the original scene
+    let col = textureSample(sceneTex, sceneSampler, uv).rgb;
+
+    // 2) Compute lum & fetch palette color
+    let lum     = luminance(col);
+    let rampCol = textureSample(rampTex, rampSampler, vec2<f32>(lum, 0.5)).rgb;
+
+    // 3) Mix ramp & original
+    var outCol = mix(rampCol, col, settings.ramp_mix);
+
+    // 4) Chromatic aberration: nudge R and B channels apart
+    let caOff = settings.aberr_strength * (uv - vec2<f32>(0.5));
+    let r = textureSample(sceneTex, sceneSampler, uv + caOff).r;
+    let b = textureSample(sceneTex, sceneSampler, uv - caOff).b;
+    outCol.r = r;
+    outCol.b = b;
+
+    // 5) Add subtle film‑like noise
+    let n = (rand(uv) - 0.5) * settings.noise_strength;
+    outCol += n;
+
+    return vec4<f32>(outCol, 1.0);
+}

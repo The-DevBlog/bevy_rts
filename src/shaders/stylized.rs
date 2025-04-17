@@ -5,7 +5,6 @@ use bevy::{
         prepass::ViewPrepassTextures,
     },
     ecs::query::QueryItem,
-    input::mouse::MouseWheel,
     prelude::*,
     render::{
         extract_component::{
@@ -16,7 +15,7 @@ use bevy::{
             NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner,
         },
         render_resource::{
-            binding_types::{sampler, texture_2d, texture_depth_2d, uniform_buffer},
+            binding_types::{sampler, texture_2d, uniform_buffer},
             *,
         },
         renderer::{RenderContext, RenderDevice},
@@ -26,29 +25,27 @@ use bevy::{
 };
 
 /// This example uses a shader source file from the assets subdirectory
-const SHADER_ASSET_PATH: &str = "shaders/outline.wgsl";
+const SHADER_ASSET_PATH: &str = "shaders/stylized.wgsl";
 
 /// It is generally encouraged to set up post processing effects as a plugin
-pub struct OutlineShaderPlugin;
+pub struct StylizedShaderPlugin;
 
-impl Plugin for OutlineShaderPlugin {
+impl Plugin for StylizedShaderPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<OutlineShaderSettings>();
-        app.register_type::<OutlineShaderSettings>().add_plugins((
+        app.register_type::<StylizedShaderSettings>();
+        app.register_type::<StylizedShaderSettings>().add_plugins((
             // The settings will be a component that lives in the main world but will
             // be extracted to the render world every frame.
             // This makes it possible to control the effect from the main world.
             // This plugin will take care of extracting it automatically.
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
-            ExtractComponentPlugin::<OutlineShaderSettings>::default(),
+            ExtractComponentPlugin::<StylizedShaderSettings>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
             // and writing the data to that buffer every frame.
-            UniformComponentPlugin::<OutlineShaderSettings>::default(),
+            UniformComponentPlugin::<StylizedShaderSettings>::default(),
         ));
-
-        app.add_systems(Update, update_zoom_system);
 
         // We need to get the render app from the main app
         let Some(render_app) = app.get_sub_app_mut(RenderApp) else {
@@ -117,10 +114,10 @@ impl ViewNode for PostProcessNode {
         &'static ViewTarget,
         &'static ViewPrepassTextures,
         // This makes sure the node only runs on cameras with the PostProcessSettings component
-        &'static OutlineShaderSettings,
+        &'static StylizedShaderSettings,
         // As there could be multiple post processing components sent to the GPU (one per camera),
         // we need to get the index of the one that is associated with the current view.
-        &'static DynamicUniformIndex<OutlineShaderSettings>,
+        &'static DynamicUniformIndex<StylizedShaderSettings>,
         &'static ViewUniformOffset,
     );
 
@@ -135,7 +132,7 @@ impl ViewNode for PostProcessNode {
         &self,
         _graph: &mut RenderGraphContext,
         render_context: &mut RenderContext,
-        (view_target, prepass_textures, _post_process_settings, settings_index, _view_uniform): QueryItem<Self::ViewQuery>,
+        (view_target, _prepass_textures, _post_process_settings, settings_index, _view_uniform): QueryItem<Self::ViewQuery>,
         world: &World,
     ) -> Result<(), NodeRunError> {
         // Get the pipeline resource that contains the global data we need
@@ -154,16 +151,14 @@ impl ViewNode for PostProcessNode {
         };
 
         // Get the settings uniform binding
-        let settings_uniforms = world.resource::<ComponentUniforms<OutlineShaderSettings>>();
+        let settings_uniforms = world.resource::<ComponentUniforms<StylizedShaderSettings>>();
+
         let Some(settings_binding) = settings_uniforms.uniforms().binding() else {
             return Ok(());
         };
-        let (Some(depth_texture), Some(normal_texture)) =
-            (&prepass_textures.depth, &prepass_textures.normal)
-        else {
-            println!("could not find depth or normal");
-            return Ok(());
-        };
+
+        // let ramp_view =
+
         // This will start a new "post process write", obtaining two texture
         // views from the view target - a `source` and a `destination`.
         // `source` is the "current" main texture and you _must_ write into
@@ -185,11 +180,10 @@ impl ViewNode for PostProcessNode {
             &post_process_pipeline.layout,
             // It's important for this to match the BindGroupLayout defined in the PostProcessPipeline
             &BindGroupEntries::sequential((
-                post_process.source,                  // Binding 0: Screen texture (source view)
-                &post_process_pipeline.sampler,       // Binding 1: Screen sampler
-                settings_binding.clone(),             // Binding 2: Settings uniform buffer
-                &normal_texture.texture.default_view, // Binding 3: Normal texture
-                &depth_texture.texture.default_view,  // Binding 4: Depth texture
+                post_process.source,            // Binding 0: Screen texture (source view)
+                &post_process_pipeline.sampler, // Binding 1: Screen sampler
+                settings_binding.clone(),       // Binding 2: Settings uniform buffer
+                &post_process_pipeline.sampler,
             )),
         );
 
@@ -242,9 +236,9 @@ impl FromWorld for PostProcessPipeline {
                 (
                     texture_2d(TextureSampleType::Float { filterable: true }), // 0: The screen texture
                     sampler(SamplerBindingType::Filtering), // 1: The screen sampler
-                    uniform_buffer::<OutlineShaderSettings>(true), // 2: The settings uniform
-                    texture_2d(TextureSampleType::Float { filterable: true }), // 3: The normal texture
-                    texture_depth_2d(), // 4: The depth texture
+                    uniform_buffer::<StylizedShaderSettings>(true), // 2: The settings uniform
+                    texture_2d(TextureSampleType::Float { filterable: true }), // 3
+                    sampler(SamplerBindingType::Filtering), // 4
                 ),
             ),
         );
@@ -294,41 +288,21 @@ impl FromWorld for PostProcessPipeline {
 
 // This is the component that will get passed to the shader
 #[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct OutlineShaderSettings {
-    pub zoom: f32,
-    pub resolution: Vec2,
-    pub normal_threshold: f32,
-    pub outline_color: Vec4,
-    pub outline_thickness: f32,
+pub struct StylizedShaderSettings {
+    // 0.0 = only original scene colors; 1.0 = only ramp palette
+    pub ramp_mix: f32,
+    // How far each channel splits (in UV space)
+    pub aberr_strength: f32,
+    // Strength of the per‑pixel noise
+    pub noise_strength: f32,
 }
 
-impl Default for OutlineShaderSettings {
+impl Default for StylizedShaderSettings {
     fn default() -> Self {
         Self {
-            zoom: 1.0,
-            resolution: Vec2::new(1920.0, 1080.0),
-            normal_threshold: 0.02,
-            outline_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
-            outline_thickness: 0.8,
+            ramp_mix: 0.0,
+            aberr_strength: 0.0,
+            noise_strength: 0.0,
         }
-    }
-}
-
-fn update_zoom_system(
-    mut events: EventReader<MouseWheel>,
-    mut settings: Query<&mut OutlineShaderSettings>,
-) {
-    let Ok(mut settings) = settings.get_single_mut() else {
-        return;
-    };
-
-    for ev in events.read() {
-        if ev.y < 0.0 {
-            settings.zoom -= 0.2;
-        } else if ev.y > 0.0 {
-            settings.zoom += 0.2;
-        }
-
-        // settings.zoom = settings.zoom.clamp(0.4, 3.0);
     }
 }

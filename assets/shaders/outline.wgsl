@@ -22,7 +22,7 @@ struct OutlineShaderSettings {
 var sceneTex: texture_2d<f32>;
 
 @group(0) @binding(1)
-var sampler: sampler;
+var sceneSampler: sampler;
 
 @group(0) @binding(2)
 var<uniform> settings: OutlineShaderSettings;
@@ -45,11 +45,11 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let offset = pixelSize * outlineThickness;
     
     // Sample the center normals and neighbors using the offset
-    let centerN: vec3<f32> = textureSample(normalTex, sampler, uv).xyz;
-    let upN: vec3<f32> = textureSample(normalTex, sampler, uv + vec2<f32>(0.0,  offset.y)).xyz;
-    let downN: vec3<f32> = textureSample(normalTex, sampler, uv - vec2<f32>(0.0,  offset.y)).xyz;
-    let leftN: vec3<f32> = textureSample(normalTex, sampler, uv - vec2<f32>(offset.x, 0.0)).xyz;
-    let rightN: vec3<f32> = textureSample(normalTex, sampler, uv + vec2<f32>(offset.x, 0.0)).xyz;
+    let centerN: vec3<f32> = textureSample(normalTex, sceneSampler, uv).xyz;
+    let upN: vec3<f32> = textureSample(normalTex, sceneSampler, uv + vec2<f32>(0.0,  offset.y)).xyz;
+    let downN: vec3<f32> = textureSample(normalTex, sceneSampler, uv - vec2<f32>(0.0,  offset.y)).xyz;
+    let leftN: vec3<f32> = textureSample(normalTex, sceneSampler, uv - vec2<f32>(offset.x, 0.0)).xyz;
+    let rightN: vec3<f32> = textureSample(normalTex, sceneSampler, uv + vec2<f32>(offset.x, 0.0)).xyz;
     
     // Compute edge strength by how different the normals are
     let diffUp   = length(centerN - upN);
@@ -65,6 +65,6 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     }
     
     // Otherwise, show the original color
-    let sceneColor = textureSample(sceneTex, sampler, uv);
+    let sceneColor = textureSample(sceneTex, sceneSampler, uv);
     return sceneColor;
 }

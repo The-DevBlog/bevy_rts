@@ -12,7 +12,7 @@ use bevy_rts_pathfinding::components as pf_comps;
 
 use crate::{
     resources::GameCommands,
-    shaders::{outline_shader::OutlineShaderSettings, tint_shader::TintPostProcessSettings},
+    shaders::{outline::OutlineShaderSettings, tint_shader::TintPostProcessSettings},
     structures::components::StructurePlaceholder,
 };
 
@@ -47,6 +47,7 @@ fn spawn_camera(mut cmds: Commands) {
             bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),
             min_angle: 60.0f32.to_radians(),
             height_max: 200.0,
+            height_min: 30.0,
             ..default()
         },
         RtsCameraControls {

@@ -318,7 +318,7 @@ impl FromWorld for PostProcessPipeline {
 // This is the component that will get passed to the shader
 #[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
 pub struct OutlineShaderSettings {
-    // pub zoom: f32,
+    pub zoom: f32,
     pub resolution: Vec2,
     pub normal_threshold: f32,
     pub outline_color: Vec4,
@@ -328,7 +328,7 @@ pub struct OutlineShaderSettings {
 impl Default for OutlineShaderSettings {
     fn default() -> Self {
         Self {
-            // zoom: 1.0,
+            zoom: 1.0,
             resolution: Vec2::new(1920.0, 1080.0),
             normal_threshold: 0.02,
             outline_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
@@ -338,26 +338,20 @@ impl Default for OutlineShaderSettings {
 }
 
 fn update_zoom_system(
-    // keyboard_input: Res<Input<KeyCode>>,
     mut events: EventReader<MouseWheel>,
     mut settings: Query<&mut OutlineShaderSettings>,
 ) {
-    // let Ok(mut settings) = settings.get_single_mut() else {
-    //     return;
-    // };
+    let Ok(mut settings) = settings.get_single_mut() else {
+        return;
+    };
 
-    // for ev in events.read() {
-    //     // Increase zoom (thicker outlines) when scrolling up,
-    //     // and decrease when scrolling down.
-    //     if ev.y < 0.0 {
-    //         settings.zoom -= 0.3;
-    //         info!("Zoom increased: {}", settings.zoom);
-    //     } else if ev.y > 0.0 {
-    //         settings.zoom += 0.3;
-    //         // settings.zoom = (settings.zoom - 0.1).max(0.1); // avoid non-positive zoom
-    //         info!("Zoom decreased: {}", settings.zoom);
-    //     }
+    for ev in events.read() {
+        if ev.y < 0.0 {
+            settings.zoom -= 0.2;
+        } else if ev.y > 0.0 {
+            settings.zoom += 0.2;
+        }
 
-    //     settings.zoom = settings.zoom.clamp(0.8, 5.0);
-    // }
+        // settings.zoom = settings.zoom.clamp(0.4, 3.0);
+    }
 }

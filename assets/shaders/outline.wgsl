@@ -1,12 +1,16 @@
 #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
 
 // Constants for the effect
-// const resolution: vec2<f32> = vec2<f32>(1920.0, 1080.0); // Target resolution (adjust as needed)
-// const normalThreshold: f32 = 0.01; // How sensitive the outline is to normal changes
-// const outlineColor: vec4<f32> = vec4<f32>(0.0, 0.0, 0.0, 1.0); // Outline color (black here)
-// const outlineThickness: f32 = 2.5; // Outline thickness factor. Increase for a thicker outline.
+const resolution: vec2<f32> = vec2<f32>(1920.0, 1080.0); // Target resolution (adjust as needed)
+const normalThreshold: f32 = 0.01; // How sensitive the outline is to normal changes
+const outlineColor: vec4<f32> = vec4<f32>(0.0, 0.0, 0.0, 1.0); // Outline color (black here)
+const outlineThickness: f32 = 2.5; // Outline thickness factor. Increase for a thicker outline.
+
+const MIN_ZOOM: f32 = 0.3;
+const MAX_ZOOM: f32 = 2.0;
 
 struct OutlineShaderSettings {
+    zoom: f32,
     resolution: vec2<f32>,
     normalThreshold: f32,
     outlineColor: vec4<f32>,
@@ -23,7 +27,6 @@ var sceneSampler: sampler;
 @group(0) @binding(2)
 var<uniform> settings: OutlineShaderSettings;
 
-
 // Normal map from an offscreen pass.
 @group(0) @binding(3)
 var normalTex: texture_2d<f32>;
@@ -39,9 +42,10 @@ struct VertexOutput {
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let uv = in.uv;
-    let pixelSize = vec2<f32>(1.0) / settings.resolution;
+    let zoom = clamp(settings.zoom, MIN_ZOOM, MAX_ZOOM);
+    let pixelSize = vec2<f32>(1.0) / resolution * zoom;
     // Multiply pixelSize by our thickness factor to sample at a further distance if desired
-    let offset = pixelSize * settings.outlineThickness;
+    let offset = pixelSize * outlineThickness;
     
     // Sample the center normals and neighbors using the offset
     let centerN: vec3<f32> = textureSample(normalTex, normalSampler, uv).xyz;
@@ -59,8 +63,8 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let maxDiff = max(max(diffUp, diffDown), max(diffLeft, diffRight));
     
     // If the difference in normals exceeds the threshold, draw outline
-    if maxDiff > settings.normalThreshold {
-        return settings.outlineColor;
+    if maxDiff > normalThreshold {
+        return outlineColor;
     }
     
     // Otherwise, show the original color

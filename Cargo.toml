@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 accesskit = "0.17.1"
-bevy = "0.15.3"
+bevy = { version = "0.15.3", features = ["file_watcher"] }
 
 #bevy = { version = "0.15.3", default-features = true, features = ["bevy_picking"] }
 

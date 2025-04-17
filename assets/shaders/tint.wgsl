@@ -1,6 +1,5 @@
 #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
 
-// How “black” is too black to tint?
 const BLACK_THRESHOLD: f32 = 0.05;
 
 struct TintShaderSettings {

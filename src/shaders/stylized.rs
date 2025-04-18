@@ -11,6 +11,8 @@ use bevy::{
             ComponentUniforms, DynamicUniformIndex, ExtractComponent, ExtractComponentPlugin,
             UniformComponentPlugin,
         },
+        extract_resource::ExtractResourcePlugin,
+        render_asset::RenderAssets,
         render_graph::{
             NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner,
         },
@@ -19,10 +21,13 @@ use bevy::{
             *,
         },
         renderer::{RenderContext, RenderDevice},
+        texture::GpuImage,
         view::{ViewTarget, ViewUniformOffset},
         RenderApp,
     },
 };
+
+use crate::asset_manager::textures::MyTextures;
 
 /// This example uses a shader source file from the assets subdirectory
 const SHADER_ASSET_PATH: &str = "shaders/stylized.wgsl";
@@ -40,6 +45,7 @@ impl Plugin for StylizedShaderPlugin {
             // This plugin will take care of extracting it automatically.
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
+            ExtractResourcePlugin::<MyTextures>::default(),
             ExtractComponentPlugin::<StylizedShaderSettings>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
@@ -157,7 +163,11 @@ impl ViewNode for PostProcessNode {
             return Ok(());
         };
 
-        // let ramp_view =
+        // Ramp Texture
+        let ramp_handle = world.resource::<MyTextures>().ramp_texture.clone();
+        let gpu_images = world.resource::<RenderAssets<GpuImage>>();
+        let ramp_gpu = gpu_images.get(&ramp_handle).unwrap();
+        let ramp_view: &TextureView = &ramp_gpu.texture_view;
 
         // This will start a new "post process write", obtaining two texture
         // views from the view target - a `source` and a `destination`.
@@ -183,7 +193,8 @@ impl ViewNode for PostProcessNode {
                 post_process.source,            // Binding 0: Screen texture (source view)
                 &post_process_pipeline.sampler, // Binding 1: Screen sampler
                 settings_binding.clone(),       // Binding 2: Settings uniform buffer
-                &post_process_pipeline.sampler,
+                ramp_view,                      // Binding 3: Ramp texture (destination view)
+                &post_process_pipeline.sampler, // Binding 4: Ramp Sampler
             )),
         );
 

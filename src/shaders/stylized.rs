@@ -328,6 +328,9 @@ pub struct StylizedShaderSettings {
 
     // grain
     pub grain_strength: f32,
+
+    pub saturation: f32, // 1.0 = no change, >1 boost, <1 desat
+    pub contrast: f32,   //
 }
 
 impl Default for StylizedShaderSettings {
@@ -348,12 +351,15 @@ impl Default for StylizedShaderSettings {
             // mix_amount: 0.0,
             // grain_strength: 0.0,
             dark_tone: Vec3::new(0.0, 0.0, 0.0),
-            mid_tone: Vec3::new(50.0, 50.0, 50.0),
-            light_tone: Vec3::new(0.0, 0.0, 0.0),
+            mid_tone: Vec3::new(0.5, 0.5, 0.5),
+            light_tone: Vec3::new(0.7, 0.7, 0.7),
             tone_thresh: Vec2::new(0.01, 0.1),
             tone_strength: 0.001,
             mix_amount: 0.0,
             grain_strength: 0.0,
+
+            saturation: 1.3, // 1.0 = no change, >1 boost, <1 desat
+            contrast: 0.95,  //
         }
     }
 }

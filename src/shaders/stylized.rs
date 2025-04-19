@@ -167,7 +167,11 @@ impl ViewNode for PostProcessNode {
         // Ramp Texture
         let ramp_handle = world.resource::<MyTextures>().ramp_texture.clone();
         let gpu_images = world.resource::<RenderAssets<GpuImage>>();
-        let ramp_gpu = gpu_images.get(&ramp_handle).unwrap();
+
+        let Some(ramp_gpu) = gpu_images.get(&ramp_handle) else {
+            return Ok(());
+        };
+
         let ramp_view: &TextureView = &ramp_gpu.texture_view;
 
         // This will start a new "post process write", obtaining two texture

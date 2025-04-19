@@ -1,63 +1,89 @@
 #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
 
-//–– Uniforms for controlling the look ––
 struct StylizedShaderSettings {
-    // 0.0 = only original scene colors; 1.0 = only ramp palette
-    ramp_mix:      f32,
-    // How far each channel splits (in UV space)
-    aberr_strength: f32,
-    // Strength of the per‑pixel noise
-    noise_strength: f32,
+    horizon:        f32,
+    softness:       f32,
+    ground_color:   vec3<f32>,
+    sky_color:      vec3<f32>,
+
+    dark_tone:      vec3<f32>,
+    mid_tone:       vec3<f32>,
+    light_tone:     vec3<f32>,
+    tone_thresh:    vec2<f32>,  // (dark→mid, mid→light)
+    tone_strength:  f32,
+
+    mix_amount:     f32,
+    grain_strength: f32,
+
+    // New!
+    saturation:     f32,  // 1.0 = no change, >1 boost, <1 desat
+    contrast:       f32,  // 1.0 = no change, >1 punch, <1 flatten
 }
 
-// Bindings
-@group(0) @binding(0) var sceneTex: texture_2d<f32>;
+//–– bindings
+@group(0) @binding(0) var sceneTex:     texture_2d<f32>;
 @group(0) @binding(1) var sceneSampler: sampler;
 @group(0) @binding(2) var<uniform> settings: StylizedShaderSettings;
-
-// Your 1D palette ramp: sample with x = luminance, y = 0.5
-@group(0) @binding(3) var rampTex: texture_2d<f32>;
-@group(0) @binding(4) var rampSampler: sampler;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0)    uv:       vec2<f32>,
 };
 
-// Simple luminance extractor
+// Rec.709 luminance
 fn luminance(c: vec3<f32>) -> f32 {
-    return dot(c, vec3<f32>(0.299, 0.587, 0.114));
+    return dot(c, vec3<f32>(0.2126, 0.7152, 0.0722));
 }
 
-// 2D “random” for a bit of per‑pixel noise
-fn rand(uv: vec2<f32>) -> f32 {
-    return fract(sin(dot(uv , vec2<f32>(12.9898, 78.233))) * 43758.5453);
+// Simple HSV‑style saturation adjust
+fn adjust_saturation(c: vec3<f32>, s: f32) -> vec3<f32> {
+    let y = luminance(c);
+    return mix(vec3<f32>(y), c, s);
+}
+
+// Contrast about mid‑gray
+fn adjust_contrast(c: vec3<f32>, contrast: f32) -> vec3<f32> {
+    return (c - vec3<f32>(0.5)) * contrast + vec3<f32>(0.5);
+}
+
+// Film grain
+fn grain(uv: vec2<f32>) -> f32 {
+    let x = dot(uv * 123.456, vec2<f32>(78.233, 37.719));
+    return fract(sin(x) * 43758.5453) - 0.5;
 }
 
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let uv = in.uv;
 
-    // 1) Sample the original scene
-    let col = textureSample(sceneTex, sceneSampler, uv).rgb;
+    // 0) Sample once
+    let scene4 = textureSample(sceneTex, sceneSampler, uv);
+    var col   = scene4.rgb;
 
-    // 2) Compute lum & fetch palette color
-    let lum     = luminance(col);
-    let rampCol = textureSample(rampTex, rampSampler, vec2<f32>(lum, 0.5)).rgb;
+    // 1) Tri‐tone *only* for dark and mid zones
+    let lum = luminance(col);
+    if lum < settings.tone_thresh.x {
+        col = mix(col, settings.dark_tone, settings.tone_strength);
+    } else if lum < settings.tone_thresh.y {
+        col = mix(col, settings.mid_tone,  settings.tone_strength);
+    }
+    // (pixels brighter than tone_thresh.y keep their original color)
 
-    // 3) Mix ramp & original
-    var outCol = mix(rampCol, col, settings.ramp_mix);
+    // 2) Sky/ground tint *only* near the horizon
+    let h0 = settings.horizon - settings.softness;
+    let h1 = settings.horizon + settings.softness;
+    let blend = smoothstep(h0, h1, uv.y);
+    // ground only below horizon
+    col = mix(col, settings.ground_color, settings.mix_amount * (1.0 - blend));
+    // sky only above horizon
+    col = mix(col, settings.sky_color, settings.mix_amount * blend);
 
-    // 4) Chromatic aberration: nudge R and B channels apart
-    let caOff = settings.aberr_strength * (uv - vec2<f32>(0.5));
-    let r = textureSample(sceneTex, sceneSampler, uv + caOff).r;
-    let b = textureSample(sceneTex, sceneSampler, uv - caOff).b;
-    outCol.r = r;
-    outCol.b = b;
+    // 3) Saturation & contrast boost
+    col = adjust_saturation(col, settings.saturation);
+    col = adjust_contrast(col, settings.contrast);
 
-    // 5) Add subtle film‑like noise
-    let n = (rand(uv) - 0.5) * settings.noise_strength;
-    outCol += n;
+    // 4) Film grain (subtle)
+    col += grain(uv) * settings.grain_strength;
 
-    return vec4<f32>(outCol, 1.0);
+    return vec4<f32>(col, scene4.a);
 }

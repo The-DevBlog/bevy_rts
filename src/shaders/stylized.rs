@@ -5,12 +5,15 @@ use bevy::{
         prepass::ViewPrepassTextures,
     },
     ecs::query::QueryItem,
+    math::VectorSpace,
     prelude::*,
     render::{
         extract_component::{
             ComponentUniforms, DynamicUniformIndex, ExtractComponent, ExtractComponentPlugin,
             UniformComponentPlugin,
         },
+        extract_resource::ExtractResourcePlugin,
+        render_asset::RenderAssets,
         render_graph::{
             NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner,
         },
@@ -19,10 +22,13 @@ use bevy::{
             *,
         },
         renderer::{RenderContext, RenderDevice},
+        texture::GpuImage,
         view::{ViewTarget, ViewUniformOffset},
         RenderApp,
     },
 };
+
+use crate::asset_manager::textures::MyTextures;
 
 /// This example uses a shader source file from the assets subdirectory
 const SHADER_ASSET_PATH: &str = "shaders/stylized.wgsl";
@@ -40,6 +46,7 @@ impl Plugin for StylizedShaderPlugin {
             // This plugin will take care of extracting it automatically.
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
+            ExtractResourcePlugin::<MyTextures>::default(),
             ExtractComponentPlugin::<StylizedShaderSettings>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
@@ -157,7 +164,15 @@ impl ViewNode for PostProcessNode {
             return Ok(());
         };
 
-        // let ramp_view =
+        // Ramp Texture
+        let ramp_handle = world.resource::<MyTextures>().ramp_texture.clone();
+        let gpu_images = world.resource::<RenderAssets<GpuImage>>();
+
+        let Some(ramp_gpu) = gpu_images.get(&ramp_handle) else {
+            return Ok(());
+        };
+
+        let ramp_view: &TextureView = &ramp_gpu.texture_view;
 
         // This will start a new "post process write", obtaining two texture
         // views from the view target - a `source` and a `destination`.
@@ -183,7 +198,8 @@ impl ViewNode for PostProcessNode {
                 post_process.source,            // Binding 0: Screen texture (source view)
                 &post_process_pipeline.sampler, // Binding 1: Screen sampler
                 settings_binding.clone(),       // Binding 2: Settings uniform buffer
-                &post_process_pipeline.sampler,
+                ramp_view,                      // Binding 3: Ramp texture (destination view)
+                &post_process_pipeline.sampler, // Binding 4: Ramp Sampler
             )),
         );
 
@@ -289,20 +305,65 @@ impl FromWorld for PostProcessPipeline {
 // This is the component that will get passed to the shader
 #[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
 pub struct StylizedShaderSettings {
-    // 0.0 = only original scene colors; 1.0 = only ramp palette
-    pub ramp_mix: f32,
-    // How far each channel splits (in UV space)
-    pub aberr_strength: f32,
-    // Strength of the per‑pixel noise
-    pub noise_strength: f32,
+    // // 0.0 = only original scene colors; 1.0 = only ramp palette
+    // pub ramp_mix: f32,
+    // // How far each channel splits (in UV space)
+    // pub aberr_strength: f32,
+    // // Strength of the per‑pixel noise
+    // pub noise_strength: f32,
+
+    // horizon parameters
+    pub horizon: f32,  // y‐coordinate (0..1) of the horizon line
+    pub softness: f32, // how soft the horizon blend is
+
+    // sky/ground colors
+    pub ground_color: Vec3,
+    pub sky_color: Vec3,
+
+    // tri‐tone ramp
+    pub dark_tone: Vec3,
+    pub mid_tone: Vec3,
+    pub light_tone: Vec3,
+    pub tone_thresh: Vec2,  // (dark→mid, mid→light) luminance thresholds
+    pub tone_strength: f32, // how strongly to apply tri‐tone
+
+    // overall mix between original and sky/ground tint
+    pub mix_amount: f32,
+
+    // grain
+    pub grain_strength: f32,
+
+    pub saturation: f32, // 1.0 = no change, >1 boost, <1 desat
+    pub contrast: f32,   //
 }
 
 impl Default for StylizedShaderSettings {
     fn default() -> Self {
         Self {
-            ramp_mix: 0.0,
-            aberr_strength: 0.0,
-            noise_strength: 0.0,
+            // ramp_mix: 0.0,
+            // aberr_strength: 0.0,
+            // noise_strength: 0.0,
+            horizon: 0.5,             // not working?
+            softness: 0.5,            // not working?
+            ground_color: Vec3::ZERO, // not working?
+            sky_color: Vec3::ZERO,    // not working?
+            // dark_tone: Vec3::new(-22.0, -22.0, -22.0),
+            // mid_tone: Vec3::new(41.0, 50.0, 71.5),
+            // light_tone: Vec3::ZERO,
+            // tone_thresh: Vec2::new(0.01, 0.1),
+            // tone_strength: 0.001,
+            // mix_amount: 0.0,
+            // grain_strength: 0.0,
+            dark_tone: Vec3::new(0.0, 0.0, 0.0),
+            mid_tone: Vec3::new(0.5, 0.5, 0.5),
+            light_tone: Vec3::new(0.7, 0.7, 0.7),
+            tone_thresh: Vec2::new(0.01, 0.1),
+            tone_strength: 0.001,
+            mix_amount: 0.0,
+            grain_strength: 0.0,
+
+            saturation: 1.3, // 1.0 = no change, >1 boost, <1 desat
+            contrast: 0.95,  //
         }
     }
 }

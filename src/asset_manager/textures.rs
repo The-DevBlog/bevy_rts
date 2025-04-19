@@ -1,5 +1,6 @@
 use bevy::image::*;
 use bevy::prelude::*;
+use bevy::render::extract_resource::ExtractResource;
 
 // TODO: Im currently not using this at all, but im leaving it in place for future reference
 pub struct TexturesPlugin;
@@ -11,12 +12,13 @@ impl Plugin for TexturesPlugin {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, ExtractResource, Clone)]
 pub struct MyTextures {
     pub grass_clr: Handle<Image>,
     pub grass_normal: Handle<Image>,
     pub grass_roughness: Handle<Image>,
     pub grass_occlusion: Handle<Image>,
+    pub ramp_texture: Handle<Image>,
 }
 
 fn load_texures(mut my_textures: ResMut<MyTextures>, assets: Res<AssetServer>) {
@@ -72,4 +74,6 @@ fn load_texures(mut my_textures: ResMut<MyTextures>, assets: Res<AssetServer>) {
                 ..default()
             }
         });
+
+    my_textures.ramp_texture = assets.load("ramp.png");
 }

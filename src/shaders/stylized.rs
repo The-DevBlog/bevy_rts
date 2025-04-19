@@ -5,7 +5,6 @@ use bevy::{
         prepass::ViewPrepassTextures,
     },
     ecs::query::QueryItem,
-    math::VectorSpace,
     prelude::*,
     render::{
         extract_component::{

@@ -72,11 +72,11 @@ pub struct Sfx {
 #[derive(Default)]
 pub struct SfxOptions {
     pub source: Handle<bevy_kira_audio::AudioSource>,
-    pub instance: Handle<bevy_kira_audio::AudioInstance>,
+    // pub instance: Handle<bevy_kira_audio::AudioInstance>,
 }
 
 fn load_assets(
-    audio: Res<bevy_kira_audio::Audio>,
+    // audio: Res<bevy_kira_audio::Audio>,
     mut my_audio: ResMut<MyAudio>,
     assets: Res<AssetServer>,
     dbg: Res<DbgOptions>,

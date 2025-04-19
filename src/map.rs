@@ -86,13 +86,16 @@ fn spawn_light(mut cmds: Commands) {
     let light_height = 10.0;
     let light_pos = Vec3::new(0.0, light_height, 0.0);
 
-    // Build a transform at that position, looking at (0,0,0)
-    let transform = Transform::from_translation(light_pos).looking_at(Vec3::ZERO, Vec3::Y);
+    let mut transform = Transform::from_translation(light_pos).looking_at(Vec3::ZERO, Vec3::Y);
+
+    let tilt: f32 = 15.0f32.to_radians();
+    transform.rotate_x(tilt);
 
     cmds.spawn((
         DirectionalLight {
             illuminance: 5000.0,
-            shadow_normal_bias: 0.0,
+            shadow_depth_bias: 1.5,
+            shadow_normal_bias: 1.0,
             shadows_enabled: true,
             ..default()
         },

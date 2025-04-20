@@ -1,4 +1,6 @@
 #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
+#import bevy_render::view::View
+#import bevy_pbr::view_transformations::uv_to_ndc;
 
 // Constants for the effect
 const resolution: vec2<f32> = vec2<f32>(1920.0, 1080.0); // Target resolution (adjust as needed)
@@ -18,23 +20,36 @@ struct OutlineShaderSettings {
 }
 
 // Texture and sampler bindings
-@group(0) @binding(0)
-var sceneTex: texture_2d<f32>;
-
-@group(0) @binding(1)
-var sceneSampler: sampler;
-
-@group(0) @binding(2)
-var<uniform> settings: OutlineShaderSettings;
-
-// Normal map from an offscreen pass.
-@group(0) @binding(3)
-var normalTex: texture_2d<f32>;
+@group(0) @binding(0) var screen_texture: texture_2d<f32>;
+@group(0) @binding(1) var scene_sampler: sampler;
+@group(0) @binding(2) var<uniform> settings: OutlineShaderSettings;
+@group(0) @binding(3) var normal_texture: texture_2d<f32>;
+@group(0) @binding(4) var depth_texture: texture_depth_2d;
+@group(0) @binding(5) var<uniform> view: View;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) uv: vec2<f32>,
 };
+
+fn prepass_depth(frag_coord: vec2f) -> f32 {
+    return textureLoad(depth_texture, vec2i(frag_coord), 0);
+}
+
+fn position_ndc_to_world(ndc_pos: vec2<f32>, depth: f32) -> vec3<f32> {
+    let world_pos = view.world_from_clip * vec4(ndc_pos, depth, 1.0);
+    return world_pos.xyz / world_pos.w;
+}
+
+fn uv_to_pos(uv: vec2f) -> vec2f {
+    return uv * vec2<f32>(textureDimensions(screen_texture));
+}
+
+fn worldspace_camera_view_direction(uv: vec2f) -> vec3f {
+    let ndc = uv_to_ndc(uv);
+    let ray_point = position_ndc_to_world(ndc, prepass_depth(uv_to_pos(uv)));
+    return normalize(ray_point - view.world_position).xyz;
+}
 
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -45,11 +60,11 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let offset = pixelSize * outlineThickness;
     
     // Sample the center normals and neighbors using the offset
-    let centerN: vec3<f32> = textureSample(normalTex, sceneSampler, uv).xyz;
-    let upN: vec3<f32> = textureSample(normalTex, sceneSampler, uv + vec2<f32>(0.0,  offset.y)).xyz;
-    let downN: vec3<f32> = textureSample(normalTex, sceneSampler, uv - vec2<f32>(0.0,  offset.y)).xyz;
-    let leftN: vec3<f32> = textureSample(normalTex, sceneSampler, uv - vec2<f32>(offset.x, 0.0)).xyz;
-    let rightN: vec3<f32> = textureSample(normalTex, sceneSampler, uv + vec2<f32>(offset.x, 0.0)).xyz;
+    let centerN: vec3<f32> = textureSample(normal_texture, scene_sampler, uv).xyz;
+    let upN: vec3<f32> = textureSample(normal_texture, scene_sampler, uv + vec2<f32>(0.0,  offset.y)).xyz;
+    let downN: vec3<f32> = textureSample(normal_texture, scene_sampler, uv - vec2<f32>(0.0,  offset.y)).xyz;
+    let leftN: vec3<f32> = textureSample(normal_texture, scene_sampler, uv - vec2<f32>(offset.x, 0.0)).xyz;
+    let rightN: vec3<f32> = textureSample(normal_texture, scene_sampler, uv + vec2<f32>(offset.x, 0.0)).xyz;
     
     // Compute edge strength by how different the normals are
     let diffUp   = length(centerN - upN);
@@ -65,6 +80,6 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     }
     
     // Otherwise, show the original color
-    let sceneColor = textureSample(sceneTex, sceneSampler, uv);
+    let sceneColor = textureSample(screen_texture, scene_sampler, uv);
     return sceneColor;
 }

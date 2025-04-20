@@ -20,7 +20,7 @@ use bevy::{
             *,
         },
         renderer::{RenderContext, RenderDevice},
-        view::{ViewTarget, ViewUniformOffset},
+        view::{ViewTarget, ViewUniform, ViewUniformOffset, ViewUniforms},
         RenderApp,
     },
 };
@@ -137,7 +137,7 @@ impl ViewNode for PostProcessNode {
         &self,
         _graph: &mut RenderGraphContext,
         render_context: &mut RenderContext,
-        (view_target, prepass_textures, _post_process_settings, settings_index, _view_uniform): QueryItem<Self::ViewQuery>,
+        (view_target, prepass_textures, _post_process_settings, settings_index, view_uniform): QueryItem<Self::ViewQuery>,
         world: &World,
     ) -> Result<(), NodeRunError> {
         // Get the pipeline resource that contains the global data we need
@@ -155,17 +155,24 @@ impl ViewNode for PostProcessNode {
             return Ok(());
         };
 
+        let view_uniforms = world.resource::<ViewUniforms>();
+        let Some(view_uniforms) = view_uniforms.uniforms.binding() else {
+            return Ok(());
+        };
+
         // Get the settings uniform binding
         let settings_uniforms = world.resource::<ComponentUniforms<OutlineShaderSettings>>();
         let Some(settings_binding) = settings_uniforms.uniforms().binding() else {
             return Ok(());
         };
+
         let (Some(depth_texture), Some(normal_texture)) =
             (&prepass_textures.depth, &prepass_textures.normal)
         else {
             println!("could not find depth or normal");
             return Ok(());
         };
+
         // This will start a new "post process write", obtaining two texture
         // views from the view target - a `source` and a `destination`.
         // `source` is the "current" main texture and you _must_ write into
@@ -192,6 +199,7 @@ impl ViewNode for PostProcessNode {
                 settings_binding.clone(),             // Binding 2: Settings uniform buffer
                 &normal_texture.texture.default_view, // Binding 3: Normal texture
                 &depth_texture.texture.default_view,  // Binding 4: Depth texture
+                view_uniforms,                        // Binding 5: View uniform buffer
             )),
         );
 
@@ -216,7 +224,11 @@ impl ViewNode for PostProcessNode {
         // By passing in the index of the post process settings on this view, we ensure
         // that in the event that multiple settings were sent to the GPU (as would be the
         // case with multiple cameras), we use the correct one.
-        render_pass.set_bind_group(0, &bind_group, &[settings_index.index()]);
+        render_pass.set_bind_group(
+            0,
+            &bind_group,
+            &[settings_index.index(), view_uniform.offset],
+        );
         render_pass.draw(0..3, 0..1);
 
         Ok(())
@@ -246,7 +258,8 @@ impl FromWorld for PostProcessPipeline {
                     sampler(SamplerBindingType::Filtering), // 1: The screen sampler
                     uniform_buffer::<OutlineShaderSettings>(true), // 2: The settings uniform
                     texture_2d(TextureSampleType::Float { filterable: true }), // 3: The normal texture
-                    texture_depth_2d(), // 4: The depth texture
+                    texture_depth_2d(),                  // 4: The depth texture
+                    uniform_buffer::<ViewUniform>(true), // 5: The view uniform
                 ),
             ),
         );
@@ -335,15 +348,9 @@ fn update_zoom_system(
         } else {
             zoom_lvl.0 += 1;
         }
-        //     settings.zoom -= 0.2;
-        // } else if ev.y > 0.0 {
-        //     settings.zoom += 0.2;
-        // }
 
         zoom_lvl.0 = zoom_lvl.0.clamp(1, 10);
-        // settings.zoom = settings.zoom.clamp(0.4, 3.0);
     }
 
     settings.zoom = zoom_lvl.0 as f32 * 0.1;
-    println!("Zoom level: {}", zoom_lvl.0);
 }

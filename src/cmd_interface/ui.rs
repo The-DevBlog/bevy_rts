@@ -61,16 +61,16 @@ struct TankGen2Ctr;
 struct RiflemanCtr;
 
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
-    if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
-        let width = computed_node.size().x;
+    // if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
+    //     let width = computed_node.size().x;
 
-        // first frame is 0.0 for some reason
-        if width == 0.0 {
-            return;
-        }
+    //     // first frame is 0.0 for some reason
+    //     if width == 0.0 {
+    //         return;
+    //     }
 
-        mini_map.height = Val::Px(width);
-    }
+    //     mini_map.height = Val::Px(width);
+    // }
 }
 
 fn command_center_ui(
@@ -338,35 +338,74 @@ fn command_center_ui(
 
     // Command Interface Ctr
     cmds.spawn(cmd_interface_ctr).with_children(|p| {
-        //  Mini Map
-        p.spawn(mini_map_ctr);
+        // mini map
+        p.spawn((
+            ImageNode::new(my_imgs.cmd_intrfce_mini_map.clone()),
+            Node {
+                height: Val::Percent(30.0),
+                width: Val::Percent(100.0),
+                border: UiRect::all(Val::Px(2.5)),
+                ..default()
+            },
+            Name::new("Mini Map Ctr"),
+        ));
 
-        // Bank
-        p.spawn(bank_ctr);
+        // bank
+        p.spawn((
+            ImageNode::new(my_imgs.cmd_intrfce_funds.clone()),
+            Node {
+                height: Val::Percent(10.0),
+                width: Val::Percent(100.0),
+                border: UiRect::all(Val::Px(2.5)),
+                ..default()
+            },
+            Name::new("Bank Ctr"),
+        ));
 
-        // Structure/Units Icons
-        p.spawn(icons_ctr).with_children(|parent| {
-            parent.spawn(icon(my_imgs.cmd_intrfce_structures.clone()));
-            parent.spawn(icon(my_imgs.cmd_intrfce_units.clone()));
-        });
-
-        // Structure/Units Columns
-        p.spawn(build_columns_ctr)
-            .with_children(|p: &mut ChildBuilder<'_>| {
-                // Structures Column
-                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                    for structure in StructureType::iter() {
-                        spawn_structure_btn(parent, structure, &my_imgs);
-                    }
-                    for structure in StructureType::iter() {
-                        spawn_structure_btn(parent, structure, &my_imgs);
-                    }
-                });
-
-                // Units Column
-                p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
-            });
+        // structure/units
+        p.spawn((
+            BorderColor(Color::BLACK),
+            Node {
+                height: Val::Percent(60.0),
+                width: Val::Percent(100.0),
+                border: UiRect::all(Val::Px(2.5)),
+                ..default()
+            },
+            Name::new("Structure/Units Ctr"),
+        ));
     });
+
+    // // Command Interface Ctr
+    // cmds.spawn(cmd_interface_ctr).with_children(|p| {
+    //     //  Mini Map
+    //     p.spawn(mini_map_ctr);
+
+    //     // Bank
+    //     p.spawn(bank_ctr);
+
+    //     // Structure/Units Icons
+    //     p.spawn(icons_ctr).with_children(|parent| {
+    //         parent.spawn(icon(my_imgs.cmd_intrfce_structures.clone()));
+    //         parent.spawn(icon(my_imgs.cmd_intrfce_units.clone()));
+    //     });
+
+    //     // Structure/Units Columns
+    //     p.spawn(build_columns_ctr)
+    //         .with_children(|p: &mut ChildBuilder<'_>| {
+    //             // Structures Column
+    //             p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+    //                 for structure in StructureType::iter() {
+    //                     spawn_structure_btn(parent, structure, &my_imgs);
+    //                 }
+    //                 for structure in StructureType::iter() {
+    //                     spawn_structure_btn(parent, structure, &my_imgs);
+    //                 }
+    //             });
+
+    //             // Units Column
+    //             p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
+    //         });
+    // });
 }
 
 fn update_build_queue_count(

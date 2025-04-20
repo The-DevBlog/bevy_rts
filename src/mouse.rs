@@ -72,6 +72,7 @@ fn spawn_drag_select_box(mut cmds: Commands) {
         BackgroundColor(COLOR_SELECT_BOX),
         BorderColor(COLOR_SELECT_BOX_BORDER.into()),
         SelectionBox,
+        Name::new("Drag Selection Box"),
     );
 
     cmds.spawn(select_box);

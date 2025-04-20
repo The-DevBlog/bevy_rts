@@ -20,6 +20,7 @@ pub struct MyImgs {
     pub cmd_intrfce_background: Handle<Image>,
     pub cmd_intrfce_mini_map: Handle<Image>,
     pub cmd_intrfce_funds: Handle<Image>,
+    pub cmds_intrfce_build_columns_ctr: Handle<Image>,
     pub info_ctr: Handle<Image>,
     pub info_ctr_dmg: Handle<Image>,
     pub info_ctr_speed: Handle<Image>,
@@ -45,6 +46,8 @@ fn load_imgs(mut my_imgs: ResMut<MyImgs>, assets: Res<AssetServer>) {
     my_imgs.cmd_intrfce_background = assets.load("imgs/cmd_interface/root_ctr.png");
     my_imgs.cmd_intrfce_mini_map = assets.load("imgs/cmd_interface/mini_map_ctr.png");
     my_imgs.cmd_intrfce_funds = assets.load("imgs/cmd_interface/funds_ctr.png");
+    my_imgs.cmds_intrfce_build_columns_ctr =
+        assets.load("imgs/cmd_interface/build_columns_ctr.png");
     my_imgs.structure_barracks = assets.load("imgs/structures/barracks.png");
     my_imgs.structure_cannon = assets.load("imgs/structures/cannon.png");
     my_imgs.structure_vehicle_depot = assets.load("imgs/structures/vehicle_depot.png");

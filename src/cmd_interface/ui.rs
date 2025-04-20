@@ -344,7 +344,6 @@ fn command_center_ui(
             Node {
                 height: Val::Percent(30.0),
                 width: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(2.5)),
                 ..default()
             },
             Name::new("Mini Map Ctr"),
@@ -356,7 +355,6 @@ fn command_center_ui(
             Node {
                 height: Val::Percent(10.0),
                 width: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(2.5)),
                 ..default()
             },
             Name::new("Bank Ctr"),
@@ -364,11 +362,10 @@ fn command_center_ui(
 
         // structure/units
         p.spawn((
-            BorderColor(Color::BLACK),
+            ImageNode::new(my_imgs.cmds_intrfce_build_columns_ctr.clone()),
             Node {
                 height: Val::Percent(60.0),
                 width: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(2.5)),
                 ..default()
             },
             Name::new("Structure/Units Ctr"),

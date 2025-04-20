@@ -29,6 +29,8 @@ impl Plugin for CameraPlugin {
     }
 }
 
+// #[derive(Component)]
+
 fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
@@ -48,7 +50,7 @@ fn spawn_camera(mut cmds: Commands) {
         RtsCamera {
             bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),
             min_angle: 60.0f32.to_radians(),
-            height_max: 200.0,
+            height_max: 300.0,
             height_min: 30.0,
             ..default()
         },

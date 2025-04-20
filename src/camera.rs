@@ -12,8 +12,7 @@ use bevy_rts_pathfinding::components as pf_comps;
 use crate::{
     resources::GameCommands,
     shaders::{
-        outline::OutlineShaderSettings, outline_2::Outline2ShaderSettings,
-        stylized::StylizedShaderSettings, tint::TintShaderSettings,
+        outline::ShaderSettingsOutline, stylized::ShaderSettingsStylized, tint::ShaderSettingsTint,
     },
     structures::components::StructurePlaceholder,
 };
@@ -30,16 +29,12 @@ impl Plugin for CameraPlugin {
     }
 }
 
-#[derive(Component)]
-pub struct ZoomLevel(pub u32);
-
 fn spawn_camera(mut cmds: Commands) {
     cmds.spawn((
         Camera3d::default(),
-        OutlineShaderSettings::default(),
-        TintShaderSettings::default(),
-        StylizedShaderSettings::default(),
-        Outline2ShaderSettings::default(),
+        ShaderSettingsTint::default(),
+        ShaderSettingsStylized::default(),
+        ShaderSettingsOutline::default(),
         DepthPrepass,
         NormalPrepass,
         Msaa::Off,
@@ -50,7 +45,6 @@ fn spawn_camera(mut cmds: Commands) {
         },
         pf_comps::GameCamera,
         SpatialAudioReceiver,
-        ZoomLevel(1),
         RtsCamera {
             bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),
             min_angle: 60.0f32.to_radians(),

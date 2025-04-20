@@ -37,8 +37,8 @@ pub struct StylizedShaderPlugin;
 
 impl Plugin for StylizedShaderPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<StylizedShaderSettings>();
-        app.register_type::<StylizedShaderSettings>().add_plugins((
+        app.register_type::<ShaderSettingsStylized>();
+        app.register_type::<ShaderSettingsStylized>().add_plugins((
             // The settings will be a component that lives in the main world but will
             // be extracted to the render world every frame.
             // This makes it possible to control the effect from the main world.
@@ -46,11 +46,11 @@ impl Plugin for StylizedShaderPlugin {
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
             ExtractResourcePlugin::<MyTextures>::default(),
-            ExtractComponentPlugin::<StylizedShaderSettings>::default(),
+            ExtractComponentPlugin::<ShaderSettingsStylized>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
             // and writing the data to that buffer every frame.
-            UniformComponentPlugin::<StylizedShaderSettings>::default(),
+            UniformComponentPlugin::<ShaderSettingsStylized>::default(),
         ));
 
         // We need to get the render app from the main app
@@ -120,10 +120,10 @@ impl ViewNode for PostProcessNode {
         &'static ViewTarget,
         &'static ViewPrepassTextures,
         // This makes sure the node only runs on cameras with the PostProcessSettings component
-        &'static StylizedShaderSettings,
+        &'static ShaderSettingsStylized,
         // As there could be multiple post processing components sent to the GPU (one per camera),
         // we need to get the index of the one that is associated with the current view.
-        &'static DynamicUniformIndex<StylizedShaderSettings>,
+        &'static DynamicUniformIndex<ShaderSettingsStylized>,
         &'static ViewUniformOffset,
     );
 
@@ -157,7 +157,7 @@ impl ViewNode for PostProcessNode {
         };
 
         // Get the settings uniform binding
-        let settings_uniforms = world.resource::<ComponentUniforms<StylizedShaderSettings>>();
+        let settings_uniforms = world.resource::<ComponentUniforms<ShaderSettingsStylized>>();
 
         let Some(settings_binding) = settings_uniforms.uniforms().binding() else {
             return Ok(());
@@ -251,7 +251,7 @@ impl FromWorld for PostProcessPipeline {
                 (
                     texture_2d(TextureSampleType::Float { filterable: true }), // 0: The screen texture
                     sampler(SamplerBindingType::Filtering), // 1: The screen sampler
-                    uniform_buffer::<StylizedShaderSettings>(true), // 2: The settings uniform
+                    uniform_buffer::<ShaderSettingsStylized>(true), // 2: The settings uniform
                     texture_2d(TextureSampleType::Float { filterable: true }), // 3
                     sampler(SamplerBindingType::Filtering), // 4
                 ),
@@ -303,7 +303,7 @@ impl FromWorld for PostProcessPipeline {
 
 // This is the component that will get passed to the shader
 #[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct StylizedShaderSettings {
+pub struct ShaderSettingsStylized {
     // // 0.0 = only original scene colors; 1.0 = only ramp palette
     // pub ramp_mix: f32,
     // // How far each channel splits (in UV space)
@@ -336,7 +336,7 @@ pub struct StylizedShaderSettings {
     pub contrast: f32,   //
 }
 
-impl Default for StylizedShaderSettings {
+impl Default for ShaderSettingsStylized {
     fn default() -> Self {
         Self {
             // ramp_mix: 0.0,

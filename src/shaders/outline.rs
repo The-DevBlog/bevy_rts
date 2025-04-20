@@ -5,7 +5,6 @@ use bevy::{
         prepass::ViewPrepassTextures,
     },
     ecs::query::QueryItem,
-    input::mouse::MouseWheel,
     prelude::*,
     render::{
         extract_component::{
@@ -25,8 +24,6 @@ use bevy::{
     },
 };
 
-use crate::camera::ZoomLevel;
-
 /// This example uses a shader source file from the assets subdirectory
 const SHADER_ASSET_PATH: &str = "shaders/outline.wgsl";
 
@@ -35,22 +32,20 @@ pub struct OutlineShaderPlugin;
 
 impl Plugin for OutlineShaderPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<OutlineShaderSettings>();
-        app.register_type::<OutlineShaderSettings>().add_plugins((
+        app.register_type::<ShaderSettingsOutline>();
+        app.add_plugins((
             // The settings will be a component that lives in the main world but will
             // be extracted to the render world every frame.
             // This makes it possible to control the effect from the main world.
             // This plugin will take care of extracting it automatically.
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
-            ExtractComponentPlugin::<OutlineShaderSettings>::default(),
+            ExtractComponentPlugin::<ShaderSettingsOutline>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
             // and writing the data to that buffer every frame.
-            UniformComponentPlugin::<OutlineShaderSettings>::default(),
+            UniformComponentPlugin::<ShaderSettingsOutline>::default(),
         ));
-
-        app.add_systems(Update, update_zoom_system);
 
         // We need to get the render app from the main app
         let Some(render_app) = app.get_sub_app_mut(RenderApp) else {
@@ -119,10 +114,10 @@ impl ViewNode for PostProcessNode {
         &'static ViewTarget,
         &'static ViewPrepassTextures,
         // This makes sure the node only runs on cameras with the PostProcessSettings component
-        &'static OutlineShaderSettings,
+        &'static ShaderSettingsOutline,
         // As there could be multiple post processing components sent to the GPU (one per camera),
         // we need to get the index of the one that is associated with the current view.
-        &'static DynamicUniformIndex<OutlineShaderSettings>,
+        &'static DynamicUniformIndex<ShaderSettingsOutline>,
         &'static ViewUniformOffset,
     );
 
@@ -155,24 +150,21 @@ impl ViewNode for PostProcessNode {
             return Ok(());
         };
 
+        // Get the settings uniform binding
+        let settings_uniforms = world.resource::<ComponentUniforms<ShaderSettingsOutline>>();
         let view_uniforms = world.resource::<ViewUniforms>();
         let Some(view_uniforms) = view_uniforms.uniforms.binding() else {
             return Ok(());
         };
-
-        // Get the settings uniform binding
-        let settings_uniforms = world.resource::<ComponentUniforms<OutlineShaderSettings>>();
         let Some(settings_binding) = settings_uniforms.uniforms().binding() else {
             return Ok(());
         };
-
         let (Some(depth_texture), Some(normal_texture)) =
             (&prepass_textures.depth, &prepass_textures.normal)
         else {
             println!("could not find depth or normal");
             return Ok(());
         };
-
         // This will start a new "post process write", obtaining two texture
         // views from the view target - a `source` and a `destination`.
         // `source` is the "current" main texture and you _must_ write into
@@ -194,12 +186,15 @@ impl ViewNode for PostProcessNode {
             &post_process_pipeline.layout,
             // It's important for this to match the BindGroupLayout defined in the PostProcessPipeline
             &BindGroupEntries::sequential((
-                post_process.source,                  // Binding 0: Screen texture (source view)
-                &post_process_pipeline.sampler,       // Binding 1: Screen sampler
-                settings_binding.clone(),             // Binding 2: Settings uniform buffer
-                &normal_texture.texture.default_view, // Binding 3: Normal texture
-                &depth_texture.texture.default_view,  // Binding 4: Depth texture
-                view_uniforms,                        // Binding 5: View uniform buffer
+                // Make sure to use the source view
+                post_process.source,
+                // Use the sampler created for the pipeline
+                &post_process_pipeline.sampler,
+                // Set the settings binding
+                settings_binding.clone(),
+                &depth_texture.texture.default_view,
+                &normal_texture.texture.default_view,
+                view_uniforms,
             )),
         );
 
@@ -254,12 +249,15 @@ impl FromWorld for PostProcessPipeline {
                 // The layout entries will only be visible in the fragment stage
                 ShaderStages::FRAGMENT,
                 (
-                    texture_2d(TextureSampleType::Float { filterable: true }), // 0: The screen texture
-                    sampler(SamplerBindingType::Filtering), // 1: The screen sampler
-                    uniform_buffer::<OutlineShaderSettings>(true), // 2: The settings uniform
-                    texture_2d(TextureSampleType::Float { filterable: true }), // 3: The normal texture
-                    texture_depth_2d(),                  // 4: The depth texture
-                    uniform_buffer::<ViewUniform>(true), // 5: The view uniform
+                    // The screen texture
+                    texture_2d(TextureSampleType::Float { filterable: true }),
+                    // The sampler that will be used to sample the screen texture
+                    sampler(SamplerBindingType::Filtering),
+                    // The settings uniform that will control the effect
+                    uniform_buffer::<ShaderSettingsOutline>(true),
+                    texture_depth_2d(),
+                    texture_2d(TextureSampleType::Float { filterable: true }),
+                    uniform_buffer::<ViewUniform>(true),
                 ),
             ),
         );
@@ -308,49 +306,27 @@ impl FromWorld for PostProcessPipeline {
 }
 
 // This is the component that will get passed to the shader
-#[derive(Reflect, Component, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct OutlineShaderSettings {
-    pub zoom: f32,
-    pub resolution: Vec2,
+#[derive(Component, Clone, Copy, ExtractComponent, ShaderType, Reflect)]
+pub struct ShaderSettingsOutline {
+    pub depth_threshold: f32,
+    pub depth_threshold_depth_mul: f32, // If something is further away, it should require more depth
+    pub depth_normal_threshold: f32,    // If at a glazing angle, depth threshold should be harsher
+    pub depth_normal_threshold_mul: f32, // If at a glazing angle, depth threshold should be harsher
     pub normal_threshold: f32,
-    pub outline_color: Vec4,
-    pub outline_thickness: f32,
+    pub colour_threshold: f32,
+    pub sampling_scale: f32,
 }
 
-impl Default for OutlineShaderSettings {
+impl Default for ShaderSettingsOutline {
     fn default() -> Self {
         Self {
-            zoom: 1.0,
-            resolution: Vec2::new(1920.0, 1080.0),
-            normal_threshold: 0.02,
-            outline_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
-            outline_thickness: 0.8,
+            depth_threshold: 1.9,
+            depth_threshold_depth_mul: 0.5,
+            depth_normal_threshold: 0.5,
+            depth_normal_threshold_mul: 30.0,
+            normal_threshold: 0.16,
+            colour_threshold: 0.3,
+            sampling_scale: 3.0,
         }
     }
-}
-
-fn update_zoom_system(
-    mut events: EventReader<MouseWheel>,
-    mut q: Query<&mut ZoomLevel>,
-    mut settings: Query<&mut OutlineShaderSettings>,
-) {
-    let Ok(mut zoom_lvl) = q.get_single_mut() else {
-        return;
-    };
-
-    let Ok(mut settings) = settings.get_single_mut() else {
-        return;
-    };
-
-    for ev in events.read() {
-        if ev.y < 0.0 {
-            zoom_lvl.0 -= 1;
-        } else {
-            zoom_lvl.0 += 1;
-        }
-
-        zoom_lvl.0 = zoom_lvl.0.clamp(1, 10);
-    }
-
-    settings.zoom = zoom_lvl.0 as f32 * 0.1;
 }

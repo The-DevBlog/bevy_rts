@@ -82,18 +82,24 @@ fn spawn_ground(
 }
 
 fn spawn_light(mut cmds: Commands) {
-    // Light
-    let yaw = 150.0f32.to_radians() + std::f32::consts::PI; // 150° + 180° = 330° (in radians)
-    let pitch = -40.0f32.to_radians();
-    let roll = 0.0;
+    // Position the “sun” 10 units above the origin
+    let light_height = 10.0;
+    let light_pos = Vec3::new(0.0, light_height, 0.0);
+
+    let mut transform = Transform::from_translation(light_pos).looking_at(Vec3::ZERO, Vec3::Y);
+
+    let tilt: f32 = 15.0f32.to_radians();
+    transform.rotate_x(tilt);
 
     cmds.spawn((
         DirectionalLight {
-            illuminance: 1000.0,
+            illuminance: 5000.0,
+            shadow_depth_bias: 1.5,
+            shadow_normal_bias: 1.0,
             shadows_enabled: true,
             ..default()
         },
-        Transform::from_rotation(Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)),
-        Name::new("Light"),
+        transform,
+        Name::new("Sun Light"),
     ));
 }

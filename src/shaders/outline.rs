@@ -25,6 +25,8 @@ use bevy::{
     },
 };
 
+use crate::camera::ZoomLevel;
+
 /// This example uses a shader source file from the assets subdirectory
 const SHADER_ASSET_PATH: &str = "shaders/outline.wgsl";
 
@@ -316,19 +318,32 @@ impl Default for OutlineShaderSettings {
 
 fn update_zoom_system(
     mut events: EventReader<MouseWheel>,
+    mut q: Query<&mut ZoomLevel>,
     mut settings: Query<&mut OutlineShaderSettings>,
 ) {
+    let Ok(mut zoom_lvl) = q.get_single_mut() else {
+        return;
+    };
+
     let Ok(mut settings) = settings.get_single_mut() else {
         return;
     };
 
     for ev in events.read() {
         if ev.y < 0.0 {
-            settings.zoom -= 0.2;
-        } else if ev.y > 0.0 {
-            settings.zoom += 0.2;
+            zoom_lvl.0 -= 1;
+        } else {
+            zoom_lvl.0 += 1;
         }
+        //     settings.zoom -= 0.2;
+        // } else if ev.y > 0.0 {
+        //     settings.zoom += 0.2;
+        // }
 
+        zoom_lvl.0 = zoom_lvl.0.clamp(1, 10);
         // settings.zoom = settings.zoom.clamp(0.4, 3.0);
     }
+
+    settings.zoom = zoom_lvl.0 as f32 * 0.1;
+    println!("Zoom level: {}", zoom_lvl.0);
 }

@@ -320,7 +320,7 @@ pub struct Outline2ShaderSettings {
 impl Default for Outline2ShaderSettings {
     fn default() -> Self {
         Self {
-            depth_threshold: 1.0,
+            depth_threshold: 1.9,
             depth_threshold_depth_mul: 0.5,
             depth_normal_threshold: 0.5,
             depth_normal_threshold_mul: 30.0,

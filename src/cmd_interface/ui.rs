@@ -159,14 +159,20 @@ fn command_center_ui(
     };
     let mini_map_ctr = (
         MiniMapCtr,
+        // Node {
+        //     min_height: Val::Percent(25.0),
+        //     max_height: Val::Px(341.0),
+        //     max_width: Val::Px(341.0),
+        //     width: Val::Percent(width),
+        //     margin: UiRect::bottom(Val::Px(41.0)),
+        //     top: Val::Px(22.1),
+        //     // left: Val::Percent(2.0),
+        //     ..default()
+        // },
+        ImageNode::new(my_imgs.cmd_intrfce_mini_map.clone()),
         Node {
-            min_height: Val::Percent(25.0),
-            max_height: Val::Px(341.0),
-            max_width: Val::Px(341.0),
+            height: Val::Percent(30.0),
             width: Val::Percent(width),
-            margin: UiRect::bottom(Val::Px(41.0)),
-            top: Val::Px(22.1),
-            // left: Val::Percent(2.0),
             ..default()
         },
         Text::new("Mini Map"),
@@ -177,10 +183,16 @@ fn command_center_ui(
 
     let bank_ctr = (
         BankCtr,
+        ImageNode::new(my_imgs.cmd_intrfce_funds.clone()),
         Node {
-            margin: UiRect::bottom(Val::Percent(2.8)),
+            height: Val::Percent(10.0),
+            width: Val::Percent(100.0),
             ..default()
         },
+        // Node {
+        //     margin: UiRect::bottom(Val::Percent(2.8)),
+        //     ..default()
+        // },
         Text::new(format!("${}", bank.funds.to_string())),
         TextFont {
             font_size: 30.0,
@@ -214,20 +226,18 @@ fn command_center_ui(
     };
 
     let (min_width, width, height) = match dbg.youtube_shorts {
-        true => (0.0, 92.0, Val::Percent(46.2)),
-        false => (246.0, 100.0, Val::Auto),
+        true => (0.0, 92.0, 46.2),
+        false => (246.0, 100.0, 60.0),
     };
     let build_columns_ctr = (
         BuildColumnsCtr,
+        ImageNode::new(my_imgs.cmds_intrfce_build_columns_ctr.clone()),
         BackgroundColor(Color::BLACK),
         Node {
             padding: UiRect::top(Val::Px(5.0)),
-            // margin: UiRect::new(Val::Auto, Val::Auto, Val::ZERO, Val::ZERO),
             min_width: Val::Px(min_width),
-            max_width: Val::Px(358.0),
-            height,
+            height: Val::Percent(height),
             width: Val::Percent(width),
-            // max_width: Val::Px(341.0),
             overflow: Overflow::scroll_y(),
             ..default()
         },
@@ -339,70 +349,34 @@ fn command_center_ui(
     // Command Interface Ctr
     cmds.spawn(cmd_interface_ctr).with_children(|p| {
         // mini map
-        p.spawn((
-            ImageNode::new(my_imgs.cmd_intrfce_mini_map.clone()),
-            Node {
-                height: Val::Percent(30.0),
-                width: Val::Percent(100.0),
-                ..default()
-            },
-            Name::new("Mini Map Ctr"),
-        ));
+        p.spawn(mini_map_ctr);
 
         // bank
-        p.spawn((
-            ImageNode::new(my_imgs.cmd_intrfce_funds.clone()),
-            Node {
-                height: Val::Percent(10.0),
-                width: Val::Percent(100.0),
-                ..default()
-            },
-            Name::new("Bank Ctr"),
-        ));
+        p.spawn(bank_ctr);
 
         // structure/units
-        p.spawn((
-            ImageNode::new(my_imgs.cmds_intrfce_build_columns_ctr.clone()),
-            Node {
-                height: Val::Percent(60.0),
-                width: Val::Percent(100.0),
-                ..default()
-            },
-            Name::new("Structure/Units Ctr"),
-        ));
+        p.spawn(build_columns_ctr)
+            .with_children(|p: &mut ChildBuilder<'_>| {
+                // Structures Column
+                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                    for structure in StructureType::iter() {
+                        spawn_structure_btn(parent, structure, &my_imgs);
+                    }
+                    for structure in StructureType::iter() {
+                        spawn_structure_btn(parent, structure, &my_imgs);
+                    }
+                });
+
+                // Units Column
+                p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
+            });
     });
-
-    // // Command Interface Ctr
-    // cmds.spawn(cmd_interface_ctr).with_children(|p| {
-    //     //  Mini Map
-    //     p.spawn(mini_map_ctr);
-
-    //     // Bank
-    //     p.spawn(bank_ctr);
 
     //     // Structure/Units Icons
     //     p.spawn(icons_ctr).with_children(|parent| {
     //         parent.spawn(icon(my_imgs.cmd_intrfce_structures.clone()));
     //         parent.spawn(icon(my_imgs.cmd_intrfce_units.clone()));
     //     });
-
-    //     // Structure/Units Columns
-    //     p.spawn(build_columns_ctr)
-    //         .with_children(|p: &mut ChildBuilder<'_>| {
-    //             // Structures Column
-    //             p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-    //                 for structure in StructureType::iter() {
-    //                     spawn_structure_btn(parent, structure, &my_imgs);
-    //                 }
-    //                 for structure in StructureType::iter() {
-    //                     spawn_structure_btn(parent, structure, &my_imgs);
-    //                 }
-    //             });
-
-    //             // Units Column
-    //             p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
-    //         });
-    // });
 }
 
 fn update_build_queue_count(

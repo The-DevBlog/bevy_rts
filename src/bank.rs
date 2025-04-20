@@ -7,7 +7,7 @@ pub struct BankPlugin;
 impl Plugin for BankPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Bank>()
-            // .add_systems(Update, update_bank_funds)
+            .add_systems(Update, update_bank_funds)
             .add_observer(adjust_funds);
     }
 }

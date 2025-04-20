@@ -175,14 +175,10 @@ fn command_center_ui(
             width: Val::Percent(width),
             ..default()
         },
-        Text::new("Mini Map"),
-        TextLayout::new_with_justify(JustifyText::Center),
-        BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
         Name::new("Mini Map Ctr"),
     );
 
     let bank_ctr = (
-        BankCtr,
         ImageNode::new(my_imgs.cmd_intrfce_funds.clone()),
         Node {
             height: Val::Percent(10.0),
@@ -193,13 +189,28 @@ fn command_center_ui(
         //     margin: UiRect::bottom(Val::Percent(2.8)),
         //     ..default()
         // },
+        // Text::new(format!("${}", bank.funds.to_string())),
+        // TextFont {
+        //     font_size: 30.0,
+        //     ..default()
+        // TextLayout::new_with_justify(JustifyText::Center),
+        // },
+        Name::new("Bank"),
+    );
+
+    let bank_txt = (
+        BankTxt,
+        Node {
+            margin: UiRect::all(Val::Auto),
+            ..default()
+        },
         Text::new(format!("${}", bank.funds.to_string())),
         TextFont {
             font_size: 30.0,
             ..default()
         },
         TextLayout::new_with_justify(JustifyText::Center),
-        Name::new("Bank"),
+        Name::new("Bank Txt"),
     );
 
     let icons_ctr = (
@@ -263,7 +274,7 @@ fn command_center_ui(
      -> (
         OptCtr,
         Button,
-        BorderColor,
+        // BorderColor,
         ImageNode,
         Node,
         StructureType,
@@ -272,7 +283,7 @@ fn command_center_ui(
         (
             OptCtr,
             Button,
-            BorderColor(Color::srgb(0.8, 0.8, 0.8)),
+            // BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             ImageNode {
                 image: structure.img(my_imgs),
                 color: CLR_STRUCTURE_BUILD_ACTIONS,
@@ -352,7 +363,7 @@ fn command_center_ui(
         p.spawn(mini_map_ctr);
 
         // bank
-        p.spawn(bank_ctr);
+        p.spawn(bank_ctr).with_child(bank_txt);
 
         // structure/units
         p.spawn(build_columns_ctr)

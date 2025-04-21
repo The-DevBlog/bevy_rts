@@ -13,7 +13,6 @@ mod events;
 mod map;
 mod mouse;
 mod resources;
-mod shaders;
 mod structures;
 mod tank;
 mod units;
@@ -26,7 +25,6 @@ use cmd_interface::CmdInterfacePlugin;
 use map::MapPlugin;
 use mouse::MousePlugin;
 use resources::ResourcesPlugin;
-use shaders::ShadersPlugin;
 use structures::StructuresPlugin;
 use tank::TankPlugin;
 use units::UnitsPlugin;
@@ -70,7 +68,7 @@ fn main() {
         TankPlugin,
     ));
 
-    app.add_plugins((AudioPlugin, SpatialAudioPlugin, ShadersPlugin));
+    app.add_plugins((AudioPlugin, SpatialAudioPlugin));
 
     // if !shorts_flag {
     //     app.add_plugins(WorldInspectorPlugin::new());

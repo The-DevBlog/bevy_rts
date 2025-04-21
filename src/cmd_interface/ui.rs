@@ -138,7 +138,6 @@ fn command_center_ui(
     let cmd_interface_ctr = (
         CmdInterfaceCtr,
         Button,
-        ImageNode::new(my_imgs.cmd_intrfce_background.clone()),
         Node {
             margin: UiRect::left(Val::Auto),
             flex_direction: FlexDirection::Column,
@@ -245,7 +244,7 @@ fn command_center_ui(
         ImageNode::new(my_imgs.cmds_intrfce_build_columns_ctr.clone()),
         BackgroundColor(Color::BLACK),
         Node {
-            padding: UiRect::top(Val::Px(5.0)),
+            padding: UiRect::new(Val::Px(10.0), Val::Px(10.0), Val::Px(12.5), Val::Px(12.5)),
             min_width: Val::Px(min_width),
             height: Val::Percent(height),
             width: Val::Percent(width),
@@ -271,19 +270,10 @@ fn command_center_ui(
 
     let structure_opt_ctr = |structure: StructureType,
                              my_imgs: &Res<MyImgs>|
-     -> (
-        OptCtr,
-        Button,
-        // BorderColor,
-        ImageNode,
-        Node,
-        StructureType,
-        Name,
-    ) {
+     -> (OptCtr, Button, ImageNode, Node, StructureType, Name) {
         (
             OptCtr,
             Button,
-            // BorderColor(Color::srgb(0.8, 0.8, 0.8)),
             ImageNode {
                 image: structure.img(my_imgs),
                 color: CLR_STRUCTURE_BUILD_ACTIONS,

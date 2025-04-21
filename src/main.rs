@@ -31,6 +31,8 @@ use structures::StructuresPlugin;
 use tank::TankPlugin;
 use units::UnitsPlugin;
 
+// const COLOR_GROUND: Color = Color::srgb(0.44, 0.75, 0.44);
+const COLOR_GROUND: Color = Color::srgb(0.42, 0.61, 0.38);
 const COLOR_SELECT_BOX: Color = Color::srgba(0.0, 0.45, 0.73, 0.45); // TODO: Keeps getting modified somehow?
 const COLOR_SELECT_BOX_BORDER: Color = Color::srgba(0.22, 0.22, 0.22, 1.0);
 const CELL_SIZE: f32 = 10.0;

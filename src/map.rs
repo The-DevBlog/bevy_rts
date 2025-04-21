@@ -69,7 +69,7 @@ fn spawn_ground(
         Mesh3d(meshes.add(Plane3d::default().mesh().size(MAP_WIDTH, MAP_DEPTH))),
         MeshMaterial3d(materials.add(StandardMaterial {
             // base_color: Color::srgb(0.37, 0.48, 0.61), // blue
-            base_color: Color::srgb(0.44, 0.75, 0.44), // green
+            base_color: COLOR_GROUND, // green
             perceptual_roughness: 1.0,
             ..Default::default()
         })),

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::cmd_interface::components::BankCtr;
+use crate::cmd_interface::components::BankTxt;
 
 pub struct BankPlugin;
 
@@ -38,7 +38,7 @@ fn adjust_funds(trigger: Trigger<AdjustFundsEv>, mut bank: ResMut<Bank>) {
 fn update_bank_funds(
     time: Res<Time>,
     mut bank: ResMut<Bank>,
-    mut bank_txt: Query<&mut Text, With<BankCtr>>,
+    mut bank_txt: Query<&mut Text, With<BankTxt>>,
 ) {
     if bank.funds == bank.displayed_funds {
         return;

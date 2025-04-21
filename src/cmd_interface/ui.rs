@@ -270,10 +270,19 @@ fn command_center_ui(
 
     let structure_opt_ctr = |structure: StructureType,
                              my_imgs: &Res<MyImgs>|
-     -> (OptCtr, Button, ImageNode, Node, StructureType, Name) {
+     -> (
+        OptCtr,
+        Button,
+        BorderRadius,
+        ImageNode,
+        Node,
+        StructureType,
+        Name,
+    ) {
         (
             OptCtr,
             Button,
+            BorderRadius::all(Val::Px(6.5)),
             ImageNode {
                 image: structure.img(my_imgs),
                 color: CLR_STRUCTURE_BUILD_ACTIONS,

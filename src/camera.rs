@@ -2,22 +2,43 @@ use bevy::{
     core_pipeline::{
         fxaa::{Fxaa, Sensitivity},
         prepass::{DepthPrepass, NormalPrepass},
+        Skybox,
     },
+    image::CompressedImageFormats,
     math::bounding::Aabb2d,
+    render::{
+        render_resource::{TextureViewDescriptor, TextureViewDimension},
+        renderer::RenderDevice,
+    },
 };
 use bevy_kira_audio::SpatialAudioReceiver;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use bevy_rts_pathfinding::components as pf_comps;
 
-use crate::{
-    resources::GameCommands,
-    shaders::{
-        outline::ShaderSettingsOutline, stylized::ShaderSettingsStylized, tint::ShaderSettingsTint,
-    },
-    structures::components::StructurePlaceholder,
+use crate::shaders::{
+    outline::ShaderSettingsOutline, stylized::ShaderSettingsStylized, tint::ShaderSettingsTint,
 };
 
 use super::*;
+
+const CUBEMAPS: &[(&str, CompressedImageFormats)] = &[
+    (
+        "imgs/skybox/Ryfjallet_cubemap.png",
+        CompressedImageFormats::NONE,
+    ),
+    (
+        "imgs/skybox/textures/Ryfjallet_cubemap_astc4x4.ktx2",
+        CompressedImageFormats::ASTC_LDR,
+    ),
+    (
+        "imgs/skybox/Ryfjallet_cubemap_bc7.ktx2",
+        CompressedImageFormats::BC,
+    ),
+    (
+        "imgs/skybox/Ryfjallet_cubemap_etc2.ktx2",
+        CompressedImageFormats::ETC2,
+    ),
+];
 
 pub struct CameraPlugin;
 
@@ -25,11 +46,23 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(RtsCameraPlugin)
             .add_systems(Startup, spawn_camera)
-            .add_systems(Update, stop_scroll);
+            .add_systems(
+                Update,
+                (cycle_cubemap_asset, asset_loaded.after(cycle_cubemap_asset)),
+            );
     }
 }
 
-fn spawn_camera(mut cmds: Commands) {
+#[derive(Resource)]
+struct Cubemap {
+    is_loaded: bool,
+    index: usize,
+    image_handle: Handle<Image>,
+}
+
+fn spawn_camera(mut cmds: Commands, assets: Res<AssetServer>) {
+    let skybox_handle = assets.load(CUBEMAPS[0].0);
+
     cmds.spawn((
         Camera3d::default(),
         ShaderSettingsTint::default(),
@@ -62,22 +95,87 @@ fn spawn_camera(mut cmds: Commands) {
             zoom_sensitivity: 0.2,
             ..default()
         },
+        Skybox {
+            image: skybox_handle.clone(),
+            brightness: 1000.0,
+            ..default()
+        },
     ));
+
+    cmds.insert_resource(Cubemap {
+        is_loaded: false,
+        index: 0,
+        image_handle: skybox_handle,
+    });
 }
 
-// prevent scrolling when hovering over the command interface or when placing a structure
-fn stop_scroll(
-    game_cmds: Res<GameCommands>,
-    q_placeholder: Query<&StructurePlaceholder>,
-    mut q_cam: Query<&mut RtsCameraControls>,
-) {
-    let Ok(mut cam_ctrls) = q_cam.get_single_mut() else {
-        return;
-    };
+const CUBEMAP_SWAP_DELAY: f32 = 3.0;
 
-    if game_cmds.hvr_cmd_interface || !q_placeholder.is_empty() {
-        cam_ctrls.zoom_sensitivity = 0.0;
-    } else {
-        cam_ctrls.zoom_sensitivity = 0.2;
+fn cycle_cubemap_asset(
+    time: Res<Time>,
+    mut next_swap: Local<f32>,
+    mut cubemap: ResMut<Cubemap>,
+    asset_server: Res<AssetServer>,
+    render_device: Res<RenderDevice>,
+) {
+    let now = time.elapsed_secs();
+    if *next_swap == 0.0 {
+        *next_swap = now + CUBEMAP_SWAP_DELAY;
+        return;
+    } else if now < *next_swap {
+        return;
+    }
+    *next_swap += CUBEMAP_SWAP_DELAY;
+
+    let supported_compressed_formats =
+        CompressedImageFormats::from_features(render_device.features());
+
+    let mut new_index = cubemap.index;
+    for _ in 0..CUBEMAPS.len() {
+        new_index = (new_index + 1) % CUBEMAPS.len();
+        if supported_compressed_formats.contains(CUBEMAPS[new_index].1) {
+            break;
+        }
+        // info!(
+        //     "Skipping format which is not supported by current hardware: {:?}",
+        //     CUBEMAPS[new_index]
+        // );
+    }
+
+    // Skip swapping to the same texture. Useful for when ktx2, zstd, or compressed texture support
+    // is missing
+    if new_index == cubemap.index {
+        return;
+    }
+
+    cubemap.index = new_index;
+    cubemap.image_handle = asset_server.load(CUBEMAPS[cubemap.index].0);
+    cubemap.is_loaded = false;
+}
+
+fn asset_loaded(
+    asset_server: Res<AssetServer>,
+    mut images: ResMut<Assets<Image>>,
+    mut cubemap: ResMut<Cubemap>,
+    mut skyboxes: Query<&mut Skybox>,
+) {
+    if !cubemap.is_loaded && asset_server.load_state(&cubemap.image_handle).is_loaded() {
+        // info!("Swapping to {}...", CUBEMAPS[cubemap.index].0);
+        let image = images.get_mut(&cubemap.image_handle).unwrap();
+        // NOTE: PNGs do not have any metadata that could indicate they contain a cubemap texture,
+        // so they appear as one texture. The following code reconfigures the texture as necessary.
+        if image.texture_descriptor.array_layer_count() == 1 {
+            image.reinterpret_stacked_2d_as_array(image.height() / image.width());
+            image.texture_view_descriptor = Some(TextureViewDescriptor {
+                dimension: Some(TextureViewDimension::Cube),
+                ..default()
+            });
+        }
+
+        for mut skybox in &mut skyboxes {
+            skybox.image = cubemap.image_handle.clone();
+        }
+
+        cubemap.is_loaded = true;
     }
 }

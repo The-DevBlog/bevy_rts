@@ -2,14 +2,15 @@ use accesskit::{Node as Accessible, Role};
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
 use bevy::picking::focus::HoverMap;
 use bevy::{a11y::AccessibilityNode, prelude::*};
+use bevy_rts_camera::RtsCameraControls;
 use strum::IntoEnumIterator;
 
 use super::resources::BuildQueueCount;
 use super::{build_actions::CLR_STRUCTURE_BUILD_ACTIONS, components::*};
 use crate::asset_manager::imgs::MyImgs;
 use crate::bank::Bank;
-use crate::resources::DbgOptions;
-use crate::structures::components::StructureType;
+use crate::resources::{DbgOptions, GameCommands};
+use crate::structures::components::{StructurePlaceholder, StructureType};
 use crate::structures::resources::VehicleBuildQueue;
 use crate::units::components::UnitType;
 use crate::units::resources::UnlockedUnits;
@@ -23,6 +24,7 @@ impl Plugin for UiPlugin {
         app.add_systems(Startup, command_center_ui).add_systems(
             Update,
             (
+                stop_scroll,
                 update_build_queue_count.run_if(resource_changed::<BuildQueueCount>),
                 update_minimap_aspect,
                 update_build_progress_bar,
@@ -612,5 +614,22 @@ fn update_build_progress_bar(
         *visibility = Visibility::Visible;
         // Update the height of the progress bar relative to the timer's progress.
         node.height = Val::Percent(progress_percent);
+    }
+}
+
+// prevent scrolling when hovering over the command interface or when placing a structure
+fn stop_scroll(
+    game_cmds: Res<GameCommands>,
+    q_placeholder: Query<&StructurePlaceholder>,
+    mut q_cam: Query<&mut RtsCameraControls>,
+) {
+    let Ok(mut cam_ctrls) = q_cam.get_single_mut() else {
+        return;
+    };
+
+    if game_cmds.hvr_cmd_interface || !q_placeholder.is_empty() {
+        cam_ctrls.zoom_sensitivity = 0.0;
+    } else {
+        cam_ctrls.zoom_sensitivity = 0.2;
     }
 }

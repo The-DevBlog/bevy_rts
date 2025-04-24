@@ -5,7 +5,7 @@ use bevy_rapier3d::prelude::ExternalImpulse;
 
 use crate::{
     asset_manager::{
-        audio::{AudioCmd, MyAudio, UnitAudioEv},
+        audio::{AudioCmd, UnitAudioEv},
         models::MyModels,
     },
     cmd_interface::resources::BuildQueueCount,
@@ -64,8 +64,8 @@ fn obs_build_vehicle(
     mut cmds: Commands,
     q_structure: Query<&Transform, With<PrimaryVehicleDepot>>,
     my_models: Res<MyModels>,
-    audio: Res<bevy_kira_audio::Audio>,
-    my_audio: Res<MyAudio>,
+    // audio: Res<bevy_kira_audio::Audio>,
+    // my_audio: Res<MyAudio>,
     mut build_queue_count: ResMut<BuildQueueCount>,
 ) {
     let Ok(structure_trans) = q_structure.get_single() else {
@@ -85,7 +85,7 @@ fn obs_build_vehicle(
         ..Default::default()
     };
 
-    let unit = unit_type.build(vehicle_transform, &my_models, &audio, &my_audio);
+    let unit = unit_type.build(vehicle_transform, &my_models);
 
     cmds.trigger(UnitAudioEv::new(AudioCmd::Ready, unit_type.clone()));
     cmds.spawn((unit, NewUnit::new(vehicle_transform.translation)));

@@ -1,10 +1,10 @@
 use bevy::prelude::*;
-use bevy_kira_audio::prelude::*;
+// use bevy_kira_audio::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding::components as pf_comps;
-use strum_macros::EnumIter;
+use strum_macros::{EnumIter, EnumString};
 
-use crate::asset_manager::audio::*;
+// use crate::asset_manager::audio::*;
 use crate::asset_manager::imgs::MyImgs;
 use crate::asset_manager::models::MyModels;
 use crate::structures::components::StructureType;
@@ -13,7 +13,7 @@ use crate::*;
 
 const TANK_GEN_1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
 const TANK_GEN_2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
-const ARTILLERY_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
+const ARTILLERY_SIZE: Vec3 = Vec3::new(7.5, 3.1, 16.0);
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder(pub Entity);
@@ -37,12 +37,16 @@ pub struct IsMoving(pub bool);
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub struct Unit;
 
-#[derive(Component, EnumIter, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, EnumIter, Clone, Copy, PartialEq, Eq, Hash, EnumString)]
 #[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub enum UnitType {
+    #[strum(serialize = "rifleman")]
     Rifleman,
+    #[strum(serialize = "tank_gen_1")]
     TankGen1,
+    #[strum(serialize = "tank_gen_2")]
     TankGen2,
+    #[strum(serialize = "artillery")]
     Artillery,
 }
 
@@ -97,7 +101,7 @@ impl UnitType {
             UnitType::Rifleman => 50,
             UnitType::TankGen1 => 500,
             UnitType::TankGen2 => 800,
-            UnitType::Artillery => 350,
+            UnitType::Artillery => 650,
         }
     }
 
@@ -137,41 +141,25 @@ impl UnitType {
         }
     }
 
-    fn audio_emitter(
-        &self,
-        audio: &bevy_kira_audio::Audio,
-        my_audio: &MyAudio,
-    ) -> SpatialAudioEmitter {
-        let audio_handles = match self {
-            UnitType::Rifleman => {
-                let handle = my_audio.sfx.moving_rifleman.source.clone();
-                vec![audio.play(handle).looped().paused().handle()]
-            }
-            UnitType::TankGen1 => {
-                let handle = my_audio.sfx.moving_tank_gen_1.source.clone();
-                vec![audio.play(handle).looped().paused().handle()]
-            }
-            UnitType::TankGen2 => {
-                let handle = my_audio.sfx.moving_tank_gen_2.source.clone();
-                vec![audio.play(handle).looped().paused().handle()]
-            }
-            UnitType::Artillery => {
-                let handle = my_audio.sfx.moving_tank_gen_2.source.clone(); // TODO: Make artillery sound
-                vec![audio.play(handle).looped().paused().handle()]
-            }
-        };
+    // fn audio_emitter(
+    //     &self,
+    //     audio: &bevy_kira_audio::Audio,
+    //     my_audio: &MyAudio,
+    // ) -> SpatialAudioEmitter {
+    //     let handle = my_audio.sfx.get_moving_handle(self);
+    //     let audio_handles = vec![audio.play(handle).looped().paused().handle()];
 
-        SpatialAudioEmitter {
-            instances: audio_handles,
-        }
-    }
+    //     SpatialAudioEmitter {
+    //         instances: audio_handles,
+    //     }
+    // }
 
     pub fn build(
         &self,
         transform: Transform,
         my_models: &Res<MyModels>,
-        audio: &bevy_kira_audio::Audio,
-        my_audio: &MyAudio,
+        // audio: &bevy_kira_audio::Audio,
+        // my_audio: &MyAudio,
     ) -> UnitBundle {
         let unit_bundle = UnitBundle::new(
             BORDER_SIZE,
@@ -180,7 +168,7 @@ impl UnitType {
             self.size(),
             transform,
             *self,
-            self.audio_emitter(&audio, &my_audio),
+            // self.audio_emitter(&audio, &my_audio),
         );
 
         unit_bundle
@@ -204,8 +192,8 @@ pub struct UnitBundle {
     pub transform_global: GlobalTransform,
     pub unit_type: UnitType,
     pub unit: Unit,
-    pub audio_emitter: SpatialAudioEmitter,
-    pub spatial_audio_radius: SpatialRadius,
+    // pub audio_emitter: SpatialAudioEmitter,
+    // pub spatial_audio_radius: SpatialRadius,
 }
 
 impl UnitBundle {
@@ -216,7 +204,7 @@ impl UnitBundle {
         size: Vec3,
         transform: Transform,
         unit_type: UnitType,
-        audio_emitter: SpatialAudioEmitter,
+        // audio_emitter: SpatialAudioEmitter,
     ) -> Self {
         Self {
             border_size: BorderSize(border_size),
@@ -244,8 +232,8 @@ impl UnitBundle {
             transform_global: GlobalTransform::default(),
             unit_type: unit_type,
             unit: Unit,
-            audio_emitter,
-            spatial_audio_radius: SpatialRadius { radius: 350.0 }, // TODO For some reason anything above 150 and I cant hear anything at all
+            // audio_emitter,
+            // spatial_audio_radius: SpatialRadius { radius: 350.0 }, // TODO For some reason anything above 150 and I cant hear anything at all
         }
     }
 }

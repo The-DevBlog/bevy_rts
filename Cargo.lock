@@ -4590,6 +4590,7 @@ dependencies = [
  "rand 0.9.1",
  "strum",
  "strum_macros",
+ "walkdir",
 ]
 
 [[package]]

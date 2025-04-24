@@ -13,4 +13,5 @@ pub struct UnlockedUnits {
     pub rifleman: bool,  // barracks built
     pub tank_gen1: bool, // vehicle depot built
     pub tank_gen2: bool, // vehicle depot build, (eventually research as well)
+    pub artillery: bool, // vehicle depot build,
 }

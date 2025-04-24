@@ -13,6 +13,7 @@ use crate::*;
 
 const TANK_GEN_1_SIZE: Vec3 = Vec3::new(6.5, 3.1, 10.75);
 const TANK_GEN_2_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
+const ARTILLERY_SIZE: Vec3 = Vec3::new(7.5, 3.1, 13.0);
 
 #[derive(Component, Clone)]
 pub struct UnitSelectBorder(pub Entity);
@@ -42,6 +43,7 @@ pub enum UnitType {
     Rifleman,
     TankGen1,
     TankGen2,
+    Artillery,
 }
 
 impl UnitType {
@@ -50,6 +52,7 @@ impl UnitType {
             UnitType::Rifleman => StructureType::Barracks,
             UnitType::TankGen1 => StructureType::VehicleDepot,
             UnitType::TankGen2 => StructureType::VehicleDepot,
+            UnitType::Artillery => StructureType::VehicleDepot,
         }
     }
 
@@ -58,6 +61,7 @@ impl UnitType {
             UnitType::Rifleman => 20,
             UnitType::TankGen1 => 100,
             UnitType::TankGen2 => 200,
+            UnitType::Artillery => 150,
         }
     }
 
@@ -66,6 +70,7 @@ impl UnitType {
             UnitType::Rifleman => SPEED_RIFELMAN,
             UnitType::TankGen1 => SPEED_TANK_GEN_1,
             UnitType::TankGen2 => SPEED_TANK_GEN_2,
+            UnitType::Artillery => SPEED_ARTILLERY,
         }
     }
 
@@ -74,6 +79,7 @@ impl UnitType {
             UnitType::Rifleman => 1,
             UnitType::TankGen1 => 10,
             UnitType::TankGen2 => 20,
+            UnitType::Artillery => 30,
         }
     }
 
@@ -82,6 +88,7 @@ impl UnitType {
             UnitType::Rifleman => 1,
             UnitType::TankGen1 => 3,
             UnitType::TankGen2 => 3,
+            UnitType::Artillery => 3,
         }
     }
 
@@ -90,6 +97,7 @@ impl UnitType {
             UnitType::Rifleman => 50,
             UnitType::TankGen1 => 500,
             UnitType::TankGen2 => 800,
+            UnitType::Artillery => 350,
         }
     }
 
@@ -98,6 +106,7 @@ impl UnitType {
             UnitType::Rifleman => "Rifleman".to_string(),
             UnitType::TankGen1 => "Tank Gen I".to_string(),
             UnitType::TankGen2 => "Tank Gen II".to_string(),
+            UnitType::Artillery => "Artillery".to_string(),
         }
     }
 
@@ -106,6 +115,7 @@ impl UnitType {
             UnitType::Rifleman => my_imgs.unit_rifleman.clone(),
             UnitType::TankGen1 => my_imgs.unit_tank_gen1.clone(),
             UnitType::TankGen2 => my_imgs.unit_tank_gen2.clone(),
+            UnitType::Artillery => my_imgs.unit_tank_gen2.clone(), // TODO: Change to artillery
         }
     }
 
@@ -114,6 +124,7 @@ impl UnitType {
             UnitType::Rifleman => my_models.rifleman.clone(),
             UnitType::TankGen1 => my_models.tank_gen1.clone(),
             UnitType::TankGen2 => my_models.tank_gen2.clone(),
+            UnitType::Artillery => my_models.artillery.clone(),
         }
     }
 
@@ -122,6 +133,7 @@ impl UnitType {
             UnitType::Rifleman => Vec3::new(2.0, 2.0, 2.0), // TODO: Define rifleman size
             UnitType::TankGen1 => TANK_GEN_1_SIZE,
             UnitType::TankGen2 => TANK_GEN_2_SIZE,
+            UnitType::Artillery => ARTILLERY_SIZE,
         }
     }
 
@@ -141,6 +153,10 @@ impl UnitType {
             }
             UnitType::TankGen2 => {
                 let handle = my_audio.sfx.moving_tank_gen_2.source.clone();
+                vec![audio.play(handle).looped().paused().handle()]
+            }
+            UnitType::Artillery => {
+                let handle = my_audio.sfx.moving_tank_gen_2.source.clone(); // TODO: Make artillery sound
                 vec![audio.play(handle).looped().paused().handle()]
             }
         };

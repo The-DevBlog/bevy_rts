@@ -45,6 +45,7 @@ const SPEED_QUANTIFIER: f32 = 10.0;
 const SPEED_RIFELMAN: f32 = SPEED_QUANTIFIER * 10.0;
 const SPEED_TANK_GEN_1: f32 = SPEED_QUANTIFIER * 50.0;
 const SPEED_TANK_GEN_2: f32 = SPEED_QUANTIFIER * 50.0;
+const SPEED_ARTILLERY: f32 = SPEED_QUANTIFIER * 40.0;
 
 fn main() {
     // let args: Vec<String> = std::env::args().collect();

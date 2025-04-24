@@ -58,6 +58,9 @@ struct TankGen1Ctr;
 struct TankGen2Ctr;
 
 #[derive(Component)]
+struct Artillery;
+
+#[derive(Component)]
 struct RiflemanCtr;
 
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
@@ -430,6 +433,9 @@ fn spawn_unit_ctrs(
         }
         if unlocked_units.tank_gen2 {
             spawn_unit_btn(parent, UnitType::TankGen2, &my_assets, TankGen2Ctr);
+        }
+        if unlocked_units.artillery {
+            spawn_unit_btn(parent, UnitType::Artillery, &my_assets, Artillery);
         }
     });
 }

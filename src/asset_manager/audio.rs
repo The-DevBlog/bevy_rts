@@ -179,6 +179,12 @@ fn unit_audio(trigger: Trigger<UnitAudioEv>, mut cmds: Commands, my_audio: Res<M
             AudioCmd::Ready => &my_audio.unit_cmds.tank_gen_2.ready,
         },
         // TODO: Temporary
+        UnitType::Artillery => match unit_cmd {
+            AudioCmd::Relocate => &my_audio.unit_cmds.tank_gen_2.relocate,
+            AudioCmd::Select => &my_audio.unit_cmds.tank_gen_2.select,
+            AudioCmd::Ready => &my_audio.unit_cmds.tank_gen_2.ready,
+        },
+        // TODO: Temporary
         UnitType::Rifleman => match unit_cmd {
             AudioCmd::Relocate => &my_audio.unit_cmds.tank_gen_2.relocate,
             AudioCmd::Select => &my_audio.unit_cmds.tank_gen_2.select,

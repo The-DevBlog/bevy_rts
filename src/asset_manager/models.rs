@@ -14,6 +14,7 @@ pub struct MyModels {
     pub barracks: Handle<Scene>,
     pub tank_gen1: Handle<Scene>,
     pub tank_gen2: Handle<Scene>,
+    pub artillery: Handle<Scene>,
     pub rifleman: Handle<Scene>,
     pub cannon: Handle<Scene>,
     pub vehicle_depot: Handle<Scene>,
@@ -41,6 +42,7 @@ fn load_models(mut my_models: ResMut<MyModels>, assets: Res<AssetServer>) {
     my_models.rifleman = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0"); // TODO: Temporary
     my_models.tank_gen1 = assets.load("models/units/tank_gen_1/tank_gen_1.gltf#Scene0");
     my_models.tank_gen2 = assets.load("models/units/tank_gen_2/tank_gen_2.gltf#Scene0");
+    my_models.artillery = assets.load("models/units/artillery/artillery.gltf#Scene0");
 
     // structures
     my_models.barracks = assets.load("models/structures/barracks.gltf#Scene0");

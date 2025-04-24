@@ -32,6 +32,7 @@ fn mark_available_units(
         if structures_built.vehicle_depot > 0 {
             available_units.tank_gen1 = true;
             available_units.tank_gen2 = true; // TODO: requrie research eventually
+            available_units.artillery = true;
         }
 
         if structures_built.barracks > 0 {

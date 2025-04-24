@@ -8,7 +8,7 @@ use bevy_rts_pathfinding::flowfield::FlowField;
 use std::f32::consts::PI;
 use std::time::Duration;
 
-use crate::asset_manager::audio::MyAudio;
+// use crate::asset_manager::audio::MyAudio;
 use crate::asset_manager::models::MyModels;
 use crate::units::components::*;
 use crate::{resources::*, *};
@@ -37,8 +37,8 @@ impl Plugin for TankPlugin {
 pub fn spawn_tank(
     mut cmds: Commands,
     my_models: Res<MyModels>,
-    audio: Res<bevy_kira_audio::Audio>,
-    my_audio: Res<MyAudio>,
+    // audio: Res<bevy_kira_audio::Audio>,
+    // my_audio: Res<MyAudio>,
 ) {
     // Define the 180 degree rotation about the Y axis.
     let tank_rotation = Quat::from_rotation_y(PI);
@@ -49,7 +49,7 @@ pub fn spawn_tank(
         rotation: tank_rotation,
         scale: Vec3::ONE,
     };
-    cmds.spawn(UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen1.build(transform, &my_models));
 
     // GEN II: Another tank with the same rotation.
     let transform = Transform {
@@ -57,7 +57,7 @@ pub fn spawn_tank(
         rotation: tank_rotation,
         scale: Vec3::ONE,
     };
-    cmds.spawn(UnitType::TankGen2.build(transform, &my_models, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_models));
 
     // GEN II: And one more tank with the rotation.
     let transform = Transform {
@@ -65,14 +65,14 @@ pub fn spawn_tank(
         rotation: tank_rotation,
         scale: Vec3::ONE,
     };
-    cmds.spawn(UnitType::TankGen2.build(transform, &my_models, &audio, &my_audio));
+    cmds.spawn(UnitType::TankGen2.build(transform, &my_models));
 }
 
 pub fn spawn_tanks(
     mut cmds: Commands,
     my_models: Res<MyModels>,
-    audio: Res<bevy_kira_audio::Audio>,
-    my_audio: Res<MyAudio>,
+    // audio: Res<bevy_kira_audio::Audio>,
+    // my_audio: Res<MyAudio>,
 ) {
     let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
     let initial_pos_right = Vec3::new(500.0, 0.0, 0.0);
@@ -83,7 +83,7 @@ pub fn spawn_tanks(
     let _create_left_tank = |row: usize, col: usize| {
         let pos = initial_pos_left + Vec3::new(offset.x * row as f32, 2.0, offset.z * col as f32);
         let transform = Transform::from_translation(pos);
-        UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio)
+        UnitType::TankGen1.build(transform, &my_models)
     };
 
     // Create tank on the right side facing left
@@ -92,7 +92,7 @@ pub fn spawn_tanks(
         let tank_rotation = Quat::from_rotation_y(PI);
         let mut transform = Transform::from_translation(pos);
         transform.rotation = tank_rotation;
-        UnitType::TankGen1.build(transform, &my_models, &audio, &my_audio)
+        UnitType::TankGen1.build(transform, &my_models)
     };
 
     // Spawn Left Group (facing right)

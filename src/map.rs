@@ -83,23 +83,22 @@ fn spawn_ground(
 
 fn spawn_light(mut cmds: Commands) {
     // Position the “sun” 10 units above the origin
-    let light_height = 10.0;
-    let light_pos = Vec3::new(0.0, light_height, 0.0);
-
-    let mut transform = Transform::from_translation(light_pos).looking_at(Vec3::ZERO, Vec3::Y);
-
-    let tilt: f32 = 15.0f32.to_radians();
-    transform.rotate_x(tilt);
+    let translation = Vec3::new(0.0, 10.0, 0.0);
+    let rotation = Quat::from_euler(EulerRot::XYZ, -0.7, 0.2, 0.0);
 
     cmds.spawn((
         DirectionalLight {
             illuminance: 5000.0,
+            shadows_enabled: true,
             shadow_depth_bias: 1.5,
             shadow_normal_bias: 1.0,
-            shadows_enabled: true,
             ..default()
         },
-        transform,
+        Transform {
+            translation,
+            rotation,
+            ..default()
+        },
         Name::new("Sun Light"),
     ));
 }

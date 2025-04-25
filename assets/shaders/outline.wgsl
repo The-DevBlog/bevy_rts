@@ -101,17 +101,16 @@ fn detect_edge_colour(bl_uv: vec2f, tr_uv: vec2f, br_uv: vec2f, tl_uv: vec2f) ->
 }
 
 
-fn toon_colour(uv: vec2f) -> vec4f {
+fn toon_colour(uv: vec2f) -> vec4<f32> {
     let c = textureSample(screen_texture, texture_sampler, uv).rgb;
     let i = length(c);
-    let new_i = floor(i * 15.0) / 15.0;
-    let new_c = normalize(c) * new_i;
-    return vec4<f32>(
-        new_c.r,
-        new_c.g,
-        new_c.b,
-        1.0
-    );
+    // quantize into 15 steps…
+    var level = floor(i * 15.0) / 15.0;
+    // …but never go below 0.1 (≈1/10)
+    let ambient = 0.1;
+    level = max(level, ambient);
+    let shaded = normalize(c) * level;
+    return vec4<f32>(shaded, 1.0);
 }
 
 fn get_sampling_scale(pos: vec2f) -> f32 {

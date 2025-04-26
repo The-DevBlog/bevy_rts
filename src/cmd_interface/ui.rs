@@ -133,48 +133,29 @@ fn command_center_ui(
         Name::new("Build Time Txt"),
     );
 
-    let (min_width, width) = match dbg.youtube_shorts {
-        true => (0.0, 30.0),
-        false => (200.0, 100.0),
-    };
-
     let cmd_interface_ctr = (
+        BackgroundColor(Color::BLACK),
         CmdInterfaceCtr,
         Button,
         Node {
             margin: UiRect::left(Val::Auto),
             flex_direction: FlexDirection::Column,
             height: Val::Percent(100.0),
-            width: Val::Percent(width),
+            width: Val::Percent(30.0),
             align_items: AlignItems::Center,
             max_width: Val::Px(394.0),
-            min_width: Val::Px(min_width),
             ..default()
         },
         ZIndex(105),
         Name::new("Command Interface Ctr"),
     );
 
-    let width = match dbg.youtube_shorts {
-        true => 93.0,
-        false => 100.0,
-    };
     let mini_map_ctr = (
         MiniMapCtr,
-        // Node {
-        //     min_height: Val::Percent(25.0),
-        //     max_height: Val::Px(341.0),
-        //     max_width: Val::Px(341.0),
-        //     width: Val::Percent(width),
-        //     margin: UiRect::bottom(Val::Px(41.0)),
-        //     top: Val::Px(22.1),
-        //     // left: Val::Percent(2.0),
-        //     ..default()
-        // },
         ImageNode::new(my_imgs.cmd_intrfce_mini_map.clone()),
         Node {
             height: Val::Percent(30.0),
-            width: Val::Percent(width),
+            width: Val::Percent(100.0),
             ..default()
         },
         Name::new("Mini Map Ctr"),
@@ -187,16 +168,6 @@ fn command_center_ui(
             width: Val::Percent(100.0),
             ..default()
         },
-        // Node {
-        //     margin: UiRect::bottom(Val::Percent(2.8)),
-        //     ..default()
-        // },
-        // Text::new(format!("${}", bank.funds.to_string())),
-        // TextFont {
-        //     font_size: 30.0,
-        //     ..default()
-        // TextLayout::new_with_justify(JustifyText::Center),
-        // },
         Name::new("Bank"),
     );
 
@@ -238,19 +209,14 @@ fn command_center_ui(
         )
     };
 
-    let (min_width, width, height) = match dbg.youtube_shorts {
-        true => (0.0, 92.0, 46.2),
-        false => (246.0, 100.0, 60.0),
-    };
     let build_columns_ctr = (
         BuildColumnsCtr,
         ImageNode::new(my_imgs.cmds_intrfce_build_columns_ctr.clone()),
         BackgroundColor(Color::BLACK),
         Node {
             padding: UiRect::new(Val::Px(10.0), Val::Px(10.0), Val::Px(12.5), Val::Px(12.5)),
-            min_width: Val::Px(min_width),
-            height: Val::Percent(height),
-            width: Val::Percent(width),
+            height: Val::Percent(60.0),
+            width: Val::Percent(100.0),
             overflow: Overflow::scroll_y(),
             ..default()
         },

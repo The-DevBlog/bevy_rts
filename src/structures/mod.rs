@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -204,9 +206,18 @@ fn sync_placeholder(
         return;
     };
 
-    const ROTATION_SPEED: f32 = 0.3;
+    let rotation_step = PI / 2.0; // 90°
     for event in mouse_wheel_events.read() {
-        transform.rotate_y(event.y * ROTATION_SPEED);
+        // get whether the wheel went “up” or “down”
+        let dir = event.y.signum();
+        if dir == 0.0 {
+            continue;
+        }
+
+        let (mut yaw, pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
+        yaw += dir * rotation_step;
+        yaw = (yaw / rotation_step).round() * rotation_step;
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
     }
 
     let (cam, cam_trans) = cam_q.single_mut();

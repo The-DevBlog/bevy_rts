@@ -58,7 +58,7 @@ fn main() {
         AssetManagerPlugin,
         BankPlugin,
         RapierPhysicsPlugin::<NoUserData>::default(),
-        // RapierDebugRenderPlugin::default(),
+        RapierDebugRenderPlugin::default(),
         WorldInspectorPlugin::new(),
         OutlinePlugin,
         bevy_rts_pathfinding::BevyRtsPathFindingPlugin,

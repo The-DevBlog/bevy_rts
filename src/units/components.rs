@@ -208,7 +208,8 @@ impl UnitBundle {
     ) -> Self {
         Self {
             border_size: BorderSize(border_size),
-            collider: Collider::cuboid(size.x, size.y, size.z),
+            // collider: Collider::cuboid(size.x, size.y, size.z),
+            collider: Collider::capsule_y(size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,
                 angular_damping: 20.0,

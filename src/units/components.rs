@@ -117,9 +117,9 @@ impl UnitType {
     pub fn img(&self, my_imgs: &Res<MyImgs>) -> Handle<Image> {
         match self {
             UnitType::Rifleman => my_imgs.unit_rifleman.clone(),
-            UnitType::TankGen1 => my_imgs.unit_tank_gen1.clone(),
-            UnitType::TankGen2 => my_imgs.unit_tank_gen2.clone(),
-            UnitType::Artillery => my_imgs.unit_tank_gen2.clone(), // TODO: Change to artillery
+            UnitType::TankGen1 => my_imgs.unit_tank_gen_1.clone(),
+            UnitType::TankGen2 => my_imgs.unit_tank_gen_2.clone(),
+            UnitType::Artillery => my_imgs.unit_artillery.clone(),
         }
     }
 

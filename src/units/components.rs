@@ -186,7 +186,6 @@ pub struct UnitBundle {
     pub name: Name,
     pub rigid_body: RigidBody,
     pub scene_root: SceneRoot,
-    // pub size: pf_comps::RtsObjSize,
     pub speed: Speed,
     pub transform: Transform,
     pub transform_global: GlobalTransform,
@@ -208,7 +207,6 @@ impl UnitBundle {
     ) -> Self {
         Self {
             border_size: BorderSize(border_size),
-            // collider: Collider::cuboid(size.x, size.y, size.z),
             collider: Collider::capsule_y(size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,
@@ -227,7 +225,6 @@ impl UnitBundle {
             }),
             rigid_body: RigidBody::Dynamic,
             scene_root: SceneRoot(scene),
-            // size: pf_comps::RtsObjSize(Vec3::new(size.x * 2.0, size.y * 2.0, size.z * 2.0)),
             speed: Speed(unit_type.speed()),
             transform,
             transform_global: GlobalTransform::default(),

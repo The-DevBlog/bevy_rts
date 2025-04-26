@@ -176,11 +176,11 @@ fn move_unit(
             }
 
             // Process the destination flow fields
-            for dest_ff in ff.destination_flowfields.iter() {
-                if let Some(steering) = dest_ff.flowfield_props.steering_map.get(&ent) {
-                    apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
-                }
-            }
+            // for dest_ff in ff.destination_flowfields.iter() {
+            //     if let Some(steering) = dest_ff.flowfield_props.steering_map.get(&ent) {
+            //         apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
+            //     }
+            // }
         }
     }
 }

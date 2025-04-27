@@ -52,6 +52,10 @@ fn main() {
     // let shorts_flag = args.contains(&String::from("-shorts"));
 
     let mut app = App::new();
+
+    // app.register_type::<bevy_rts_pathfinding::BoidsResource>();
+    // app.init_resource::<bevy_rts_pathfinding::BoidsResource>();
+
     app.add_plugins(DefaultPlugins);
     app.add_plugins((
         CmdInterfacePlugin,

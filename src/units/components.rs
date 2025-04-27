@@ -38,7 +38,6 @@ pub struct IsMoving(pub bool);
 pub struct Unit;
 
 #[derive(Component, EnumIter, Clone, Copy, PartialEq, Eq, Hash, EnumString)]
-#[require(pf_comps::RtsObj, IsMoving, Velocity)]
 pub enum UnitType {
     #[strum(serialize = "rifleman")]
     Rifleman,
@@ -163,7 +162,6 @@ impl UnitType {
     ) -> UnitBundle {
         let unit_bundle = UnitBundle::new(
             BORDER_SIZE,
-            self.name(),
             self.model(&my_models),
             self.size(),
             transform,
@@ -198,7 +196,6 @@ pub struct UnitBundle {
 impl UnitBundle {
     fn new(
         border_size: Vec2,
-        name: String,
         scene: Handle<Scene>,
         size: Vec3,
         transform: Transform,
@@ -214,7 +211,7 @@ impl UnitBundle {
                 ..default()
             },
             external_impulse: ExternalImpulse::default(),
-            name: Name::new(name),
+            name: Name::new(unit_type.name()),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
                 | LockedAxes::TRANSLATION_LOCKED_Y),

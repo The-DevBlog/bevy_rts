@@ -210,7 +210,7 @@ fn apply_steering(
 
         // Only apply impulse if the rotation is nearly aligned with the target.
         if let Ok((mut ext_impulse, is_moving)) = q_impulse.get_mut(ent) {
-            let rotation_threshold = 0.1; // radians
+            let rotation_threshold = 0.85; // radians
             if (is_moving.0 && angle_diff < 0.85) || (angle_diff < rotation_threshold) {
                 // apply movement
                 let impulse_vec = steering * speed.0 * delta_secs;

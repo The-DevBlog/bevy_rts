@@ -214,6 +214,7 @@ impl UnitBundle {
             name: Name::new(unit_type.name()),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
+                | LockedAxes::ROTATION_LOCKED_Y
                 | LockedAxes::TRANSLATION_LOCKED_Y),
             mass_properties: ColliderMassProperties::MassProperties(MassProperties {
                 principal_inertia: Vec3::ONE,

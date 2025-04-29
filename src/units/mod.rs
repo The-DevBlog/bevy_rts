@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::LockedAxes;
+use components::{IsMoving, Unit};
 use events::{QueueSolderEv, QueueVehicleEv};
 
 use crate::cmd_interface::events::BuildUnitEv;
@@ -18,7 +20,7 @@ pub struct UnitsPlugin;
 impl Plugin for UnitsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ResourcesPlugin)
-            .add_systems(Update, mark_available_units.after(count_structures))
+            .add_systems(Update, (mark_available_units.after(count_structures),))
             .add_observer(handle_build_unit);
     }
 }

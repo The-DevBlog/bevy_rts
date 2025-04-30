@@ -24,7 +24,9 @@ impl Plugin for TankPlugin {
         app.add_systems(
             Update,
             (
+                p,
                 set_is_moving,
+                stop_movement,
                 spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
                 move_unit.run_if(any_with_component::<pf_comps::Destination>),
             )
@@ -32,6 +34,10 @@ impl Plugin for TankPlugin {
         )
         .add_observer(set_unit_destination);
     }
+}
+
+fn p(q: Query<&pf_comps::Destination>) {
+    println!("Count: {}", q.iter().count());
 }
 
 pub fn spawn_tank(
@@ -158,32 +164,87 @@ fn set_is_moving(mut q_is_moving: Query<(&mut IsMoving, &Velocity), With<UnitTyp
     }
 }
 
-fn move_unit(
-    q_ff: Query<&FlowField>,
-    mut q_boids: Query<
-        (Entity, &mut Transform, &pf_comps::Boid, &Speed),
-        With<pf_comps::Destination>,
-    >,
-    mut q_impulse: Query<(&mut ExternalImpulse, &IsMoving), With<UnitType>>,
-    time: Res<Time>,
-) {
-    let delta_secs = time.delta_secs();
-    for ff in q_ff.iter() {
-        for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
-            // Process the primary flow field steering
-            if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
-                apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
-            }
-
-            // Process the destination flow fields
-            // for dest_ff in ff.destination_flowfields.iter() {
-            //     if let Some(steering) = dest_ff.flowfield_props.steering_map.get(&ent) {
-            //         apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
-            //     }
-            // }
+fn stop_movement(mut q_vel: Query<(&mut Velocity, &IsMoving), With<Unit>>) {
+    for (mut vel, is_moving) in q_vel.iter_mut() {
+        if !is_moving.0 {
+            vel.linvel = Vec3::ZERO;
         }
     }
 }
+
+fn move_unit(
+    q_ff: Query<&FlowField>,
+    mut q_units: Query<
+        (
+            Entity,
+            &mut Transform,
+            &pf_comps::Boid,
+            &Speed,
+            &mut Velocity,
+        ),
+        With<pf_comps::Destination>,
+    >,
+    time: Res<Time>,
+) {
+    let dt = time.delta_secs();
+    let rotation_speed = 5.0; // radians/sec
+
+    for ff in q_ff.iter() {
+        for (ent, mut tx, _boid, speed, mut vel) in q_units.iter_mut() {
+            if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
+                // ——— 1) Rotate toward steering ———
+                if steering.length_squared() > 1e-6 {
+                    // Compute the yaw so that “forward” (-Z) points along steering
+                    let target_yaw = f32::atan2(-steering.x, -steering.z);
+                    let target_rot = Quat::from_rotation_y(target_yaw);
+
+                    // Slerp current rotation → target
+                    let angle_diff = tx.rotation.angle_between(target_rot);
+                    if angle_diff > 1e-4 {
+                        let max_step = rotation_speed * dt;
+                        let t = (max_step.min(angle_diff)) / angle_diff;
+                        tx.rotation = tx.rotation.slerp(target_rot, t);
+                    } else {
+                        tx.rotation = target_rot;
+                    }
+
+                    // ——— 2) Drive velocity along steering ———
+                    vel.linvel = steering.normalize() * speed.0;
+                } else {
+                    // No steering → stop
+                    vel.linvel = Vec3::ZERO;
+                }
+            }
+        }
+    }
+}
+
+// fn move_unit(
+//     q_ff: Query<&FlowField>,
+//     mut q_boids: Query<
+//         (Entity, &mut Transform, &pf_comps::Boid, &Speed),
+//         With<pf_comps::Destination>,
+//     >,
+//     mut q_impulse: Query<(&mut ExternalImpulse, &IsMoving), With<UnitType>>,
+//     time: Res<Time>,
+// ) {
+//     let delta_secs = time.delta_secs();
+//     for ff in q_ff.iter() {
+//         for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
+//             // Process the primary flow field steering
+//             if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
+//                 apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
+//             }
+
+//             // Process the destination flow fields
+//             // for dest_ff in ff.destination_flowfields.iter() {
+//             //     if let Some(steering) = dest_ff.flowfield_props.steering_map.get(&ent) {
+//             //         apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
+//             //     }
+//             // }
+//         }
+//     }
+// }
 
 fn apply_steering(
     steering: Vec3,

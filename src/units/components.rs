@@ -178,7 +178,7 @@ pub struct UnitBundle {
     pub border_size: BorderSize,
     pub collider: Collider,
     pub damping: Damping,
-    pub external_impulse: ExternalImpulse,
+    // pub external_impulse: ExternalImpulse,
     pub locked_axis: LockedAxes,
     pub mass_properties: ColliderMassProperties, // TODO: remove
     pub name: Name,
@@ -210,7 +210,7 @@ impl UnitBundle {
                 angular_damping: 20.0,
                 ..default()
             },
-            external_impulse: ExternalImpulse::default(),
+            // external_impulse: ExternalImpulse::default(),
             name: Name::new(unit_type.name()),
             locked_axis: (LockedAxes::ROTATION_LOCKED_X
                 | LockedAxes::ROTATION_LOCKED_Z
@@ -221,7 +221,7 @@ impl UnitBundle {
                 mass: 1.0,
                 ..default()
             }),
-            rigid_body: RigidBody::Dynamic,
+            rigid_body: RigidBody::KinematicVelocityBased,
             scene_root: SceneRoot(scene),
             speed: Speed(unit_type.speed()),
             transform,

@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::LockedAxes;
-use components::{IsMoving, Unit};
 use events::{QueueSolderEv, QueueVehicleEv};
 
 use crate::cmd_interface::events::BuildUnitEv;

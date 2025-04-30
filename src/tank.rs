@@ -23,7 +23,6 @@ impl Plugin for TankPlugin {
         app.add_systems(
             Update,
             (
-                p,
                 set_is_moving,
                 stop_movement,
                 spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
@@ -33,10 +32,6 @@ impl Plugin for TankPlugin {
         )
         .add_observer(set_unit_destination);
     }
-}
-
-fn p(q: Query<&pf_comps::Destination>) {
-    println!("Count: {}", q.iter().count());
 }
 
 pub fn spawn_tank(

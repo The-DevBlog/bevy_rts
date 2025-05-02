@@ -189,7 +189,7 @@ fn move_unit(
 
     for ff in q_ff.iter() {
         for (ent, mut tx, _boid, speed, mut vel) in q_units.iter_mut() {
-            if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
+            if let Some(steering) = ff.steering_map.get(&ent) {
                 // ——— 1) Rotate toward steering ———
                 if steering.length_squared() > 1e-6 {
                     // Compute the yaw so that “forward” (-Z) points along steering

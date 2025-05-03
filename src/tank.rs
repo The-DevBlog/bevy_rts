@@ -62,8 +62,8 @@ pub fn spawn_tanks(
     // audio: Res<bevy_kira_audio::Audio>,
     // my_audio: Res<MyAudio>,
 ) {
-    let initial_pos_left = Vec3::new(-200.0, 0.0, 0.0);
-    let initial_pos_right = Vec3::new(200.0, 0.0, 0.0);
+    let initial_pos_left = Vec3::new(-150.0, 0.0, 0.0);
+    let initial_pos_right = Vec3::new(150.0, 0.0, 0.0);
     let offset = Vec3::new(30.0, 0.0, 30.0);
     let grid_size = (TANK_COUNT as f32).sqrt().ceil() as usize;
 

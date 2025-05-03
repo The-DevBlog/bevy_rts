@@ -147,13 +147,15 @@ fn move_unit(
                     let target_rot = Quat::from_rotation_y(target_yaw);
 
                     // Slerp current rotation → target
+                    let min_rotation = 0.1;
                     let angle_diff = tx.rotation.angle_between(target_rot);
-                    if angle_diff > 1e-4 {
+                    if angle_diff > min_rotation {
                         let max_step = rotation_speed * dt;
                         let t = (max_step.min(angle_diff)) / angle_diff;
                         tx.rotation = tx.rotation.slerp(target_rot, t);
                     } else {
-                        tx.rotation = target_rot;
+                        let t = (rotation_speed * dt).clamp(0.0, 1.0);
+                        tx.rotation = tx.rotation.slerp(target_rot, t);
                     }
 
                     // ——— 2) Drive velocity along steering ———

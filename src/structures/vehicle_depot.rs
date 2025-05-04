@@ -1,7 +1,6 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::ExternalImpulse;
+use bevy_rapier3d::prelude::Velocity;
+use std::time::Duration;
 
 use crate::{
     asset_manager::{
@@ -9,7 +8,7 @@ use crate::{
         models::MyModels,
     },
     cmd_interface::resources::BuildQueueCount,
-    units::events::QueueVehicleEv,
+    units::{components::Speed, events::QueueVehicleEv},
 };
 
 use super::{components::*, events::BuildVehicleEv, resources::VehicleBuildQueue};
@@ -95,21 +94,22 @@ fn obs_build_vehicle(
 
 fn move_vehicle_from_garage(
     mut cmds: Commands,
-    mut q_new_unit: Query<(Entity, &mut ExternalImpulse, &Transform, &mut NewUnit)>,
+    mut q_new_unit: Query<(Entity, &mut Velocity, &Transform, &Speed, &mut NewUnit)>,
     time: Res<Time>,
 ) {
-    for (entity, mut ext_impulse, transform, mut new_unit) in q_new_unit.iter_mut() {
+    for (entity, mut vel, tf, speed, mut new_unit) in q_new_unit.iter_mut() {
         new_unit.timer.tick(time.delta());
 
         if !new_unit.timer.finished() {
             continue;
         }
 
-        let forward = transform.rotation * Vec3::new(0.0, 0.0, -1.0);
-        ext_impulse.impulse += 300.0 * forward * time.delta_secs();
+        let forward = tf.rotation * Vec3::new(0.0, 0.0, -1.0);
+        vel.linvel = forward.normalize() * speed.0;
 
-        let distance_traveled = transform.translation.distance(new_unit.start_pos);
+        let distance_traveled = tf.translation.distance(new_unit.start_pos);
         if distance_traveled >= 50.0 {
+            vel.linvel = Vec3::ZERO;
             cmds.entity(entity).remove::<NewUnit>();
         }
     }

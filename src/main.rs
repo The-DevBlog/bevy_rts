@@ -41,7 +41,7 @@ const MAP_DEPTH: f32 = CELL_SIZE * MAP_GRID_ROWS as f32;
 const MAP_GRID_COLUMNS: i32 = 120;
 const MAP_GRID_ROWS: i32 = 120;
 const TANK_COUNT: usize = 20;
-const SPEED_QUANTIFIER: f32 = 10.0;
+const SPEED_QUANTIFIER: f32 = 1.0;
 const SPEED_RIFELMAN: f32 = SPEED_QUANTIFIER * 10.0;
 const SPEED_TANK_GEN_1: f32 = SPEED_QUANTIFIER * 50.0;
 const SPEED_TANK_GEN_2: f32 = SPEED_QUANTIFIER * 50.0;
@@ -52,6 +52,10 @@ fn main() {
     // let shorts_flag = args.contains(&String::from("-shorts"));
 
     let mut app = App::new();
+
+    // app.register_type::<bevy_rts_pathfinding::BoidsResource>();
+    // app.init_resource::<bevy_rts_pathfinding::BoidsResource>();
+
     app.add_plugins(DefaultPlugins);
     app.add_plugins((
         CmdInterfacePlugin,

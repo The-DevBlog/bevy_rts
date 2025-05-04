@@ -1,18 +1,12 @@
 use bevy::math::f32;
 use bevy::time::common_conditions::once_after_delay;
-use bevy_rapier3d::plugin::RapierContext;
-use bevy_rapier3d::prelude::ExternalImpulse;
-use bevy_rts_pathfinding::components as pf_comps;
-use bevy_rts_pathfinding::events as pf_events;
-use bevy_rts_pathfinding::flowfield::FlowField;
 use std::f32::consts::PI;
 use std::time::Duration;
 
 // use crate::asset_manager::audio::MyAudio;
 use crate::asset_manager::models::MyModels;
 use crate::units::components::*;
-use crate::{resources::*, *};
-use events::SetUnitDestinationEv;
+use crate::*;
 
 pub const BORDER_SIZE: Vec2 = Vec2::new(50.0, 50.0);
 
@@ -23,14 +17,8 @@ impl Plugin for TankPlugin {
         // app.add_systems(Startup, spawn_tank);
         app.add_systems(
             Update,
-            (
-                set_is_moving,
-                spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),
-                move_unit.run_if(any_with_component::<pf_comps::Destination>),
-            )
-                .chain(),
-        )
-        .add_observer(set_unit_destination);
+            (spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),).chain(),
+        );
     }
 }
 
@@ -118,106 +106,6 @@ pub fn spawn_tanks(
             }
             cmds.spawn(create_right_tank(row, col));
             count += 1;
-        }
-    }
-}
-
-pub fn set_unit_destination(
-    _trigger: Trigger<SetUnitDestinationEv>,
-    mouse_coords: ResMut<MouseCoords>,
-    mut q_unit: Query<Entity, With<SelectedUnit>>,
-    q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
-    mut cmds: Commands,
-) {
-    if !mouse_coords.in_bounds() {
-        return;
-    }
-
-    let Ok(rapier_ctx) = q_rapier.get_single() else {
-        return;
-    };
-
-    let (cam, cam_trans) = q_cam.single();
-    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
-
-    if let Some(_) = hit {
-        return;
-    }
-
-    let mut units = Vec::new();
-    for unit_entity in q_unit.iter_mut() {
-        cmds.entity(unit_entity).insert(pf_comps::Destination);
-        units.push(unit_entity);
-    }
-
-    cmds.trigger(pf_events::InitializeFlowFieldEv(units));
-}
-
-fn set_is_moving(mut q_is_moving: Query<(&mut IsMoving, &Velocity), With<UnitType>>) {
-    for (mut is_moving, velocity) in q_is_moving.iter_mut() {
-        is_moving.0 = velocity.linvel.length_squared() > 0.0001;
-    }
-}
-
-fn move_unit(
-    q_ff: Query<&FlowField>,
-    mut q_boids: Query<
-        (Entity, &mut Transform, &pf_comps::Boid, &Speed),
-        With<pf_comps::Destination>,
-    >,
-    mut q_impulse: Query<(&mut ExternalImpulse, &IsMoving), With<UnitType>>,
-    time: Res<Time>,
-) {
-    let delta_secs = time.delta_secs();
-    for ff in q_ff.iter() {
-        for (ent, mut pos, _boid, speed) in q_boids.iter_mut() {
-            // Process the primary flow field steering
-            if let Some(steering) = ff.flowfield_props.steering_map.get(&ent) {
-                apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
-            }
-
-            // Process the destination flow fields
-            for dest_ff in ff.destination_flowfields.iter() {
-                if let Some(steering) = dest_ff.flowfield_props.steering_map.get(&ent) {
-                    apply_steering(*steering, &mut pos, speed, delta_secs, ent, &mut q_impulse);
-                }
-            }
-        }
-    }
-}
-
-fn apply_steering(
-    steering: Vec3,
-    pos: &mut Transform,
-    speed: &Speed,
-    delta_secs: f32,
-    ent: Entity,
-    q_impulse: &mut Query<(&mut ExternalImpulse, &IsMoving), With<UnitType>>,
-) {
-    if steering.length_squared() > 0.00001 {
-        let target_yaw = f32::atan2(-steering.x, -steering.z);
-        let target_rotation = Quat::from_rotation_y(target_yaw);
-        let rotation_speed = 5.0; // radians per second
-
-        // apply rotation
-        let angle_diff = pos.rotation.angle_between(target_rotation);
-        if angle_diff > 0.0001 {
-            let max_angle = rotation_speed * delta_secs;
-            let t = (max_angle).min(angle_diff) / angle_diff;
-            pos.rotation = pos.rotation.slerp(target_rotation, t);
-        } else {
-            pos.rotation = target_rotation;
-        }
-
-        // Only apply impulse if the rotation is nearly aligned with the target.
-        if let Ok((mut ext_impulse, is_moving)) = q_impulse.get_mut(ent) {
-            let rotation_threshold = 0.1; // radians
-            if (is_moving.0 && angle_diff < 0.85) || (angle_diff < rotation_threshold) {
-                // apply movement
-                let impulse_vec = steering * speed.0 * delta_secs;
-                ext_impulse.impulse += impulse_vec;
-            }
         }
     }
 }

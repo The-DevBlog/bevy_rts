@@ -1,6 +1,7 @@
-use accesskit::{Node as Accessible, Role};
+use accesskit::Role;
+use bevy::ecs::relationship::RelatedSpawnerCommands;
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
-use bevy::picking::focus::HoverMap;
+use bevy::picking::hover::HoverMap;
 use bevy::{a11y::AccessibilityNode, prelude::*};
 use strum::IntoEnumIterator;
 
@@ -64,7 +65,7 @@ struct Artillery;
 struct RiflemanCtr;
 
 fn update_minimap_aspect(mut q_mini_map: Query<(&mut Node, &ComputedNode), With<MiniMapCtr>>) {
-    // if let Ok((mut mini_map, computed_node)) = q_mini_map.get_single_mut() {
+    // if let Ok((mut mini_map, computed_node)) = q_mini_map.single_mut() {
     //     let width = computed_node.size().x;
 
     //     // first frame is 0.0 for some reason
@@ -271,22 +272,23 @@ fn command_center_ui(
         )
     };
 
-    let spawn_structure_btn =
-        |parent: &mut ChildBuilder, structure: StructureType, assets: &Res<MyImgs>| {
-            parent
-                .spawn(structure_opt_ctr(structure, assets))
-                .insert(PickingBehavior {
-                    should_block_lower: false,
-                    ..default()
-                })
-                .with_children(|p| {
-                    p.spawn(build_opt_txt(structure.to_string()))
-                        .insert(PickingBehavior {
-                            should_block_lower: false,
-                            ..default()
-                        });
-                });
-        };
+    let spawn_structure_btn = |parent: &mut RelatedSpawnerCommands<'_, ChildOf>,
+                               structure: StructureType,
+                               assets: &Res<MyImgs>| {
+        parent
+            .spawn(structure_opt_ctr(structure, assets))
+            .insert(Pickable {
+                should_block_lower: false,
+                ..default()
+            })
+            .with_children(|p| {
+                p.spawn(build_opt_txt(structure.to_string()))
+                    .insert(Pickable {
+                        should_block_lower: false,
+                        ..default()
+                    });
+            });
+    };
 
     // Info Ctr
     cmds.spawn(info_ctr).with_children(|p| {
@@ -334,21 +336,20 @@ fn command_center_ui(
         p.spawn(bank_ctr).with_child(bank_txt);
 
         // structure/units
-        p.spawn(build_columns_ctr)
-            .with_children(|p: &mut ChildBuilder<'_>| {
-                // Structures Column
-                p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
-                    for structure in StructureType::iter() {
-                        spawn_structure_btn(parent, structure, &my_imgs);
-                    }
-                    for structure in StructureType::iter() {
-                        spawn_structure_btn(parent, structure, &my_imgs);
-                    }
-                });
-
-                // Units Column
-                p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
+        p.spawn(build_columns_ctr).with_children(|p| {
+            // Structures Column
+            p.spawn(build_column(5.0, 2.5)).with_children(|parent| {
+                for structure in StructureType::iter() {
+                    spawn_structure_btn(parent, structure, &my_imgs);
+                }
+                for structure in StructureType::iter() {
+                    spawn_structure_btn(parent, structure, &my_imgs);
+                }
             });
+
+            // Units Column
+            p.spawn((build_column(5.0, 2.5), UnitBuildColumn));
+        });
     });
 
     //     // Structure/Units Icons
@@ -383,11 +384,11 @@ fn spawn_unit_ctrs(
     unlocked_units: Res<UnlockedUnits>,
     my_assets: Res<MyImgs>,
 ) {
-    let Ok(unit_build_column) = q_unit_build_column.get_single() else {
+    let Ok(unit_build_column) = q_unit_build_column.single() else {
         return;
     };
 
-    cmds.entity(unit_build_column).despawn_descendants();
+    cmds.entity(unit_build_column).despawn_related::<Children>();
 
     // Now add the unit control buttons in the desired order.
     cmds.entity(unit_build_column).with_children(|parent| {
@@ -459,7 +460,7 @@ fn unit_opt_ctr(
 }
 
 fn spawn_unit_btn<T: Component>(
-    parent: &mut ChildBuilder,
+    parent: &mut RelatedSpawnerCommands<'_, ChildOf>,
     unit: UnitType,
     assets: &Res<MyImgs>,
     comp: T,
@@ -506,22 +507,20 @@ fn spawn_unit_btn<T: Component>(
     parent
         .spawn(unit_opt_ctr(unit, assets))
         .insert(comp)
-        .insert(PickingBehavior {
+        .insert(Pickable {
             should_block_lower: false,
             ..default()
         })
         .with_children(|p| {
-            p.spawn(build_queue_count_ctr(unit))
-                .insert(PickingBehavior {
-                    should_block_lower: false,
-                    ..default()
-                });
-            p.spawn(build_unit_progress_bar_ctr(unit))
-                .insert(PickingBehavior {
-                    should_block_lower: false,
-                    ..default()
-                });
-            p.spawn(build_opt_txt(unit.name())).insert(PickingBehavior {
+            p.spawn(build_queue_count_ctr(unit)).insert(Pickable {
+                should_block_lower: false,
+                ..default()
+            });
+            p.spawn(build_unit_progress_bar_ctr(unit)).insert(Pickable {
+                should_block_lower: false,
+                ..default()
+            });
+            p.spawn(build_opt_txt(unit.name())).insert(Pickable {
                 should_block_lower: false,
                 ..default()
             });
@@ -551,7 +550,7 @@ fn build_opt_txt(
         },
         TextLayout::new_with_justify(JustifyText::Center),
         Label,
-        AccessibilityNode(Accessible::new(Role::ListItem)),
+        AccessibilityNode(accesskit::Node::new(Role::ListItem)),
         Name::new("Build Option Txt"),
     )
 }

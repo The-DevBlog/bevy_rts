@@ -1,6 +1,5 @@
-use bevy::winit::cursor::{CursorIcon, CustomCursor};
+use bevy::winit::cursor::{CursorIcon, CustomCursor, CustomCursorImage};
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_rapier3d::plugin::RapierContext;
 use bevy_rts_camera::RtsCamera;
 use core::f32;
 
@@ -44,12 +43,18 @@ impl Plugin for MousePlugin {
 fn sync_select_border_with_unit(
     mut q_border: Query<(&mut Node, &UnitSelectBorder)>,
     q_unit: Query<(&Transform, &BorderSize), With<Unit>>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
-    window_q: Query<&Window, With<PrimaryWindow>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
+    q_window: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let (cam, cam_trans) = cam_q.single();
-    let window = window_q.single();
+    let Ok((cam, cam_trans)) = q_cam.single() else {
+        return;
+    };
 
+    let Ok(window) = q_window.single() else {
+        return;
+    };
+
+    // TODO: What?
     // For this example we assume a perspective camera with a 90° vertical FOV.
     // In a real app, you’d query for your camera's actual fov.
 
@@ -82,7 +87,7 @@ fn mouse_input(
     mut cmds: Commands,
     game_cmds: Res<GameCommands>,
     input: Res<ButtonInput<MouseButton>>,
-    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    read_rapier: ReadRapierContext,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     mouse_coords: Res<MouseCoords>,
     q_unit: Query<Entity, With<Unit>>,
@@ -113,12 +118,15 @@ fn mouse_input(
         cmds.trigger(ClearBoxCoordsEv);
 
         if !game_cmds.drag_select {
-            let Ok(rapier_ctx) = q_rapier.get_single() else {
+            let Ok(rapier_ctx) = read_rapier.single() else {
                 return;
             };
 
-            let (cam, cam_trans) = q_cam.single();
-            let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+            let Ok((cam, cam_trans)) = q_cam.single() else {
+                return;
+            };
+
+            let hit = utils::cast_ray(&rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
             let mut hit_unit = None;
             let mut hit_structure = None;
@@ -190,16 +198,20 @@ fn set_drag_select_box_coords(
     _trigger: Trigger<SetBoxCoordsEv>,
     mut select_box: ResMut<SelectBox>,
     mouse_coords: Res<MouseCoords>,
-    map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
+    q_map_base: Query<&GlobalTransform, With<pf_comps::MapBase>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<RtsCamera>>,
 ) {
     let viewport = select_box.viewport.clone();
     select_box.viewport.end_2 = mouse_coords.viewport;
     select_box.viewport.start_2 = Vec2::new(viewport.end_2.x, viewport.start_1.y);
     select_box.viewport.end_1 = Vec2::new(viewport.start_1.x, viewport.end_2.y);
 
-    let map_base = map_base_q.single();
-    let (cam, cam_trans) = cam_q.single();
+    let Ok(map_base) = q_map_base.single() else {
+        return;
+    };
+    let Ok((cam, cam_trans)) = q_cam.single() else {
+        return;
+    };
 
     // Convert each viewport corner to world coordinates based on the current camera view
     let viewport = select_box.viewport.clone();
@@ -230,15 +242,27 @@ fn clear_drag_select_coords(
 // referenced https://bevy-cheatbook.github.io/cookbook/cursor2world.html
 fn set_mouse_coords(
     mut mouse_coords: ResMut<MouseCoords>,
-    window_q: Query<&Window, With<PrimaryWindow>>,
-    cam_q: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
-    map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
+    q_window: Query<&Window, With<PrimaryWindow>>,
+    q_cam: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
+    q_map_base: Query<&GlobalTransform, With<pf_comps::MapBase>>,
 ) {
-    let (cam, cam_trans) = cam_q.single();
-    let Some(viewport_cursor) = window_q.single().cursor_position() else {
+    let Ok((cam, cam_trans)) = q_cam.single() else {
         return;
     };
-    let coords = utils::get_world_coords(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
+
+    let Ok(window) = q_window.single() else {
+        return;
+    };
+
+    let Some(viewport_cursor) = window.cursor_position() else {
+        return;
+    };
+
+    let Ok(map_base) = q_map_base.single() else {
+        return;
+    };
+
+    let coords = utils::get_world_coords(map_base, &cam_trans, &cam, viewport_cursor);
 
     mouse_coords.viewport = viewport_cursor;
 
@@ -253,7 +277,7 @@ fn draw_drag_select_box(
     box_coords: Res<SelectBox>,
     game_cmds: Res<GameCommands>,
 ) {
-    let Ok(mut style) = q_select_box.get_single_mut() else {
+    let Ok(mut style) = q_select_box.single_mut() else {
         return;
     };
 
@@ -289,7 +313,7 @@ fn draw_drag_select_box(
 pub fn handle_drag_select(
     _trigger: Trigger<HandleDragSelectEv>,
     mut cmds: Commands,
-    mut unit_q: Query<(Entity, &Transform), With<UnitType>>,
+    mut q_unit: Query<(Entity, &Transform), With<UnitType>>,
     box_coords: Res<SelectBox>,
     q_selected: Query<&SelectedUnit>,
     my_imgs: Res<MyImgs>,
@@ -314,7 +338,7 @@ pub fn handle_drag_select(
     };
 
     // check to see if units are within selection rectangle
-    for (friendly_ent, friendly_trans) in unit_q.iter_mut() {
+    for (friendly_ent, friendly_trans) in q_unit.iter_mut() {
         let unit_pos = friendly_trans.translation;
 
         // Calculate cross products for each edge
@@ -360,7 +384,7 @@ pub fn handle_drag_select(
 
             // Despawn the collected border entities.
             for border_entity in borders_to_despawn {
-                cmds.entity(border_entity).despawn_recursive();
+                cmds.entity(border_entity).despawn();
             }
 
             cmds.entity(friendly_ent).remove::<SelectedUnit>();
@@ -373,28 +397,31 @@ pub fn update_cursor_img(
     mut cursor_state: ResMut<CursorState>,
     my_imgs: Res<MyImgs>,
     mouse_coords: Res<MouseCoords>,
-    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    // q_rapier: Query<RapierContext, With<DefaultRapierContext>>,
+    read_rapier: ReadRapierContext,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     q_obj: Query<Entity, Or<(With<Unit>, With<Structure>)>>,
     mut q_cursor: Query<&mut CursorIcon>,
     mut q_window: Query<&mut Window, With<PrimaryWindow>>,
 ) {
-    let Ok(rapier_ctx) = q_rapier.get_single() else {
+    let Ok(rapier_ctx) = read_rapier.single() else {
         return;
     };
 
-    let Ok(mut cursor) = q_cursor.get_single_mut() else {
+    let Ok(mut cursor) = q_cursor.single_mut() else {
         return;
     };
 
-    let Ok(mut window) = q_window.get_single_mut() else {
+    let Ok(mut window) = q_window.single_mut() else {
         return;
     };
 
-    let (cam, cam_trans) = q_cam.single();
+    let Ok((cam, cam_trans)) = q_cam.single() else {
+        return;
+    };
 
     let hit: Option<(Entity, f32)> =
-        utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+        utils::cast_ray(&rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if hit.is_some()
         && !game_cmds.drag_select
@@ -437,10 +464,11 @@ pub fn update_cursor_img(
         }
     }
 
-    *cursor = CursorIcon::Custom(CustomCursor::Image {
+    *cursor = CursorIcon::Custom(CustomCursor::Image(CustomCursorImage {
         handle: img,
         hotspot,
-    });
+        ..default()
+    }));
 }
 
 pub fn single_select_unit(
@@ -473,15 +501,15 @@ pub fn single_select_unit(
 pub fn deselect_all(
     _trigger: Trigger<DeselectAllUnitsEv>,
     mut cmds: Commands,
-    mut select_q: Query<Entity, With<SelectedUnit>>,
+    mut q_selected: Query<Entity, With<SelectedUnit>>,
     mut q_border: Query<Entity, With<UnitSelectBorder>>,
 ) {
-    for entity in select_q.iter_mut() {
+    for entity in q_selected.iter_mut() {
         cmds.entity(entity).remove::<SelectedUnit>();
     }
 
     for border_ent in q_border.iter_mut() {
-        cmds.entity(border_ent).despawn_recursive();
+        cmds.entity(border_ent).despawn();
     }
 }
 

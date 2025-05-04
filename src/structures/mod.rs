@@ -78,7 +78,7 @@ fn obs_select_structure(
     q_selected: Query<(), With<SelectedStructure>>,
 ) {
     // Hack. This is used to prevent a newly placed structure from automatically being selected
-    if let Ok(ent) = q.get_single_mut() {
+    if let Ok(ent) = q.single_mut() {
         cmds.entity(ent).remove::<NewlyPlacedStructure>();
         return;
     }
@@ -138,7 +138,7 @@ fn place_structure(
     }
 
     let Ok((placeholder_ent, placeholder, structure, mut rb, mut scene, _size)) =
-        q_placeholder.get_single_mut()
+        q_placeholder.single_mut()
     else {
         return;
     };
@@ -159,16 +159,16 @@ fn place_structure(
 }
 
 fn validate_structure_placement(
-    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    read_rapier: ReadRapierContext,
     mut q_placeholder: Query<(Entity, &mut StructurePlaceholder, &mut SceneRoot)>,
     q_collider: Query<&Collider, With<pf_comps::MapBase>>,
     my_models: Res<MyModels>,
 ) {
-    let Ok((placeholder_ent, mut placeholder, mut scene)) = q_placeholder.get_single_mut() else {
+    let Ok((placeholder_ent, mut placeholder, mut scene)) = q_placeholder.single_mut() else {
         return;
     };
 
-    let Ok(rapier_ctx) = q_rapier.get_single() else {
+    let Ok(rapier_ctx) = read_rapier.single() else {
         return;
     };
 
@@ -197,12 +197,12 @@ fn validate_structure_placement(
 
 fn sync_placeholder(
     mut q_placeholder: Query<(&mut Transform, &pf_comps::RtsObjSize), With<StructurePlaceholder>>,
-    mut cam_q: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
-    map_base_q: Query<&GlobalTransform, With<pf_comps::MapBase>>,
+    mut q_cam: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
+    q_map_base: Query<&GlobalTransform, With<pf_comps::MapBase>>,
     q_window: Query<&Window, With<PrimaryWindow>>,
     mut mouse_wheel_events: EventReader<MouseWheel>,
 ) {
-    let Ok((mut transform, size)) = q_placeholder.get_single_mut() else {
+    let Ok((mut transform, size)) = q_placeholder.single_mut() else {
         return;
     };
 
@@ -220,13 +220,23 @@ fn sync_placeholder(
         transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
     }
 
-    let (cam, cam_trans) = cam_q.single_mut();
-
-    let Some(viewport_cursor) = q_window.single().cursor_position() else {
+    let Ok((cam, cam_trans)) = q_cam.single_mut() else {
         return;
     };
 
-    let coords = utils::get_world_coords(map_base_q.single(), &cam_trans, &cam, viewport_cursor);
+    let Ok(window) = q_window.single() else {
+        return;
+    };
+
+    let Some(viewport_cursor) = window.cursor_position() else {
+        return;
+    };
+
+    let Ok(map_base) = q_map_base.single() else {
+        return;
+    };
+
+    let coords = utils::get_world_coords(map_base, &cam_trans, &cam, viewport_cursor);
     if let Some(coords) = coords {
         transform.translation = coords;
         transform.translation.y = size.0.y / 2.0;
@@ -255,7 +265,7 @@ fn obs_deselect(
     }
 
     for txt_ent in q_primary_structure_txt.iter_mut() {
-        cmds.entity(txt_ent).despawn_recursive();
+        cmds.entity(txt_ent).despawn();
     }
 }
 
@@ -273,11 +283,16 @@ fn sync_primary_structure_txt(
         return;
     }
 
-    if let Ok(mut style) = q_primary_structure_txt.get_single_mut() {
-        let (cam, cam_trans) = cam_q.single();
-        let window = window_q.single();
+    if let Ok(mut style) = q_primary_structure_txt.single_mut() {
+        let Ok((cam, cam_trans)) = cam_q.single() else {
+            return;
+        };
 
-        let Ok((trans, obj_size, _primary_structure)) = q_selected_structure.get_single() else {
+        let Ok(window) = window_q.single() else {
+            return;
+        };
+
+        let Ok((trans, obj_size, _primary_structure)) = q_selected_structure.single() else {
             return;
         };
 

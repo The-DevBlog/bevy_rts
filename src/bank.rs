@@ -38,7 +38,7 @@ fn adjust_funds(trigger: Trigger<AdjustFundsEv>, mut bank: ResMut<Bank>) {
 fn update_bank_funds(
     time: Res<Time>,
     mut bank: ResMut<Bank>,
-    mut bank_txt: Query<&mut Text, With<BankTxt>>,
+    mut q_bank_txt: Query<&mut Text, With<BankTxt>>,
 ) {
     if bank.funds == bank.displayed_funds {
         return;
@@ -57,6 +57,9 @@ fn update_bank_funds(
         bank.displayed_funds -= step as i32;
     }
 
-    let mut text = bank_txt.single_mut();
+    let Ok(mut text) = q_bank_txt.single_mut() else {
+        return;
+    };
+
     text.0 = format!("${}", bank.displayed_funds);
 }

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_rapier3d::plugin::{DefaultRapierContext, RapierContext};
+use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
@@ -75,19 +75,22 @@ pub fn set_unit_destination(
     mouse_coords: ResMut<MouseCoords>,
     mut q_unit: Query<Entity, With<SelectedUnit>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    q_rapier: Query<&RapierContext, With<DefaultRapierContext>>,
+    read_rapier: ReadRapierContext,
     mut cmds: Commands,
 ) {
     if !mouse_coords.in_bounds() {
         return;
     }
 
-    let Ok(rapier_ctx) = q_rapier.get_single() else {
+    let Ok(rapier_ctx) = read_rapier.single() else {
         return;
     };
 
-    let (cam, cam_trans) = q_cam.single();
-    let hit = utils::cast_ray(rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+    let Ok((cam, cam_trans)) = q_cam.single() else {
+        return;
+    };
+
+    let hit = utils::cast_ray(&rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
 
     if let Some(_) = hit {
         return;

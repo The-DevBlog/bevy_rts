@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_kira_audio::{AudioPlugin, SpatialAudioPlugin};
+// use bevy_kira_audio::{AudioPlugin, SpatialAudioPlugin};
 use bevy_mod_outline::OutlinePlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rts_pathfinding;
@@ -63,6 +64,9 @@ fn main() {
         BankPlugin,
         RapierPhysicsPlugin::<NoUserData>::default(),
         // RapierDebugRenderPlugin::default(),
+        EguiPlugin {
+            enable_multipass_for_primary_context: true,
+        },
         WorldInspectorPlugin::new(),
         OutlinePlugin,
         bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
@@ -75,7 +79,7 @@ fn main() {
         TankPlugin,
     ));
 
-    app.add_plugins((AudioPlugin, SpatialAudioPlugin, ShadersPlugin));
+    app.add_plugins(/*AudioPlugin, SpatialAudioPlugin,*/ ShadersPlugin);
 
     // if !shorts_flag {
     //     app.add_plugins(WorldInspectorPlugin::new());

@@ -14,7 +14,7 @@ pub struct TankPlugin;
 
 impl Plugin for TankPlugin {
     fn build(&self, app: &mut App) {
-        // app.add_systems(Startup, spawn_tank);
+        // app.add_systems(Startup, _spawn_tank);
         app.add_systems(
             Update,
             (spawn_tanks.run_if(once_after_delay(Duration::from_secs(1))),).chain(),
@@ -22,7 +22,7 @@ impl Plugin for TankPlugin {
     }
 }
 
-pub fn spawn_tank(
+pub fn _spawn_tank(
     mut cmds: Commands,
     my_models: Res<MyModels>,
     // audio: Res<bevy_kira_audio::Audio>,

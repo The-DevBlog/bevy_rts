@@ -52,7 +52,7 @@ fn garage_door_animation(
     q_children: Query<&Children>,
     mut players: Query<(Entity, &mut AnimationPlayer)>,
 ) {
-    let Ok(vehicle_depot_ent) = q_vehicle_depot.get_single() else {
+    let Ok(vehicle_depot_ent) = q_vehicle_depot.single() else {
         return;
     };
 

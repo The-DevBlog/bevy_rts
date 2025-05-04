@@ -67,7 +67,7 @@ fn obs_build_vehicle(
     // my_audio: Res<MyAudio>,
     mut build_queue_count: ResMut<BuildQueueCount>,
 ) {
-    let Ok(structure_trans) = q_structure.get_single() else {
+    let Ok(structure_trans) = q_structure.single() else {
         return;
     };
 

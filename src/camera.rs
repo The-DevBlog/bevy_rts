@@ -5,7 +5,7 @@ use bevy::{
     },
     math::bounding::Aabb2d,
 };
-use bevy_kira_audio::SpatialAudioReceiver;
+// use bevy_kira_audio::SpatialAudioReceiver;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use bevy_rts_pathfinding::components as pf_comps;
 
@@ -44,7 +44,7 @@ fn spawn_camera(mut cmds: Commands) {
             edge_threshold_min: Sensitivity::Ultra,
         },
         pf_comps::GameCamera,
-        SpatialAudioReceiver,
+        // SpatialAudioReceiver,
         RtsCamera {
             bounds: Aabb2d::new(Vec2::ZERO, Vec2::new(MAP_WIDTH / 2.0, MAP_DEPTH / 2.0)),
             min_angle: 60.0f32.to_radians(),
@@ -72,7 +72,7 @@ fn stop_scroll(
     q_placeholder: Query<&StructurePlaceholder>,
     mut q_cam: Query<&mut RtsCameraControls>,
 ) {
-    let Ok(mut cam_ctrls) = q_cam.get_single_mut() else {
+    let Ok(mut cam_ctrls) = q_cam.single_mut() else {
         return;
     };
 

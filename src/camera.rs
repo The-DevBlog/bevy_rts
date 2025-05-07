@@ -35,14 +35,14 @@ fn spawn_camera(mut cmds: Commands) {
         ShaderSettingsTint::default(),
         ShaderSettingsStylized::default(),
         ShaderSettingsOutline::default(),
-        DepthPrepass,
-        NormalPrepass,
-        Msaa::Off,
-        Fxaa {
-            enabled: true,
-            edge_threshold: Sensitivity::Ultra,
-            edge_threshold_min: Sensitivity::Ultra,
-        },
+        // DepthPrepass,
+        // NormalPrepass,
+        // Msaa::Off,
+        // Fxaa {
+        //     enabled: true,
+        //     edge_threshold: Sensitivity::Ultra,
+        //     edge_threshold_min: Sensitivity::Ultra,
+        // },
         pf_comps::GameCamera,
         // SpatialAudioReceiver,
         RtsCamera {

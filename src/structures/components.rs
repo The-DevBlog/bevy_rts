@@ -115,7 +115,6 @@ impl StructureType {
         cmds.entity(placeholder_ent)
             .remove::<(ActiveEvents, Sensor, StructurePlaceholder)>()
             .insert((
-                pf_comps::RtsObj,
                 Structure,
                 self.select_border(),
                 NewlyPlacedStructure,
@@ -165,7 +164,7 @@ impl StructureType {
         Sensor,
         ActiveEvents,
         StructurePlaceholder,
-        pf_comps::RtsObjSize,
+        pf_comps::RtsObj,
     ) {
         let size;
         let structure;
@@ -199,7 +198,7 @@ impl StructureType {
             Sensor,
             ActiveEvents::COLLISION_EVENTS,
             StructurePlaceholder::new(*self),
-            pf_comps::RtsObjSize(size),
+            pf_comps::RtsObj(Vec2::new(size.x, size.z)),
         )
     }
 }

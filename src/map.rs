@@ -13,7 +13,11 @@ impl Plugin for MapPlugin {
 }
 
 fn spawn_grid(mut cmds: Commands) {
-    let grid = Grid::new(IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS), CELL_SIZE);
+    let grid = Grid::new(
+        BUCKETS,
+        IVec2::new(MAP_GRID_COLUMNS, MAP_GRID_ROWS),
+        CELL_SIZE,
+    );
     cmds.insert_resource(grid);
 }
 

@@ -397,7 +397,6 @@ pub fn update_cursor_img(
     mut cursor_state: ResMut<CursorState>,
     my_imgs: Res<MyImgs>,
     mouse_coords: Res<MouseCoords>,
-    // q_rapier: Query<RapierContext, With<DefaultRapierContext>>,
     read_rapier: ReadRapierContext,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
     q_obj: Query<Entity, Or<(With<Unit>, With<Structure>)>>,

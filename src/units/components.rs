@@ -34,7 +34,7 @@ pub struct SelectionBox;
 pub struct IsMoving(pub bool);
 
 #[derive(Component)]
-#[require(pf_comps::RtsObj, IsMoving, Velocity)]
+#[require(IsMoving, Velocity)]
 pub struct Unit;
 
 #[derive(Component, EnumIter, Clone, Copy, PartialEq, Eq, Hash, EnumString)]
@@ -176,6 +176,7 @@ impl UnitType {
 #[derive(Bundle)]
 pub struct UnitBundle {
     pub border_size: BorderSize,
+    pub boid: pf_comps::Boid,
     pub collider: Collider,
     pub damping: Damping,
     pub locked_axis: LockedAxes,
@@ -203,6 +204,7 @@ impl UnitBundle {
     ) -> Self {
         Self {
             border_size: BorderSize(border_size),
+            boid: pf_comps::Boid::default(),
             collider: Collider::capsule_y(size.y, size.z),
             damping: Damping {
                 linear_damping: 10.0,

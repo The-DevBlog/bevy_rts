@@ -1,9 +1,10 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_rts_pathfinding::components as pf_comps;
 use bevy_rts_pathfinding::events as pf_events;
-use bevy_rts_pathfinding::flowfield::FlowField;
+use bevy_rts_pathfinding::utils as pathfinding_utils;
 use components::{IsMoving, SelectedUnit, Speed, UnitType};
 use events::{QueueSolderEv, QueueVehicleEv};
 
@@ -28,6 +29,7 @@ impl Plugin for UnitsPlugin {
             .add_systems(
                 Update,
                 (
+                    count_dest,
                     set_is_moving,
                     stop_movement,
                     mark_available_units.after(count_structures),
@@ -37,6 +39,10 @@ impl Plugin for UnitsPlugin {
             .add_observer(set_unit_destination)
             .add_observer(handle_build_unit);
     }
+}
+
+fn count_dest(q: Query<&pf_comps::Destination>) {
+    // println!("Dest count: {}", q.iter().count());
 }
 
 fn mark_available_units(
@@ -74,7 +80,9 @@ pub fn set_unit_destination(
     _trigger: Trigger<SetUnitDestinationEv>,
     mouse_coords: ResMut<MouseCoords>,
     mut q_unit: Query<Entity, With<SelectedUnit>>,
+    q_map: Query<&GlobalTransform, With<pf_comps::MapBase>>,
     q_cam: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    q_window: Query<&Window, With<PrimaryWindow>>,
     read_rapier: ReadRapierContext,
     mut cmds: Commands,
 ) {
@@ -82,15 +90,27 @@ pub fn set_unit_destination(
         return;
     }
 
+    let Ok(map_tf) = q_map.single() else {
+        return;
+    };
+
     let Ok(rapier_ctx) = read_rapier.single() else {
         return;
     };
 
-    let Ok((cam, cam_trans)) = q_cam.single() else {
+    let Ok((cam, cam_tf)) = q_cam.single() else {
         return;
     };
 
-    let hit = utils::cast_ray(&rapier_ctx, &cam, &cam_trans, mouse_coords.viewport);
+    let Ok(window) = q_window.single() else {
+        return;
+    };
+
+    let Some(cursor_pos) = window.cursor_position() else {
+        return;
+    };
+
+    let hit = utils::cast_ray(&rapier_ctx, &cam, &cam_tf, mouse_coords.viewport);
 
     if let Some(_) = hit {
         return;
@@ -102,7 +122,11 @@ pub fn set_unit_destination(
         units.push(unit_entity);
     }
 
-    cmds.trigger(pf_events::InitializeFlowFieldEv(units));
+    let destination_pos = pathfinding_utils::get_world_pos(map_tf, cam_tf, cam, cursor_pos);
+    cmds.trigger(pf_events::InitializeFlowFieldEv {
+        entities: units,
+        destination_pos,
+    });
 }
 
 fn set_is_moving(mut q_is_moving: Query<(&mut IsMoving, &Velocity), With<UnitType>>) {
@@ -123,8 +147,8 @@ fn stop_movement(
     }
 }
 
+// THIS
 fn move_unit(
-    q_ff: Query<&FlowField>,
     mut q_units: Query<
         (
             Entity,
@@ -140,34 +164,83 @@ fn move_unit(
     let dt = time.delta_secs();
     let rotation_speed = 5.0; // radians/sec
 
-    for ff in q_ff.iter() {
-        for (ent, mut tx, _boid, speed, mut vel) in q_units.iter_mut() {
-            if let Some(steering) = ff.steering_map.get(&ent) {
-                // ——— 1) Rotate toward steering ———
-                if steering.length_squared() > 1e-6 {
-                    // Compute the yaw so that “forward” (-Z) points along steering
-                    let target_yaw = f32::atan2(-steering.x, -steering.z);
-                    let target_rot = Quat::from_rotation_y(target_yaw);
+    for (ent, mut tf, boid, speed, mut vel) in q_units.iter_mut() {
+        let steering = boid.steering;
 
-                    // Slerp current rotation → target
-                    let min_rotation = 0.1;
-                    let angle_diff = tx.rotation.angle_between(target_rot);
-                    if angle_diff > min_rotation {
-                        let max_step = rotation_speed * dt;
-                        let t = (max_step.min(angle_diff)) / angle_diff;
-                        tx.rotation = tx.rotation.slerp(target_rot, t);
-                    } else {
-                        let t = (rotation_speed * dt).clamp(0.0, 1.0);
-                        tx.rotation = tx.rotation.slerp(target_rot, t);
-                    }
+        // ——— 1) Rotate toward steering ———
+        if steering.length_squared() > 1e-6 {
+            // Compute the yaw so that “forward” (-Z) points along steering
+            let target_yaw = f32::atan2(-steering.x, -steering.z);
+            let target_rot = Quat::from_rotation_y(target_yaw);
 
-                    // ——— 2) Drive velocity along steering ———
-                    vel.linvel = steering.normalize() * speed.0;
-                } else {
-                    // No steering → stop
-                    vel.linvel = Vec3::ZERO;
-                }
+            // Slerp current rotation → target
+            let min_rotation = 0.1;
+            let angle_diff = tf.rotation.angle_between(target_rot);
+            if angle_diff > min_rotation {
+                let max_step = rotation_speed * dt;
+                let t = (max_step.min(angle_diff)) / angle_diff;
+                tf.rotation = tf.rotation.slerp(target_rot, t);
+            } else {
+                let t = (rotation_speed * dt).clamp(0.0, 1.0);
+                tf.rotation = tf.rotation.slerp(target_rot, t);
             }
+
+            // ——— 2) Drive velocity along steering ———
+            vel.linvel = steering.normalize() * speed.0;
+        } else {
+            // No steering → stop
+            vel.linvel = Vec3::ZERO;
         }
+
+        // tf.translation += boid.steering.normalize_or_zero() * delta_secs * speed.0;
     }
 }
+
+// fn move_unit(
+//     q_ff: Query<&FlowField>,
+//     mut q_units: Query<
+//         (
+//             Entity,
+//             &mut Transform,
+//             &pf_comps::Boid,
+//             &Speed,
+//             &mut Velocity,
+//         ),
+//         With<pf_comps::Destination>,
+//     >,
+//     time: Res<Time>,
+// ) {
+//     let dt = time.delta_secs();
+//     let rotation_speed = 5.0; // radians/sec
+
+//     for ff in q_ff.iter() {
+//         for (ent, mut tx, _boid, speed, mut vel) in q_units.iter_mut() {
+//             if let Some(steering) = ff.steering_map.get(&ent) {
+//                 // ——— 1) Rotate toward steering ———
+//                 if steering.length_squared() > 1e-6 {
+//                     // Compute the yaw so that “forward” (-Z) points along steering
+//                     let target_yaw = f32::atan2(-steering.x, -steering.z);
+//                     let target_rot = Quat::from_rotation_y(target_yaw);
+
+//                     // Slerp current rotation → target
+//                     let min_rotation = 0.1;
+//                     let angle_diff = tx.rotation.angle_between(target_rot);
+//                     if angle_diff > min_rotation {
+//                         let max_step = rotation_speed * dt;
+//                         let t = (max_step.min(angle_diff)) / angle_diff;
+//                         tx.rotation = tx.rotation.slerp(target_rot, t);
+//                     } else {
+//                         let t = (rotation_speed * dt).clamp(0.0, 1.0);
+//                         tx.rotation = tx.rotation.slerp(target_rot, t);
+//                     }
+
+//                     // ——— 2) Drive velocity along steering ———
+//                     vel.linvel = steering.normalize() * speed.0;
+//                 } else {
+//                     // No steering → stop
+//                     vel.linvel = Vec3::ZERO;
+//                 }
+//             }
+//         }
+//     }
+// }

@@ -1,5 +1,6 @@
 use bevy::winit::cursor::{CursorIcon, CustomCursor, CustomCursorImage};
 use bevy::{prelude::*, window::PrimaryWindow};
+use bevy_pathfinding::components::{self as pf_comps};
 use bevy_rts_camera::RtsCamera;
 use core::f32;
 
@@ -11,7 +12,6 @@ use crate::structures::events::DeselectAllStructuresEv;
 use crate::units::components::*;
 use crate::utils::{self, billboard_sync};
 use crate::*;
-use bevy_rts_pathfinding::components::{self as pf_comps};
 
 pub struct MousePlugin;
 

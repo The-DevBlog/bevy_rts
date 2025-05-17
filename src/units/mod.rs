@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use bevy_pathfinding::components as pf_comps;
+use bevy_pathfinding::events as pf_events;
+use bevy_pathfinding::utils as pathfinding_utils;
 use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_rts_pathfinding::components as pf_comps;
-use bevy_rts_pathfinding::events as pf_events;
-use bevy_rts_pathfinding::utils as pathfinding_utils;
 use components::{IsMoving, SelectedUnit, Speed, UnitType};
 use events::{QueueSolderEv, QueueVehicleEv};
 

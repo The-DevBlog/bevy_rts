@@ -1,6 +1,6 @@
+use bevy_pathfinding::components as pf_comps;
+use bevy_pathfinding::grid::Grid;
 use bevy_rts_camera::Ground;
-use bevy_rts_pathfinding::components as pf_comps;
-use bevy_rts_pathfinding::grid::Grid;
 
 use super::*;
 

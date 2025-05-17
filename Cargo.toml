@@ -15,7 +15,7 @@ bevy_mod_outline = { git = "https://github.com/komadori/bevy_mod_outline.git", b
 # bevy_rapier3d = "0.28.0"
 bevy_rapier3d = { git = "https://github.com/mnmaita/bevy_rapier.git", branch = "mnmaita/bevy-0.16" }
 bevy_rts_camera = "0.10.0"
-bevy_rts_pathfinding = { path = "../../projects/bevy_rts_pathfinding" }
+bevy_pathfinding = { path = "../../projects/bevy_pathfinding" }
 rand = "0.9.1"
 strum = "0.27.1"
 strum_macros = "0.27.1"

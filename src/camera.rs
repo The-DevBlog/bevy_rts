@@ -6,8 +6,8 @@ use bevy::{
     math::bounding::Aabb2d,
 };
 // use bevy_kira_audio::SpatialAudioReceiver;
+use bevy_pathfinding::components as pf_comps;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
-use bevy_rts_pathfinding::components as pf_comps;
 
 use crate::{
     resources::GameCommands,

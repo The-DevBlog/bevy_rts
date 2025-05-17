@@ -1048,6 +1048,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_pathfinding"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bytemuck",
+ "image",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1253,15 +1262,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "447ceba9fe059053ce383604a09d6a073df234bf3d0ac0f8f51256fa81f07475"
 dependencies = [
  "bevy",
-]
-
-[[package]]
-name = "bevy_rts_pathfinding"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bytemuck",
- "image",
 ]
 
 [[package]]
@@ -4740,9 +4740,9 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_egui",
  "bevy_mod_outline",
+ "bevy_pathfinding",
  "bevy_rapier3d",
  "bevy_rts_camera",
- "bevy_rts_pathfinding",
  "rand 0.9.1",
  "strum 0.27.1",
  "strum_macros 0.27.1",

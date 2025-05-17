@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 // use bevy_kira_audio::prelude::*;
+use bevy_pathfinding::components as pf_comps;
 use bevy_rapier3d::prelude::*;
-use bevy_rts_pathfinding::components as pf_comps;
 use strum_macros::{EnumIter, EnumString};
 
 // use crate::asset_manager::audio::*;

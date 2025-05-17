@@ -1,6 +1,6 @@
 use bevy::prelude::*;
+use bevy_pathfinding::components::{self as pf_comps};
 use bevy_rapier3d::prelude::*;
-use bevy_rts_pathfinding::components::{self as pf_comps};
 use strum_macros::EnumIter;
 
 use crate::{

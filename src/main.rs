@@ -3,8 +3,8 @@ use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 // use bevy_kira_audio::{AudioPlugin, SpatialAudioPlugin};
 use bevy_mod_outline::OutlinePlugin;
+use bevy_pathfinding;
 use bevy_rapier3d::prelude::*;
-use bevy_rts_pathfinding;
 
 mod asset_manager;
 mod bank;
@@ -70,7 +70,7 @@ fn main() {
         },
         WorldInspectorPlugin::new(),
         OutlinePlugin,
-        bevy_rts_pathfinding::BevyRtsPathFindingPlugin,
+        bevy_pathfinding::BevyPathFindingPlugin,
         ResourcesPlugin,
         StructuresPlugin,
         CameraPlugin,

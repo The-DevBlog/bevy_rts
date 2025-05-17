@@ -118,7 +118,6 @@ pub fn set_unit_destination(
 
     let mut units = Vec::new();
     for unit_entity in q_unit.iter_mut() {
-        cmds.entity(unit_entity).insert(pf_comps::Destination);
         units.push(unit_entity);
     }
 

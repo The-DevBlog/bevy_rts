@@ -164,7 +164,7 @@ impl StructureType {
         Sensor,
         ActiveEvents,
         StructurePlaceholder,
-        pf_comps::RtsObj,
+        pf_comps::Obstacle,
     ) {
         let size;
         let structure;
@@ -198,7 +198,7 @@ impl StructureType {
             Sensor,
             ActiveEvents::COLLISION_EVENTS,
             StructurePlaceholder::new(*self),
-            pf_comps::RtsObj(Vec2::new(size.x, size.z)),
+            pf_comps::Obstacle(Vec2::new(size.x, size.z)),
         )
     }
 }

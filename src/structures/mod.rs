@@ -122,7 +122,7 @@ fn place_structure(
             &StructureType,
             &mut RigidBody,
             &mut SceneRoot,
-            &pf_comps::RtsObj,
+            &pf_comps::Obstacle,
         ),
         With<StructurePlaceholder>,
     >,
@@ -196,7 +196,7 @@ fn validate_structure_placement(
 }
 
 fn sync_placeholder(
-    mut q_placeholder: Query<(&mut Transform, &pf_comps::RtsObj), With<StructurePlaceholder>>,
+    mut q_placeholder: Query<(&mut Transform, &pf_comps::Obstacle), With<StructurePlaceholder>>,
     mut q_cam: Query<(&Camera, &GlobalTransform), With<pf_comps::GameCamera>>,
     q_map_base: Query<&GlobalTransform, With<pf_comps::MapBase>>,
     q_window: Query<&Window, With<PrimaryWindow>>,
@@ -272,7 +272,7 @@ fn obs_deselect(
 fn sync_primary_structure_txt(
     mut cmds: Commands,
     q_selected_structure: Query<
-        (&Transform, &pf_comps::RtsObj, &PrimaryStructure),
+        (&Transform, &pf_comps::Obstacle, &PrimaryStructure),
         With<SelectedStructure>,
     >,
     mut q_primary_structure_txt: Query<&mut Node, With<PrimaryStructureTxt>>,

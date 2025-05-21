@@ -152,7 +152,7 @@ fn move_unit(
         (
             Entity,
             &mut Transform,
-            &pf_comps::Boid,
+            &mut pf_comps::Boid,
             &Speed,
             &mut Velocity,
         ),
@@ -163,7 +163,7 @@ fn move_unit(
     let dt = time.delta_secs();
     let rotation_speed = 5.0; // radians/sec
 
-    for (ent, mut tf, boid, speed, mut vel) in q_units.iter_mut() {
+    for (ent, mut tf, mut boid, speed, mut vel) in q_units.iter_mut() {
         let steering = boid.steering;
 
         // ——— 1) Rotate toward steering ———
@@ -185,13 +185,13 @@ fn move_unit(
             }
 
             // ——— 2) Drive velocity along steering ———
-            vel.linvel = steering.normalize() * speed.0;
+            tf.translation += boid.velocity * speed.0 * dt;
+            // vel.linvel = steering.normalize() * speed.0;
         } else {
             // No steering → stop
-            vel.linvel = Vec3::ZERO;
+            boid.velocity = Vec3::ZERO;
+            // vel.linvel = Vec3::ZERO;
         }
-
-        // tf.translation += boid.steering.normalize_or_zero() * delta_secs * speed.0;
     }
 }
 
